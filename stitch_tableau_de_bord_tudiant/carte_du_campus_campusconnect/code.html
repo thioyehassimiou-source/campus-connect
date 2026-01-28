@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .map-bg {
+            background-color: #e8f5e9; /* Light green for lawns */
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden max-w-[430px] mx-auto bg-white dark:bg-background-dark shadow-2xl">
+<!-- TopAppBar -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-20">
+<div class="text-[#111418] dark:text-white flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Carte du Campus</h2>
+</div>
+<!-- SearchBar -->
+<div class="px-4 py-2">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+<div class="text-[#617289] dark:text-gray-400 flex border-none bg-[#f0f2f4] dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl" data-icon="search">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-[#f0f2f4] dark:bg-slate-800 placeholder:text-[#617289] px-4 pl-2 text-base font-normal leading-normal" placeholder="Rechercher une salle ou un département..." value=""/>
+</div>
+</label>
+</div>
+<!-- Map Section with Interactive Controls -->
+<div class="relative px-4 py-3">
+<div class="w-full aspect-[4/5] bg-[#f8fafc] dark:bg-slate-900 rounded-xl overflow-hidden relative shadow-inner border border-gray-100 dark:border-slate-800">
+<!-- Simulated 2D Map Layout -->
+<div class="absolute inset-0 map-bg opacity-40"></div>
+<!-- Path/Walkway -->
+<div class="absolute top-1/2 left-0 w-full h-12 bg-gray-200 dark:bg-slate-700 -translate-y-1/2"></div>
+<div class="absolute top-0 left-1/2 w-12 h-full bg-gray-200 dark:bg-slate-700 -translate-x-1/2"></div>
+<!-- Campus Buildings (Stylized) -->
+<!-- Bloc A -->
+<div class="absolute top-[15%] left-[15%] w-24 h-24 bg-primary/20 border-2 border-primary rounded-lg flex flex-col items-center justify-center text-primary font-bold shadow-md">
+<span class="text-xs">Bloc A</span>
+<span class="material-symbols-outlined text-xl">account_balance</span>
+</div>
+<!-- Bloc B -->
+<div class="absolute top-[15%] right-[15%] w-24 h-24 bg-green-100 border-2 border-green-500 rounded-lg flex flex-col items-center justify-center text-green-700 font-bold shadow-md">
+<span class="text-xs">Bloc B</span>
+<span class="material-symbols-outlined text-xl">science</span>
+</div>
+<!-- Bloc C -->
+<div class="absolute bottom-[15%] left-[15%] w-24 h-24 bg-amber-100 border-2 border-amber-500 rounded-lg flex flex-col items-center justify-center text-amber-700 font-bold shadow-md">
+<span class="text-xs">Bloc C</span>
+<span class="material-symbols-outlined text-xl">history_edu</span>
+</div>
+<!-- Bloc D -->
+<div class="absolute bottom-[15%] right-[15%] w-24 h-24 bg-orange-100 border-2 border-orange-500 rounded-lg flex flex-col items-center justify-center text-orange-700 font-bold shadow-md">
+<span class="text-xs">Bloc D</span>
+<span class="material-symbols-outlined text-xl">local_library</span>
+</div>
+<!-- Zoom Controls -->
+<div class="absolute bottom-4 right-4 flex flex-col gap-2">
+<button class="size-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="size-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="size-10 bg-primary text-white rounded-lg shadow-lg flex items-center justify-center mt-2">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SectionHeader -->
+<h3 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Légende du Campus</h3>
+<!-- Legend Items -->
+<div class="flex flex-col gap-1 pb-24">
+<!-- Bloc A -->
+<div class="flex items-center gap-4 bg-white dark:bg-background-dark px-4 min-h-[72px] py-2 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-normal line-clamp-1">Bloc A</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-2">Administration &amp; Rectorat</p>
+</div>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- Bloc B -->
+<div class="flex items-center gap-4 bg-white dark:bg-background-dark px-4 min-h-[72px] py-2 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-green-600 flex items-center justify-center rounded-lg bg-green-50 shrink-0 size-12">
+<span class="material-symbols-outlined">science</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-normal line-clamp-1">Bloc B</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-2">Faculté des Sciences</p>
+</div>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- Bloc C -->
+<div class="flex items-center gap-4 bg-white dark:bg-background-dark px-4 min-h-[72px] py-2 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-amber-600 flex items-center justify-center rounded-lg bg-amber-50 shrink-0 size-12">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-normal line-clamp-1">Bloc C</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-2">Faculté des Lettres &amp; Langues</p>
+</div>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- Bloc D -->
+<div class="flex items-center gap-4 bg-white dark:bg-background-dark px-4 min-h-[72px] py-2 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-orange-600 flex items-center justify-center rounded-lg bg-orange-50 shrink-0 size-12">
+<span class="material-symbols-outlined">local_library</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-normal line-clamp-1">Bloc D</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-2">Bibliothèque &amp; Cafétéria</p>
+</div>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] h-20 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-gray-100 dark:border-slate-800 flex justify-around items-center px-4 pb-4">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">map</span>
+<span class="text-[10px] font-medium">Carte</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-[10px] font-medium">Emploi</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-medium">Actualités</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profil</span>
+</div>
+</div>
+</div>
+</body></html>

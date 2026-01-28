@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Emploi du temps CampusConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "lecture": "#2e7d32",
+                        "tutorial": "#136dec",
+                        "lab": "#7b1fa2"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-white dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center px-4 py-4 justify-between">
+<div class="flex items-center gap-3">
+<div class="text-primary size-10 flex items-center justify-center rounded-xl bg-primary/10">
+<span class="material-symbols-outlined">calendar_month</span>
+</div>
+<div>
+<h1 class="text-[#111418] dark:text-white text-lg font-bold leading-tight">Emploi du temps</h1>
+<p class="text-[#617289] dark:text-gray-400 text-xs">Semestre 2 • Campus Centre</p>
+</div>
+</div>
+<button class="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-semibold transition-colors">
+                Aujourd'hui
+            </button>
+</div>
+<!-- Tabs / Horizontal Calendar Strip -->
+<div class="overflow-x-auto hide-scrollbar px-4 pb-3 flex gap-3">
+<!-- Inactive Day -->
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">Lun</span>
+<span class="text-[#111418] dark:text-white text-lg font-bold">12</span>
+</button>
+<!-- Active Day -->
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-primary text-white shadow-lg shadow-primary/20 transition-all scale-105">
+<span class="text-white/80 text-xs font-medium">Mar</span>
+<span class="text-white text-lg font-bold">13</span>
+</button>
+<!-- Inactive Day -->
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">Mer</span>
+<span class="text-[#111418] dark:text-white text-lg font-bold">14</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">Jeu</span>
+<span class="text-[#111418] dark:text-white text-lg font-bold">15</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">Ven</span>
+<span class="text-[#111418] dark:text-white text-lg font-bold">16</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">Sam</span>
+<span class="text-[#111418] dark:text-white text-lg font-bold">17</span>
+</button>
+</div>
+</header>
+<main class="px-4 py-6 space-y-4">
+<!-- Time Indicator (Now) -->
+<div class="relative flex items-center gap-3">
+<span class="text-xs font-bold text-primary shrink-0">10:45</span>
+<div class="h-[2px] flex-1 bg-primary rounded-full"></div>
+<div class="size-2 bg-primary rounded-full animate-pulse"></div>
+</div>
+<!-- Class Card 1 - Finished -->
+<div class="relative overflow-hidden flex gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm px-4 py-4 rounded-xl border border-gray-100 dark:border-gray-700 opacity-60">
+<!-- Left Colored Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-lecture"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-[#111418] dark:text-white text-base font-bold leading-tight">Algorithmique Avancée</h3>
+<span class="bg-lecture/10 text-lecture text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Lecture (CM)</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<p class="text-sm font-medium">08:00 - 10:00</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm">Amphithéâtre B • Bâtiment Colbert</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">person</span>
+<p class="text-sm">Pr. Jean Dupont</p>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-lecture">check_circle</span>
+</div>
+</div>
+<!-- Class Card 2 - Active/Next -->
+<div class="relative overflow-hidden flex gap-4 bg-white dark:bg-gray-800 px-4 py-5 rounded-xl border-2 border-primary shadow-lg shadow-primary/5">
+<!-- Left Colored Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-tutorial"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-[#111418] dark:text-white text-lg font-bold leading-tight">Systèmes d'exploitation</h3>
+<span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Tutorial (TD)</span>
+</div>
+<div class="grid grid-cols-2 gap-y-2">
+<div class="flex items-center gap-2 text-[#111418] dark:text-white">
+<span class="material-symbols-outlined text-sm text-primary">schedule</span>
+<p class="text-sm font-semibold">10:15 - 12:15</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm font-medium">Salle 204</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400 col-span-2">
+<span class="material-symbols-outlined text-sm">person</span>
+<p class="text-sm">Pr. Marie Curie</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col justify-center items-center gap-1">
+<span class="text-[10px] font-bold text-primary uppercase animate-pulse">En cours</span>
+</div>
+</div>
+<!-- Break Time -->
+<div class="flex items-center justify-center py-2 px-4">
+<div class="h-[1px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
+<span class="px-3 text-[10px] font-bold text-[#617289] dark:text-gray-500 uppercase tracking-widest">Pause Déjeuner</span>
+<div class="h-[1px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
+</div>
+<!-- Class Card 3 -->
+<div class="relative overflow-hidden flex gap-4 bg-white dark:bg-gray-800 px-4 py-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+<!-- Left Colored Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-lab"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-[#111418] dark:text-white text-base font-bold leading-tight">Base de données</h3>
+<span class="bg-lab/10 text-lab text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Lab (TP)</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<p class="text-sm font-medium">14:00 - 16:00</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm">Labo Informatique 3</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">person</span>
+<p class="text-sm">Dr. Alan Turing</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Class Card 4 -->
+<div class="relative overflow-hidden flex gap-4 bg-white dark:bg-gray-800 px-4 py-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+<!-- Left Colored Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-[#111418] dark:text-white text-base font-bold leading-tight">Anglais Technique</h3>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Tutorial (TD)</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<p class="text-sm font-medium">16:15 - 18:15</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm">Salle 102</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">person</span>
+<p class="text-sm">Mme. Sarah Connor</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (iOS Style) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 px-6 pb-6 pt-2 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[26px]">calendar_today</span>
+<span class="text-[10px] font-medium">Planning</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400" href="#">
+<span class="material-symbols-outlined text-[26px]">school</span>
+<span class="text-[10px] font-medium">Cours</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400" href="#">
+<span class="material-symbols-outlined text-[26px]">grade</span>
+<span class="text-[10px] font-medium">Notes</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400" href="#">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[10px] font-medium">Profil</span>
+</a>
+</div>
+<!-- iOS Home Indicator -->
+<div class="w-32 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4"></div>
+</nav>
+</body></html>

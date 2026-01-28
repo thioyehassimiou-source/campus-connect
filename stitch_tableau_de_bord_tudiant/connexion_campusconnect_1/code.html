@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Connexion CampusConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#136dec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101822",
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-center">
+<div class="relative flex h-full min-h-screen w-full max-w-[430px] flex-col bg-white dark:bg-background-dark overflow-x-hidden shadow-2xl">
+<!-- Top App Bar / Branding -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="text-primary flex size-12 shrink-0 items-center" data-icon="School" data-size="32px">
+<span class="material-symbols-outlined text-4xl">school</span>
+</div>
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">CampusConnect</h2>
+</div>
+<!-- Hero Section / University Visual -->
+<div class="@container">
+<div class="px-4 py-6">
+<div class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-primary/10 rounded-xl min-h-[180px]" data-alt="Modern university campus building architecture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDuXVkkH6_0rNcGh2_zbbZXVzFuMmvLcxjIvfKTUdOnUw_d7fabb9_Gb5X6j176Fzv5q0w08Rel8SrRReO9q7SmVb4td52YATkhZpa5d3MdlvjHJbMrKUy6cOhXkvFtoN2_kDgpxGxEE0IViUdRIYQRYVxRnBGxuSc9Jdmj42V-PCQC-n4POc4zPp6Zpr3IVwFOYApuOrM-S6q9kOzBgEWE7qZIeI3jGdBTgGIniJ4sxDdebP08OP5bmnoW9hU-0R72Qp_q2bEqEk0");'>
+</div>
+</div>
+</div>
+<!-- Welcome Text -->
+<div class="px-4 pt-2">
+<h1 class="text-[#111418] dark:text-white tracking-tight text-[28px] font-bold leading-tight text-center">Bienvenue</h1>
+<p class="text-[#617289] dark:text-gray-400 text-sm text-center mt-2 px-6">Accédez à votre espace universitaire sécurisé</p>
+</div>
+<!-- Role Selector (Segmented Buttons) -->
+<div class="flex px-4 py-6">
+<div class="flex h-12 flex-1 items-center justify-center rounded-xl bg-[#f0f2f4] dark:bg-gray-800 p-1.5">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm has-[:checked]:text-primary text-[#617289] dark:text-gray-400 text-sm font-medium transition-all">
+<span class="truncate">Étudiant</span>
+<input checked="" class="invisible w-0" name="user-role" type="radio" value="student"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm has-[:checked]:text-primary text-[#617289] dark:text-gray-400 text-sm font-medium transition-all">
+<span class="truncate">Enseignant</span>
+<input class="invisible w-0" name="user-role" type="radio" value="teacher"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm has-[:checked]:text-primary text-[#617289] dark:text-gray-400 text-sm font-medium transition-all">
+<span class="truncate">Admin</span>
+<input class="invisible w-0" name="user-role" type="radio" value="admin"/>
+</label>
+</div>
+</div>
+<!-- Login Form -->
+<div class="flex flex-col gap-4 px-4">
+<!-- Email Field -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[#111418] dark:text-white text-sm font-medium leading-normal px-1">Email institutionnel</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-[#617289]">mail</span>
+<input class="flex w-full min-w-0 flex-1 rounded-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-900 h-14 placeholder:text-[#617289] pl-12 pr-4 text-base font-normal transition-all" placeholder="nom@univ-campus.fr" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[#111418] dark:text-white text-sm font-medium leading-normal px-1">Mot de passe</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-[#617289]">lock</span>
+<input class="flex w-full min-w-0 flex-1 rounded-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-900 h-14 placeholder:text-[#617289] pl-12 pr-12 text-base font-normal transition-all" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 text-[#617289]">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Forgot Password -->
+<div class="flex justify-end px-1">
+<a class="text-primary text-sm font-medium hover:underline" href="#">Mot de passe oublié ?</a>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-3 pt-4 pb-8">
+<button class="flex h-14 w-full items-center justify-center rounded-xl bg-primary text-white text-base font-bold tracking-wide shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
+                    Se connecter
+                </button>
+<div class="flex items-center justify-center gap-2 py-4">
+<div class="h-[1px] flex-1 bg-[#dbe0e6] dark:bg-gray-700"></div>
+<span class="text-[#617289] text-xs font-medium uppercase tracking-widest">Ou</span>
+<div class="h-[1px] flex-1 bg-[#dbe0e6] dark:bg-gray-700"></div>
+</div>
+<button class="flex h-14 w-full items-center justify-center rounded-xl border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-900 text-[#111418] dark:text-white text-base font-semibold gap-3 active:bg-gray-50 dark:active:bg-gray-800 transition-all">
+<span class="material-symbols-outlined">face</span>
+                    Utiliser FaceID
+                </button>
+</div>
+</div>
+<!-- Footer -->
+<div class="mt-auto px-4 pb-10 text-center">
+<p class="text-[#617289] text-xs leading-relaxed px-4">
+                En vous connectant, vous acceptez nos <a class="text-primary font-medium" href="#">Conditions d'utilisation</a> et notre <a class="text-primary font-medium" href="#">Politique de confidentialité</a>.
+            </p>
+<div class="flex justify-center gap-4 mt-6">
+<button class="flex items-center gap-1 text-[#617289] text-xs font-medium">
+<span class="material-symbols-outlined text-sm">help</span>
+                    Besoin d'aide ?
+                </button>
+</div>
+</div>
+<!-- iOS Home Indicator Spacer -->
+<div class="h-5 w-full bg-white dark:bg-background-dark"></div>
+</div>
+</body></html>

@@ -4,6 +4,7 @@ import 'package:campusconnect/core/themes/app_theme.dart';
 import 'package:campusconnect/shared/models/grade_model.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
 import 'package:campusconnect/core/services/firebase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GradesScreen extends StatefulWidget {
   final UserModel user;
@@ -31,7 +32,7 @@ class _GradesScreenState extends State<GradesScreen> {
     try {
       QuerySnapshot querySnapshot;
       
-      if (widget.user.role == UserRole.teacher) {
+      if (widget.user.role == UserRole.enseignant) {
         // Teacher sees grades for courses they teach
         querySnapshot = await FirebaseService.firestore
             .collection('grades')
@@ -107,7 +108,7 @@ class _GradesScreenState extends State<GradesScreen> {
           : Column(
               children: [
                 // Summary Card
-                if (widget.user.role == UserRole.student) ...[
+                if (widget.user.role == UserRole.etudiant) ...[
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.all(16),

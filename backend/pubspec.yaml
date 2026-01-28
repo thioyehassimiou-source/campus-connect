@@ -1,0 +1,42 @@
+name: campusconnect_backend
+description: Backend API for CampusConnect application
+version: 1.0.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  # Web Framework
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  shelf_static: ^1.1.1
+  
+  # Database
+  postgres: ^3.1.2
+  supabase: ^2.0.9
+  
+  # Authentication
+  dart_jsonwebtoken: ^2.13.0
+  crypto: ^3.0.3
+  
+  # Utilities
+  dotenv: ^4.2.0
+  json_annotation: ^4.8.1
+  
+  # Validation
+  validators: ^3.0.0
+  
+  # Logging
+  logging: ^1.2.0
+
+dev_dependencies:
+  # Testing
+  test: ^1.24.4
+  http: ^1.2.1
+  
+  # Code Generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  
+  # Linting
+  lints: ^3.0.0

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusConnect - Tableau de bord</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white min-h-screen pb-24">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-30 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+<span class="material-symbols-outlined text-primary text-2xl">account_circle</span>
+</div>
+<div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-tight">Bonjour, Thomas !</h2>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-medium">Université de Labé</p>
+</div>
+</div>
+<div class="relative">
+<button class="flex size-10 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+<span class="material-symbols-outlined text-[#111418] dark:text-white">notifications</span>
+</button>
+<span class="absolute top-1 right-1 size-2.5 bg-red-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
+</div>
+</header>
+<main class="max-w-md mx-auto">
+<!-- Emploi du temps du jour Section -->
+<div class="pt-6 px-4">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-[#111418] dark:text-white text-lg font-bold">Emploi du temps</h3>
+<span class="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded-full">Aujourd'hui</span>
+</div>
+<div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-gray-50 dark:border-gray-700">
+<div class="flex items-stretch justify-between gap-4">
+<div class="flex flex-[3_3_0px] flex-col justify-between py-1">
+<div>
+<p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">À suivre</p>
+<h4 class="text-[#111418] dark:text-white text-xl font-bold leading-tight mb-1">Algorithmique</h4>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<p class="text-sm font-medium">10:30 - 12:30</p>
+</div>
+<div class="flex items-center gap-2 text-[#617289] dark:text-gray-400 mt-1">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm font-medium">Salle B2, Pavillon Central</p>
+</div>
+</div>
+<button class="mt-4 flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white gap-2 text-sm font-semibold transition-all hover:bg-primary/90">
+<span class="truncate">Voir les détails</span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-primary/5 rounded-lg flex items-center justify-center border border-primary/10 overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Abstract code and pattern illustration" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCZwiHhuBerYxCLZbqgLr2GWeM5RG3K-LDdSaYfgIApqSKROpv4BbI4qGbz1_GilgX0JRZkXOp4AQBLG-odaZ7eQOrG1wz0b6RDXKlrqYYa9wQaUSvQu8e3jHI-EFnMIlZ7Kk9cOAlSZtIvVOFd1InfXkCY-VdcB7JyQxfVot1iG_e3ZYUsI6auzKZIryWXB-nZiuOC4BbE0i3H7NYsbTaWbv5vHjvHyVgk1nS2PMOMSohdxma_N_SwjBg7XCVgyw_ESXV0lDFmDdA");'></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Accès rapide Grid -->
+<div class="pt-8 px-4">
+<h3 class="text-[#111418] dark:text-white text-lg font-bold mb-4">Accès rapide</h3>
+<div class="grid grid-cols-4 gap-4">
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-2xl bg-[#E8F0FE] dark:bg-primary/20 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl font-semibold">calendar_month</span>
+</div>
+<span class="text-xs font-medium text-[#111418] dark:text-gray-300">Planning</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-2xl bg-[#FFF4E5] dark:bg-orange-500/20 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-orange-600 text-2xl font-semibold">description</span>
+</div>
+<span class="text-xs font-medium text-[#111418] dark:text-gray-300">Docs</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-2xl bg-[#E6F4EA] dark:bg-green-500/20 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-green-600 text-2xl font-semibold">grade</span>
+</div>
+<span class="text-xs font-medium text-[#111418] dark:text-gray-300">Notes</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-2xl bg-[#F3E5F5] dark:bg-purple-500/20 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-purple-600 text-2xl font-semibold">apps</span>
+</div>
+<span class="text-xs font-medium text-[#111418] dark:text-gray-300">Services</span>
+</div>
+</div>
+</div>
+<!-- Dernières annonces Carousel -->
+<div class="pt-8">
+<div class="flex items-center justify-between px-4 mb-3">
+<h3 class="text-[#111418] dark:text-white text-lg font-bold">Dernières annonces</h3>
+<button class="text-primary text-sm font-semibold">Tout voir</button>
+</div>
+<div class="flex overflow-x-auto snap-x scroll-smooth [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<div class="flex items-stretch px-4 gap-4 pb-4">
+<!-- News Card 1 -->
+<div class="snap-start flex-none w-64 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-[0_2px_6px_rgba(0,0,0,0.05)] border border-gray-50 dark:border-gray-700">
+<div class="w-full aspect-[16/9] bg-center bg-no-repeat bg-cover" data-alt="Modern library building at sunset" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBvcy8L5CwmFEZf1cOhgh2MN-1HAtfRB_0EaItpfeHSZtRwQrtPNb3UFXYhqT9DMBbZODhWrovVXgMm8QP40CVaH8Ynh314Res8a425KkwGKWP2eXoy0sp9bhatKHhLb9ZeE5telq0iYKzLr0lOZdEqFPSG4-MuUabDTmkqFjwA2R_4IepQCZv8LKwpCmVBTEfOh99iDOXWC6JTb5S3C9CCoMJODa81VhQpd8EEFiKAF3WDJgSG5WJR92HW2nDTPXa9Ivz_8uhxC_M");'></div>
+<div class="p-3">
+<span class="text-[10px] font-bold text-primary uppercase tracking-tight">Inscription</span>
+<h4 class="text-[#111418] dark:text-white text-sm font-bold leading-snug mt-1">Inscriptions Ouvertes</h4>
+<p class="text-[#617289] dark:text-gray-400 text-xs mt-1">Semestre 2 - Clôture le 15 Mars</p>
+</div>
+</div>
+<!-- News Card 2 -->
+<div class="snap-start flex-none w-64 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-[0_2px_6px_rgba(0,0,0,0.05)] border border-gray-50 dark:border-gray-700">
+<div class="w-full aspect-[16/9] bg-center bg-no-repeat bg-cover" data-alt="Library study hall with students" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCwnCXhu4rB7XYFNdG0lfGTKejL9nJU01jNc-t95xkAsGPuXwU8LsnOSN011v46pGsgzH2lHLhsgnfdmEn5nX__C6qaUf3AxcJWAGE14vRQTY3MRVtaonlEPl2mM0BHv4MxY7TRr7HleI3qqTNwMwH_KdtiPa2tsSaVZIEnLF-y4EplQ15mmeIAoVGNa-C7Xm8TAU2sQeo1zCRV6akRF1Eyq3H7p2FAj_3i0EuBWJMshPl1jsciYYWO2nniE0B9GMbqgPjsXPnpFdI");'></div>
+<div class="p-3">
+<span class="text-[10px] font-bold text-green-600 uppercase tracking-tight">Services</span>
+<h4 class="text-[#111418] dark:text-white text-sm font-bold leading-snug mt-1">Nouveaux Horaires BU</h4>
+<p class="text-[#617289] dark:text-gray-400 text-xs mt-1">Ouvert jusqu'à 22h cette semaine</p>
+</div>
+</div>
+<!-- News Card 3 -->
+<div class="snap-start flex-none w-64 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-[0_2px_6px_rgba(0,0,0,0.05)] border border-gray-50 dark:border-gray-700">
+<div class="w-full aspect-[16/9] bg-center bg-no-repeat bg-cover" data-alt="Exam papers on a desk" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCwKFjpWNoEylQzX6CXmxqYXpgJSLysdeIeavB7gYMbLqaji5jZn8VZ_gY9QEQ7m1lgZV49jUI0x5tyTlHeVQjedkVGnh7QX2iVYtpvTZ3vHoiKp1eG48TR6UDY__ptlFPQNv6u5kcWX9QhsC7NJf2JYAAHTgcN1GvTHTMQeakbC3jSrGPfg6KElgvNy20pfeBihJcCpFKXLpF2n20zD2_Tg9PjsDiyerF7oMt3tiYs44N3H2RaNeemihczPA4cHXElSShL-gbhODU");'></div>
+<div class="p-3">
+<span class="text-[10px] font-bold text-red-500 uppercase tracking-tight">Examen</span>
+<h4 class="text-[#111418] dark:text-white text-sm font-bold leading-snug mt-1">Planning des Partiels</h4>
+<p class="text-[#617289] dark:text-gray-400 text-xs mt-1">Session de Juin disponible</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Statistics or Progress (Bonus for Modern look) -->
+<div class="px-4 py-4">
+<div class="bg-primary p-4 rounded-xl text-white shadow-lg shadow-primary/20 flex items-center justify-between">
+<div>
+<h4 class="text-sm font-medium opacity-90">Présence globale</h4>
+<p class="text-2xl font-bold">88.5%</p>
+</div>
+<div class="size-12 rounded-full border-4 border-white/20 flex items-center justify-center">
+<span class="text-[10px] font-bold">GOAL</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (iOS Style) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 px-6 py-3 pb-8 z-50">
+<div class="flex items-center justify-between max-w-md mx-auto">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-semibold">Accueil</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">campaign</span>
+<span class="text-[10px] font-medium">Annonces</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">school</span>
+<span class="text-[10px] font-medium">Cours</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profil</span>
+</div>
+</div>
+</nav>
+</body></html>

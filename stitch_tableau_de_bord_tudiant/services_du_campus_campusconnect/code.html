@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Services du Campus - CampusConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .ios-tab-bar {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#111418] dark:text-white">
+<!-- Top AppBar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">school</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight">CampusConnect</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-400">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-md mx-auto pb-24">
+<!-- Page Title -->
+<div class="px-4 pt-6 pb-2">
+<h2 class="text-2xl font-bold">Services</h2>
+<p class="text-gray-500 dark:text-gray-400 text-sm">Trouvez rapidement les services universitaires</p>
+</div>
+<!-- SearchBar -->
+<div class="px-4 py-3">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+<div class="text-[#617289] dark:text-gray-400 flex border-none bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-xl" data-icon="MagnifyingGlass">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-white dark:bg-gray-800 h-full placeholder:text-[#617289] px-4 pl-2 text-base font-normal leading-normal" placeholder="Rechercher un service..." value=""/>
+</div>
+</label>
+</div>
+<!-- Service Cards List -->
+<div class="flex flex-col gap-4 p-4">
+<!-- Service: Scolarité -->
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm bg-white dark:bg-gray-800 overflow-hidden border border-gray-50 dark:border-gray-700">
+<div class="w-full h-32 bg-center bg-no-repeat bg-cover" data-alt="University administration office with documents and computers" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgD5FWk3d727dJWkn_BtLyPKw5Io2qS7ftWFuiY1jDX1iReNHLfnzU5lAIoINpG68Rp-cCu6INdp8Nhn7CdTpX8vf9IUbuudsyYNSThXgqb9GGVNiUdN1OjbVdzGcCWsQsdUkXmJHdR1S5qpXoeFmG3c7DBn4I_xTdUgg_2-s__pXa6YPJMvgoJ-PsB0Cz-Sd4u5L6Whq8TQk5O7gTXr0Z8-3LnCeBnctNUbp6LrNHBvoPdX-UdFj_b3IUJPagWeb1zSj1r0MfFBQ");'></div>
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold text-primary">Scolarité</h3>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined text-xs mr-1">location_on</span> Bloc A, 1er étage
+                        </span>
+</div>
+<p class="text-[#617289] dark:text-gray-400 text-sm leading-relaxed">Gestion des inscriptions, des relevés de notes et des dossiers étudiants. Centralise toutes vos démarches administratives.</p>
+<div class="pt-2 border-t border-gray-50 dark:border-gray-700 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">mail</span>
+<span class="hover:underline cursor-pointer">scolarite@univ-campus.fr</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">phone</span>
+<span>01 23 45 67 89</span>
+</div>
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-medium hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined mr-2 text-sm">call</span> Appeler
+                        </button>
+</div>
+</div>
+</div>
+<!-- Service: Bibliothèque -->
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm bg-white dark:bg-gray-800 overflow-hidden border border-gray-50 dark:border-gray-700">
+<div class="w-full h-32 bg-center bg-no-repeat bg-cover" data-alt="Modern university library with bookshelves and study desks" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBKPp7tzvr4SfPVSaLrtUs-5WKuZ2ieYGbTJeG3AMK8XS0yxlELYn0wr4NmlBQcyZjebYfXZT6e7Ubf20kVGbmpoXgDqCS0lXpiHWSjXC7wS7oRhz0X_5B34aCaFtoAAOjz5C1GIw8WQYT7fevjxxQH0d8sCQQuefSu2yeZxx8H7P6EDkuRD00dvoSYwml0xCC05vA4BsRrJdjXAnOSq4AQ9PRafTwqlN3AFLApELh1A8O51Ea-nKIhGPfdgRf7NL-cEXHUiEKKySU");'></div>
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold text-primary">Bibliothèque</h3>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined text-xs mr-1">location_on</span> Bâtiment Central
+                        </span>
+</div>
+<p class="text-[#617289] dark:text-gray-400 text-sm leading-relaxed">Accès aux ressources numériques, prêt de livres et espaces d'étude calme. Ouvert du lundi au samedi.</p>
+<div class="pt-2 border-t border-gray-50 dark:border-gray-700 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">mail</span>
+<span class="hover:underline cursor-pointer">bu@univ-campus.fr</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">phone</span>
+<span>01 23 45 67 90</span>
+</div>
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-medium hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined mr-2 text-sm">call</span> Appeler
+                        </button>
+</div>
+</div>
+</div>
+<!-- Service: Service des Examens -->
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-sm bg-white dark:bg-gray-800 overflow-hidden border border-gray-50 dark:border-gray-700">
+<div class="w-full h-32 bg-center bg-no-repeat bg-cover" data-alt="Abstract composition of exam schedules and clocks" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGEn57LAUrtF9Xw4zVhAKRO3GPJqjo9PP3C4lVSHRoAnLsHyvKdNNubt2FqXH6dtl11tNWBIhCro8ivXVcWj4KYWzKW41QJ4xfrZfrkxhmnpfYBAmklQ18_onzrB9J8tSw7oeSOjvEpKsjdwL9ZsYRCdI4vFH84n7UpNt0PaXoeeTWRP2FKQw9xKcEnozAm5BGlueuhHzMKYOfg0wCvMbJBNxb-qeAq-qICo-66jNEgGWPLBNtXCgZsvwN0wuJBD6v6JI4MdZ1ifE");'></div>
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold text-primary">Service des Examens</h3>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined text-xs mr-1">location_on</span> Bloc C, RDC
+                        </span>
+</div>
+<p class="text-[#617289] dark:text-gray-400 text-sm leading-relaxed">Coordination des calendriers, réservation des salles et publication des résultats officiels.</p>
+<div class="pt-2 border-t border-gray-50 dark:border-gray-700 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">mail</span>
+<span class="hover:underline cursor-pointer">examens@univ-campus.fr</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center gap-2 text-sm text-[#111418] dark:text-gray-300">
+<span class="material-symbols-outlined text-primary text-sm">phone</span>
+<span>01 23 45 67 91</span>
+</div>
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-medium hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined mr-2 text-sm">call</span> Appeler
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (iOS Style) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 ios-tab-bar border-t border-gray-200 dark:border-gray-800">
+<div class="max-w-md mx-auto flex justify-around items-center h-20 pb-4">
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Accueil</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">hub</span>
+<span class="text-[10px] font-medium">Services</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined">map</span>
+<span class="text-[10px] font-medium">Carte</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profil</span>
+</button>
+</div>
+</nav>
+</body></html>

@@ -1,34 +1,29 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FirebaseService {
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final FirebaseStorage _storage = FirebaseStorage.instance;
-  static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-
-  // Auth getters
-  static FirebaseAuth get auth => _auth;
-  static FirebaseFirestore get firestore => _firestore;
-  static FirebaseStorage get storage => _storage;
-  static FirebaseMessaging get messaging => _messaging;
+  // Deprecated - use SupabaseService instead
+  @deprecated
+  static SupabaseClient get firestore => Supabase.instance.client;
+  
+  @deprecated
+  static SupabaseClient get storage => Supabase.instance.client;
 
   // Current user
-  static User? get currentUser => _auth.currentUser;
+  static User? get currentUser => Supabase.instance.client.auth.currentUser;
 
-  // Initialize Firebase
+  // Initialize Supabase
   static Future<void> initializeFirebase() async {
-    await Firebase.initializeApp();
-    
-    // Request notification permissions
-    await _messaging.requestPermission();
-    
-    // Get FCM token
-    final token = await _messaging.getToken();
-    print('FCM Token: $token');
+    try {
+      await Firebase.initializeApp(
+        options: FirebaseConfig.web,
+      );
+    } catch (e) {
+      // If Firebase is already initialized, ignore the error
+      if (e.toString().contains('already-initialized')) {
+        return;
+      }
+      rethrow;
+    }
   }
 
   // Sign out

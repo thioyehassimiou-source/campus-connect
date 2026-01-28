@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:campusconnect/core/themes/app_theme.dart';
+import 'package:campusconnect/core/services/auth_service.dart';
 import 'package:campusconnect/shared/widgets/custom_text_field.dart';
 import 'package:campusconnect/shared/widgets/custom_button.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
@@ -19,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  UserRole _selectedRole = UserRole.student;
+  UserRole _selectedRole = UserRole.etudiant;
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -49,12 +50,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: Implement registration logic
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await AuthService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        role: _selectedRole,
+      );
 
-    setState(() => _isLoading = false);
-    
-    // TODO: Navigate to login screen or home screen
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inscription réussie! Vous pouvez maintenant vous connecter.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Navigate back to login screen
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -152,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Expanded(
                           child: RadioListTile<UserRole>(
                             title: const Text('Étudiant'),
-                            value: UserRole.student,
+                            value: UserRole.etudiant,
                             groupValue: _selectedRole,
                             onChanged: (value) {
                               setState(() => _selectedRole = value!);
@@ -163,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Expanded(
                           child: RadioListTile<UserRole>(
                             title: const Text('Enseignant'),
-                            value: UserRole.teacher,
+                            value: UserRole.enseignant,
                             groupValue: _selectedRole,
                             onChanged: (value) {
                               setState(() => _selectedRole = value!);

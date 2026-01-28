@@ -59,9 +59,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       case AnnouncementTarget.all:
         return true;
       case AnnouncementTarget.students:
-        return widget.user.role == UserRole.student;
+        return widget.user.role == UserRole.etudiant;
       case AnnouncementTarget.teachers:
-        return widget.user.role == UserRole.teacher;
+        return widget.user.role == UserRole.enseignant;
       case AnnouncementTarget.specific:
         return announcement.targetUserIds.contains(widget.user.id);
     }
@@ -90,7 +90,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _loadAnnouncements,
           ),
-          if (widget.user.role == UserRole.admin)
+          if (widget.user.role == UserRole.administrateur)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: _showCreateAnnouncementDialog,

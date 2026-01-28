@@ -1,111 +1,107 @@
-import 'package:equatable/equatable.dart';
-
-enum UserRole { student, teacher, admin }
-
-class UserModel extends Equatable {
+class UserModel {
   final String id;
   final String email;
-  final String firstName;
-  final String lastName;
-  final UserRole role;
-  final String? phoneNumber;
+  final String fullName;
+  final String? firstName;
+  final String? lastName;
+  final String? profileImage;
   final String? profileImageUrl;
-  final String? department;
-  final String? studentId;
+  final UserRole role;
+  final String? phone;
+  final String? address;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const UserModel({
+  UserModel({
     required this.id,
     required this.email,
-    required this.firstName,
-    required this.lastName,
-    required this.role,
-    this.phoneNumber,
+    required this.fullName,
+    this.firstName,
+    this.lastName,
+    this.profileImage,
     this.profileImageUrl,
-    this.department,
-    this.studentId,
+    required this.role,
+    this.phone,
+    this.address,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory UserModel.fromMap(Map<String, dynamic> map) {
+  factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: map['id'] ?? '',
-      email: map['email'] ?? '',
-      firstName: map['firstName'] ?? '',
-      lastName: map['lastName'] ?? '',
-      role: UserRole.values.firstWhere(
-        (role) => role.name == map['role'],
-        orElse: () => UserRole.student,
-      ),
-      phoneNumber: map['phoneNumber'],
-      profileImageUrl: map['profileImageUrl'],
-      department: map['department'],
-      studentId: map['studentId'],
-      createdAt: map['createdAt']?.toDate() ?? DateTime.now(),
-      updatedAt: map['updatedAt']?.toDate() ?? DateTime.now(),
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
+      fullName: json['full_name'] ?? '',
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      profileImage: json['profile_image'],
+      profileImageUrl: json['profile_image_url'],
+      role: _parseRole(json['role']),
+      phone: json['phone'],
+      address: json['address'],
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'email': email,
-      'firstName': firstName,
-      'lastName': lastName,
-      'role': role.name,
-      'phoneNumber': phoneNumber,
-      'profileImageUrl': profileImageUrl,
-      'department': department,
-      'studentId': studentId,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-    };
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'full_name': fullName,
+        'first_name': firstName,
+        'last_name': lastName,
+        'profile_image': profileImage,
+        'profile_image_url': profileImageUrl,
+        'role': role.toString().split('.').last,
+        'phone': phone,
+        'address': address,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
+
+  static UserRole _parseRole(dynamic roleValue) {
+    if (roleValue == null) return UserRole.student;
+    final roleStr = roleValue.toString().toLowerCase();
+    if (roleStr.contains('admin')) return UserRole.admin;
+    if (roleStr.contains('teacher')) return UserRole.teacher;
+    if (roleStr.contains('student')) return UserRole.student;
+    return UserRole.student;
   }
 
   UserModel copyWith({
     String? id,
     String? email,
-    String? firstName,
-    String? lastName,
+    String? fullName,
+    String? profileImage,
     UserRole? role,
-    String? phoneNumber,
-    String? profileImageUrl,
-    String? department,
-    String? studentId,
+    String? phone,
+    String? address,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
+      fullName: fullName ?? this.fullName,
+      profileImage: profileImage ?? this.profileImage,
       role: role ?? this.role,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-      department: department ?? this.department,
-      studentId: studentId ?? this.studentId,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+}
 
-  @override
-  List<Object?> get props => [
-        id,
-        email,
-        firstName,
-        lastName,
-        role,
-        phoneNumber,
-        profileImageUrl,
-        department,
-        studentId,
-        createdAt,
-        updatedAt,
-      ];
-
-  String get fullName => '$firstName $lastName';
+enum UserRole {
+  student,
+  teacher,
+  admin,
+  etudiant,
+  enseignant,
+  administrateur,
 }
