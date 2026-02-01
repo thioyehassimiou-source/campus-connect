@@ -114,48 +114,22 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
         data: {
           'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
           'role': _selectedRole,
+          'faculty_id': _selectedFacultyId,
+          'department_id': _selectedRole != 'Administratif' ? _selectedDepartmentId : null,
+          'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
           'telephone': '',
           'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
           'filiere_id': 'Non renseignée',
         },
       );
 
-      if (response.user != null) {
-        try {
-          // Créer le profil (possible même sans session car RLS est désactivé)
-          await Supabase.instance.client.from('profiles').insert({
-            'id': response.user!.id,
-            'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
-            'email': _emailController.text.trim(),
-            'role': _selectedRole,
-            'faculty_id': _selectedFacultyId,
-            'department_id': _selectedRole != 'Administratif' ? _selectedDepartmentId : null,
-            'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
-            'telephone': '',
-            'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
-            'filiere_id': 'Non renseignée',
-            'created_at': DateTime.now().toIso8601String(),
-          });
-          
-          if (mounted) {
-            if (_selectedRole == 'Administratif') {
-              Navigator.pushReplacementNamed(context, '/admin-dashboard');
-            } else if (_selectedRole == 'Enseignant') {
-              Navigator.pushReplacementNamed(context, '/teacher-dashboard');
-            } else {
-              Navigator.pushReplacementNamed(context, '/student-dashboard');
-            }
-          }
-        } catch (e) {
-          print('CRITICAL: Erreur lors de l\'insertion dans profiles: $e');
-          if (e is PostgrestException) {
-            print('Postgrest Details: ${e.message}, ${e.details}, ${e.hint}');
-          }
-          setState(() {
-            _errorMessage = 'Erreur lors de la création du profil (Base de données). Vérifiez vos droits d\'accès.';
-            _isLoading = false;
-          });
-          // On ne redirige pas si l'insertion a échoué car le profil est vide
+      if (response.user != null && mounted) {
+        if (_selectedRole == 'Administratif') {
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else if (_selectedRole == 'Enseignant') {
+          Navigator.pushReplacementNamed(context, '/teacher-dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/student-dashboard');
         }
       }
     } on AuthException catch (e) {
