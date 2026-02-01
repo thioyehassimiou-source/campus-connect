@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
+import 'package:campusconnect/core/services/supabase_auth_service.dart';
 
 class ModernStudentProfileScreen extends StatefulWidget {
   const ModernStudentProfileScreen({super.key});
@@ -35,17 +37,62 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
     super.dispose();
   }
 
-  void _loadStudentData() {
-    // Simulation de chargement des données étudiantes
+  void _loadStudentData() async {
     setState(() {
-      _firstNameController.text = 'Alice';
-      _lastNameController.text = 'Martin';
-      _emailController.text = 'alice.martin@univ-campus.fr';
-      _phoneController.text = '+33 6 12 34 56 78';
-      _addressController.text = '123 Rue de l\'Université, 75000 Paris';
-      _bioController.text = 'Étudiante passionnée en informatique, intéressée par l\'intelligence artificielle et le développement web.';
+      _isLoading = true;
     });
+
+    final data = await ProfileService.getCurrentUserProfile();
+
+    if (mounted) {
+      setState(() {
+        if (data != null) {
+          // Gestion robuste des noms
+          final fullName = data['nom'] ?? data['full_name'] ?? 'Utilisateur';
+          final nameParts = fullName.split(' ');
+          _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : 'Prénom';
+          _lastNameController.text = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Nom';
+          
+          // Gestion des autres champs avec valeurs par défaut
+          _emailController.text = data['email'] ?? 'email@campus.fr';
+          _phoneController.text = data['telephone'] ?? data['phone'] ?? 'Non renseigné';
+          _addressController.text = data['address'] ?? 'Non renseignée';
+          _bioController.text = data['bio'] ?? 'Étudiant sur CampusConnect';
+          
+          // Stocker toutes les données
+          _studentData = {
+            ...data,
+            'role': data['role'] ?? 'Étudiant',
+            'niveau': data['niveau'] ?? data['level'] ?? 'Non renseigné',
+            'filiere_id': data['filiere_id'] ?? data['program'] ?? 'Non renseignée',
+            'faculty_name': data['faculties'] != null ? (data['faculties']['nom'] ?? data['faculties']['name']) : 'Non renseignée',
+            'department_name': data['departments'] != null ? (data['departments']['nom'] ?? data['departments']['name']) : null,
+            'service_name': data['services'] != null ? (data['services']['nom'] ?? data['services']['name']) : null,
+          };
+        } else {
+          // Données par défaut si aucune donnée n'est récupérée
+          _firstNameController.text = 'Utilisateur';
+          _lastNameController.text = 'CampusConnect';
+          _emailController.text = 'utilisateur@campus.fr';
+          _phoneController.text = 'Non renseigné';
+          _addressController.text = 'Non renseignée';
+          _bioController.text = 'Étudiant sur CampusConnect';
+          
+          _studentData = {
+            'id': 'user_id',
+            'role': 'Étudiant',
+            'niveau': 'Non renseigné',
+            'filiere_id': 'Non renseignée',
+            'email': 'utilisateur@campus.fr',
+            'telephone': 'Non renseigné',
+          };
+        }
+        _isLoading = false;
+      });
+    }
   }
+
+  Map<String, dynamic>? _studentData;
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +123,13 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Carte principale du profil
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Carte principale du profil
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -157,9 +206,9 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'Étudiant L2 Informatique',
-                        style: TextStyle(
+                      child: Text(
+                        '${_studentData?['role'] ?? 'Étudiant'} • ${_studentData?['niveau'] ?? ''}',
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -232,11 +281,18 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
               'Informations Académiques',
               Icons.school,
               [
-                _buildInfoRow('Matricule', 'ET2024001'),
-                _buildInfoRow('Programme', 'Licence Informatique'),
-                _buildInfoRow('Niveau', 'L2 - Semestre 3'),
-                _buildInfoRow('Année d\'inscription', '2023'),
-                _buildInfoRow('Statut', 'Régulier'),
+                _buildInfoRow('ID', _getShortId(_studentData?['id'])),
+                _buildInfoRow('Faculté', _studentData?['faculty_name'] ?? 'Non renseignée'),
+                if (_studentData?['role'] != 'Administratif' && _studentData?['department_name'] != null)
+                  _buildInfoRow('Département', _studentData?['department_name']),
+                if (_studentData?['role'] == 'Administratif' && _studentData?['service_name'] != null)
+                  _buildInfoRow('Service', _studentData?['service_name']),
+                if (_studentData?['role'] == 'Étudiant') ...[
+                  _buildInfoRow('Programme', _studentData?['filiere_id'] ?? 'Non renseigné'),
+                  _buildInfoRow('Niveau', _studentData?['niveau'] ?? 'Non renseigné'),
+                ],
+                _buildInfoRow('Date d\'inscription', _formatDate(_studentData?['created_at']) ?? '2024'),
+                _buildInfoRow('Statut', _studentData?['status'] ?? 'Régulier'),
               ],
             ),
             
@@ -409,6 +465,10 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                     ),
                   ),
                   const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pushNamed(context, '/create-profile'),
+                child: const Text('Créer Profil'),
+              ),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _showPrivacySettings,
@@ -793,6 +853,26 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
         );
       },
     );
+  }
+
+  String _getShortId(dynamic id) {
+    if (id == null) return 'ET2024001';
+    final idStr = id.toString();
+    return idStr.length > 8 ? idStr.substring(0, 8) : idStr;
+  }
+
+  String? _formatDate(dynamic dateValue) {
+    if (dateValue == null) return null;
+    
+    try {
+      if (dateValue is String) {
+        final date = DateTime.parse(dateValue);
+        return '${date.day}/${date.month}/${date.year}';
+      }
+      return dateValue.toString();
+    } catch (e) {
+      return dateValue.toString();
+    }
   }
 
   void _logout() {

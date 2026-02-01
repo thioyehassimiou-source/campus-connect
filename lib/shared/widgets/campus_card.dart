@@ -178,7 +178,7 @@ class CampusCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(effectiveBorderRadius),
             side: effectiveBorder != null 
-                ? effectiveBorder! 
+                ? effectiveBorder.top 
                 : BorderSide.none,
           ),
           child: cardContent,
@@ -293,7 +293,7 @@ class CampusCard extends StatelessWidget {
     }
   }
 
-  EdgeInsets? _getPadding() {
+  EdgeInsetsGeometry? _getPadding() {
     if (padding != null) return padding;
     
     switch (size) {
@@ -306,7 +306,7 @@ class CampusCard extends StatelessWidget {
     }
   }
 
-  EdgeInsets? _getMargin() {
+  EdgeInsetsGeometry? _getMargin() {
     return margin;
   }
 }

@@ -153,7 +153,6 @@ class CampusBadge extends StatelessWidget {
           ),
           const SizedBox(width: CampusSpacing.xs),
         ],
-        ],
         Flexible(
           child: Text(
             text,

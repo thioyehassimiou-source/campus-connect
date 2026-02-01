@@ -11,4 +11,6 @@ class SupabaseService {
 
   static SupabaseClient get client => Supabase.instance.client;
   static GoTrueClient get auth => client.auth;
+  static SupabaseClient get database => client;
+  static String? get currentUserId => auth.currentUser?.id;
 }

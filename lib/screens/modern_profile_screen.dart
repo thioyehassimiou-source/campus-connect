@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ModernProfileScreen extends StatefulWidget {
   const ModernProfileScreen({super.key});
@@ -9,20 +11,46 @@ class ModernProfileScreen extends StatefulWidget {
 }
 
 class _ModernProfileScreenState extends State<ModernProfileScreen> {
-  // Simuler les données utilisateur
-  final Map<String, dynamic> userData = {
-    'firstName': 'Jean',
-    'lastName': 'Dupont',
-    'email': 'jean.dupont@univ-campus.fr',
-    'role': 'Étudiant',
-    'department': 'Informatique',
-    'level': 'L2',
-    'studentId': '2024001234',
-    'phone': '06 12 34 56 78',
-    'address': '15 Rue de l\'Université, 75000 Paris',
-    'enrollmentDate': '01/09/2023',
-    'lastLogin': DateTime.now().subtract(const Duration(hours: 2)),
-  };
+  Map<String, dynamic>? userData;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final data = await ProfileService.getCurrentUserProfile();
+    
+    if (mounted) {
+      setState(() {
+        if (data != null) {
+          userData = {
+            ...data,
+            'nom': data['nom'] ?? data['full_name'] ?? 'Utilisateur',
+            'email': data['email'] ?? 'utilisateur@campus.fr',
+            'telephone': data['telephone'] ?? data['phone'] ?? 'Non renseigné',
+            'role': data['role'] ?? 'Étudiant',
+            'niveau': data['niveau'] ?? data['level'] ?? 'Non renseigné',
+            'filiere_id': data['filiere_id'] ?? data['program'] ?? 'Non renseignée',
+            'faculty_name': data['faculties'] != null ? (data['faculties']['nom'] ?? data['faculties']['name']) : 'Non renseignée',
+            'department_name': data['departments'] != null ? (data['departments']['nom'] ?? data['departments']['name']) : null,
+            'service_name': data['services'] != null ? (data['services']['nom'] ?? data['services']['name']) : null,
+          };
+        } else {
+          _error = "Impossible de charger le profil. Vérifiez votre connexion.";
+        }
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,31 +80,47 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // En-tête profil
-            _buildProfileHeader(),
-            
-            const SizedBox(height: 32),
-            
-            // Informations personnelles
-            _buildPersonalInfo(),
-            
-            const SizedBox(height: 32),
-            
-            // Informations académiques
-            _buildAcademicInfo(),
-            
-            const SizedBox(height: 32),
-            
-            // Actions
-            _buildActions(),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchProfile,
+                        child: const Text("Réessayer"),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // En-tête profil
+                      _buildProfileHeader(),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Informations personnelles
+                      _buildPersonalInfo(),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Informations académiques
+                      _buildAcademicInfo(),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Actions
+                      _buildActions(),
+                    ],
+                  ),
+                ),
     );
   }
 
@@ -120,7 +164,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${userData['firstName']} ${userData['lastName']}',
+                      userData?['nom'] ?? 'Utilisateur',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -133,21 +177,21 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getRoleColor(userData['role']).withOpacity(0.1),
+                            color: _getRoleColor(userData?['role'] ?? '').withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            userData['role'],
+                            userData?['role'] ?? 'Étudiant',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: _getRoleColor(userData['role']),
+                              color: _getRoleColor(userData?['role'] ?? ''),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${userData['department']} • ${userData['level']}',
+                          '${userData?['niveau'] ?? 'N/A'}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF64748B),
@@ -174,7 +218,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Dernière connexion : ${_formatLastLogin(userData['lastLogin'])}',
+                'ID : ${userData?['id']?.substring(0, 8) ?? '...'}',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF94A3B8),
@@ -220,19 +264,13 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
               _buildInfoRow(
                 Icons.email_outlined,
                 'Email',
-                userData['email'],
+                userData?['email'] ?? 'Non renseigné',
               ),
               const SizedBox(height: 16),
               _buildInfoRow(
                 Icons.phone_outlined,
                 'Téléphone',
-                userData['phone'],
-              ),
-              const SizedBox(height: 16),
-              _buildInfoRow(
-                Icons.location_on_outlined,
-                'Adresse',
-                userData['address'],
+                userData?['telephone'] ?? 'Non renseigné',
               ),
             ],
           ),
@@ -272,26 +310,50 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
             children: [
               _buildInfoRow(
                 Icons.badge_outlined,
-                'Numéro étudiant',
-                userData['studentId'],
+                'ID',
+                userData?['id']?.substring(0, 8) ?? 'Non renseigné',
               ),
               const SizedBox(height: 16),
               _buildInfoRow(
-                Icons.school_outlined,
-                'Filière',
-                userData['department'],
+                Icons.location_city_outlined,
+                'Faculté',
+                userData?['faculty_name'] ?? 'Non renseignée',
               ),
+              if (userData?['role'] != 'Administratif' && userData?['department_name'] != null) ...[
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  Icons.account_tree_outlined,
+                  'Département',
+                  userData?['department_name'],
+                ),
+              ],
+              if (userData?['role'] == 'Administratif' && userData?['service_name'] != null) ...[
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  Icons.business_center_outlined,
+                  'Service',
+                  userData?['service_name'],
+                ),
+              ],
+              if (userData?['role'] == 'Étudiant') ...[
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  Icons.school_outlined,
+                  'Filière',
+                  userData?['filiere_id'] ?? 'Non renseignée',
+                ),
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  Icons.trending_up_outlined,
+                  'Niveau',
+                  userData?['niveau'] ?? 'Non renseigné',
+                ),
+              ],
               const SizedBox(height: 16),
               _buildInfoRow(
-                Icons.trending_up_outlined,
-                'Niveau',
-                userData['level'],
-              ),
-              const SizedBox(height: 16),
-              _buildInfoRow(
-                Icons.calendar_today_outlined,
-                'Date d\'inscription',
-                userData['enrollmentDate'],
+                Icons.person_outline_sharp,
+                'Rôle',
+                userData?['role'] ?? 'Non renseigné',
               ),
             ],
           ),

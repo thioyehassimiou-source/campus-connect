@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
 
 class ModernRegisterScreen extends StatefulWidget {
@@ -16,9 +17,23 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   final _passwordController = TextEditingController();
   
   String _selectedRole = 'Étudiant';
+  String _selectedLevel = 'Licence 1';
+  final List<String> _levelOptions = ['Licence 1', 'Licence 2', 'Licence 3'];
+  int? _selectedFacultyId;
+  int? _selectedDepartmentId;
+  int? _selectedServiceId;
+  List<Map<String, dynamic>> _faculties = [];
+  List<Map<String, dynamic>> _departments = [];
+  List<Map<String, dynamic>> _services = [];
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFaculties();
+  }
 
   @override
   void dispose() {
@@ -29,6 +44,60 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
     super.dispose();
   }
 
+  Future<void> _loadFaculties() async {
+    try {
+      final response = await Supabase.instance.client.from('faculties').select();
+      setState(() {
+        _faculties = List<Map<String, dynamic>>.from(response);
+      });
+    } catch (e) {
+      print('Erreur chargement facultés: $e');
+    }
+  }
+
+  Future<void> _loadDepartments(int facultyId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('departments')
+          .select()
+          .eq('faculty_id', facultyId);
+      setState(() {
+        _departments = List<Map<String, dynamic>>.from(response);
+        _selectedDepartmentId = null;
+      });
+    } catch (e) {
+      print('Erreur chargement départements: $e');
+    }
+  }
+
+  Future<void> _loadServices(int facultyId) async {
+    try {
+      // D'abord essayer avec faculty_id
+      try {
+        final response = await Supabase.instance.client
+            .from('services')
+            .select()
+            .eq('faculty_id', facultyId);
+        setState(() {
+          _services = List<Map<String, dynamic>>.from(response);
+          _selectedServiceId = null;
+        });
+        return;
+      } catch (e) {
+        // Si faculty_id n'existe pas, charger tous les services
+        final response = await Supabase.instance.client
+            .from('services')
+            .select();
+        setState(() {
+          _services = List<Map<String, dynamic>>.from(response);
+          _selectedServiceId = null;
+        });
+      }
+    } catch (e) {
+      print('Erreur chargement services: $e');
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -37,39 +106,66 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       _errorMessage = null;
     });
 
-    // Simulation d'une inscription
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final response = await Supabase.instance.client.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        emailRedirectTo: null,
+        data: {
+          'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+          'role': _selectedRole,
+          'telephone': '',
+          'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
+          'filiere_id': 'Non renseignée',
+        },
+      );
 
-    // Validation simple
-    if (_firstNameController.text.isEmpty ||
-        _lastNameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+      if (response.user != null) {
+        try {
+          // Créer le profil (possible même sans session car RLS est désactivé)
+          await Supabase.instance.client.from('profiles').insert({
+            'id': response.user!.id,
+            'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+            'email': _emailController.text.trim(),
+            'role': _selectedRole,
+            'faculty_id': _selectedFacultyId,
+            'department_id': _selectedRole != 'Administratif' ? _selectedDepartmentId : null,
+            'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
+            'telephone': '',
+            'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
+            'filiere_id': 'Non renseignée',
+            'created_at': DateTime.now().toIso8601String(),
+          });
+          
+          if (mounted) {
+            if (_selectedRole == 'Administratif') {
+              Navigator.pushReplacementNamed(context, '/admin-dashboard');
+            } else if (_selectedRole == 'Enseignant') {
+              Navigator.pushReplacementNamed(context, '/teacher-dashboard');
+            } else {
+              Navigator.pushReplacementNamed(context, '/student-dashboard');
+            }
+          }
+        } catch (e) {
+          print('CRITICAL: Erreur lors de l\'insertion dans profiles: $e');
+          if (e is PostgrestException) {
+            print('Postgrest Details: ${e.message}, ${e.details}, ${e.hint}');
+          }
+          setState(() {
+            _errorMessage = 'Erreur lors de la création du profil (Base de données). Vérifiez vos droits d\'accès.';
+            _isLoading = false;
+          });
+          // On ne redirige pas si l'insertion a échoué car le profil est vide
+        }
+      }
+    } on AuthException catch (e) {
       setState(() {
-        _errorMessage = 'Veuillez remplir tous les champs';
+        _errorMessage = e.message ?? 'Erreur d\'inscription';
         _isLoading = false;
       });
-      return;
-    }
-
-    // Simulation d'une inscription réussie
-    if (_emailController.text.contains('@') && _passwordController.text.length >= 6) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Inscription réussie! Vous pouvez maintenant vous connecter.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ModernLoginScreen()),
-        );
-      }
-    } else {
+    } catch (e) {
       setState(() {
-        _errorMessage = 'Email invalide ou mot de passe trop court (min 6 caractères)';
+        _errorMessage = 'Erreur d\'inscription';
         _isLoading = false;
       });
     }
@@ -270,10 +366,6 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                           color: _selectedRole == 'Enseignant'
                                               ? const Color(0xFF2563EB)
                                               : Colors.transparent,
-                                          borderRadius: const BorderRadius.only(
-                                            topRight: Radius.circular(12),
-                                            bottomRight: Radius.circular(12),
-                                          ),
                                         ),
                                         child: Text(
                                           'Enseignant',
@@ -289,11 +381,102 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                       ),
                                     ),
                                   ),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedRole = 'Administratif';
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        decoration: BoxDecoration(
+                                          color: _selectedRole == 'Administratif'
+                                              ? const Color(0xFF2563EB)
+                                              : Colors.transparent,
+                                          borderRadius: const BorderRadius.only(
+                                            topRight: Radius.circular(12),
+                                            bottomRight: Radius.circular(12),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Administratif',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: _selectedRole == 'Administratif'
+                                                ? Colors.white
+                                                : const Color(0xFF6B7280),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ],
                         ),
+
+                        const SizedBox(height: 20),
+
+                        // Sélecteur de faculté
+                        if (_faculties.isNotEmpty) _buildDropdown(
+                          'Faculté',
+                          _selectedFacultyId,
+                          _faculties.map((f) => DropdownMenuItem<int>(
+                            value: f['id'] is int ? f['id'] as int : int.tryParse(f['id']?.toString() ?? '') ?? 0,
+                            child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
+                          )).toList(),
+                          (value) {
+                            setState(() {
+                              _selectedFacultyId = value;
+                              if (value != null) {
+                                _loadDepartments(value);
+                                _loadServices(value);
+                              }
+                            });
+                          },
+                        ),
+
+                        if (_selectedRole == 'Étudiant') ...[
+                          const SizedBox(height: 20),
+                          _buildDropdown(
+                            'Niveau (Licence)',
+                            _selectedLevel,
+                            _levelOptions.map((l) => DropdownMenuItem<String>(
+                              value: l,
+                              child: Text(l),
+                            )).toList(),
+                            (value) => setState(() => _selectedLevel = value!),
+                          ),
+                        ],
+
+                        if (_selectedFacultyId != null) const SizedBox(height: 20),
+
+                        // Sélecteur département/service
+                        if (_selectedRole != 'Administratif' && _departments.isNotEmpty)
+                          _buildDropdown(
+                            'Département',
+                            _selectedDepartmentId,
+                            _departments.map((d) => DropdownMenuItem<int>(
+                              value: d['id'] is int ? d['id'] as int : int.tryParse(d['id']?.toString() ?? '') ?? 0,
+                              child: Text(d['nom']?.toString() ?? d['name']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) => setState(() => _selectedDepartmentId = value),
+                          ),
+
+                        if (_selectedRole == 'Administratif' && _services.isNotEmpty)
+                          _buildDropdown(
+                            'Service',
+                            _selectedServiceId,
+                            _services.map((s) => DropdownMenuItem<int>(
+                              value: s['id'] is int ? s['id'] as int : int.tryParse(s['id']?.toString() ?? '') ?? 0,
+                              child: Text(s['nom']?.toString() ?? s['name']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) => setState(() => _selectedServiceId = value),
+                          ),
 
                         const SizedBox(height: 20),
 
@@ -544,6 +727,68 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDropdown<T>(
+    String label,
+    T? value,
+    List<DropdownMenuItem<T>> items,
+    void Function(T?) onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showEmailConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmation requise'),
+        content: const Text(
+          'Un email de confirmation vous a été envoyé. '
+          'Veuillez confirmer votre compte pour pouvoir vous connecter.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Fermer le dialogue
+              Navigator.of(context).pop(); // Retourner au login
+            },
+            child: const Text('Compris'),
+          ),
+        ],
+      ),
     );
   }
 }

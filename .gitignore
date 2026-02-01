@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.vercel
+.env*.local
+# Debug / local analysis
+*.txt
+dart_analyze_output.txt
+
+# Test screens (local only)
+lib/screens/test_*.dart
+test_profile.dart
+
+# Vercel / Env
+.env*
+.vercel
+

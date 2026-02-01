@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/screens/test_supabase_screen.dart';
 import 'package:campusconnect/screens/splash_screen.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
 import 'package:campusconnect/screens/modern_student_dashboard.dart';
@@ -20,9 +22,20 @@ import 'package:campusconnect/screens/modern_course_management_screen.dart';
 import 'package:campusconnect/screens/modern_resources_screen.dart';
 import 'package:campusconnect/screens/modern_academic_calendar_screen.dart';
 import 'package:campusconnect/screens/modern_admin_dashboard.dart';
+import 'package:campusconnect/screens/create_profile_screen.dart';
+import 'package:campusconnect/screens/test_profile_screen.dart';
 import 'package:campusconnect/screens/modern_teacher_dashboard.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialisation Supabase
+  await Supabase.initialize(
+    url: 'https://oecmtlkkklpbzhlajysz.supabase.co',
+    anonKey: 'sb_publishable_vlC5kvt8eBqQLuCDhM_1FQ_c9BvqTX6',
+    debug: true,
+  );
+  
   runApp(const CampusConnectApp());
 }
 
@@ -41,6 +54,7 @@ class CampusConnectApp extends StatelessWidget {
       ),
       initialRoute: '/splash',
       routes: {
+        '/test': (context) => const TestSupabaseScreen(),
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const ModernLoginScreen(),
         '/student-dashboard': (context) => const ModernStudentDashboard(),
@@ -63,6 +77,8 @@ class CampusConnectApp extends StatelessWidget {
         '/academic-calendar': (context) => const ModernAcademicCalendarScreen(),
         '/admin-dashboard': (context) => const ModernAdminDashboard(),
         '/teacher-dashboard': (context) => const ModernTeacherDashboard(),
+        '/test-profile': (context) => const TestProfileScreen(),
+        '/create-profile': (context) => const CreateProfileScreen(),
       },
     );
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ModernTeacherProfileScreen extends StatefulWidget {
   const ModernTeacherProfileScreen({super.key});
@@ -15,6 +17,8 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
   final TextEditingController _officeController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _specializationController = TextEditingController();
+  
+  Map<String, dynamic>? _userData;
   
   bool _isEditing = false;
   bool _isLoading = false;
@@ -37,17 +41,31 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
     super.dispose();
   }
 
-  void _loadTeacherData() {
-    // Simulation de chargement des données enseignant
+  Future<void> _loadTeacherData() async {
     setState(() {
-      _firstNameController.text = 'Jean';
-      _lastNameController.text = 'Bernard';
-      _emailController.text = 'jean.bernard@univ-campus.fr';
-      _phoneController.text = '+33 1 23 45 67 89';
-      _officeController.text = 'Bloc A - Bureau 301';
-      _bioController.text = 'Enseignant-chercheur en mathématiques appliquées avec 15 ans d\'expérience. Spécialisé en analyse numérique et intelligence artificielle.';
-      _specializationController.text = 'Mathématiques Appliquées, Analyse Numérique, IA';
+      _isLoading = true;
     });
+
+    final data = await ProfileService.getCurrentUserProfile();
+
+    if (mounted) {
+      setState(() {
+        if (data != null) {
+          _userData = data;
+          final fullName = data['nom'] ?? data['full_name'] ?? 'Enseignant';
+          final nameParts = fullName.split(' ');
+          _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : 'Prénom';
+          _lastNameController.text = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Nom';
+          
+          _emailController.text = data['email'] ?? 'email@campus.fr';
+          _phoneController.text = data['telephone'] ?? data['phone'] ?? 'Non renseigné';
+          _officeController.text = data['office'] ?? 'Non renseigné';
+          _bioController.text = data['bio'] ?? 'Enseignant sur CampusConnect';
+          _specializationController.text = data['specialization'] ?? 'Non renseignée';
+        }
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -237,6 +255,8 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               [
                 _buildEditableInfoRow('Email', _emailController, Icons.email),
                 _buildEditableInfoRow('Téléphone', _phoneController, Icons.phone),
+                _buildInfoRowStatic('Faculté', _userData?['faculties']?['nom'] ?? _userData?['faculties']?['name'] ?? 'Non renseignée', Icons.location_city),
+                _buildInfoRowStatic('Département', _userData?['departments']?['nom'] ?? _userData?['departments']?['name'] ?? 'Non renseigné', Icons.account_tree),
                 _buildEditableInfoRow('Bureau', _officeController, Icons.location_on),
                 _buildEditableInfoRow('Spécialisation', _specializationController, Icons.psychology),
               ],
@@ -902,6 +922,46 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           ],
         );
       },
+    );
+  }
+
+  Widget _buildInfoRowStatic(String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: const Color(0xFF64748B)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

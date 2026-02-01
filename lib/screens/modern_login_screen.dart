@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:campusconnect/screens/modern_student_dashboard.dart';
 import 'package:campusconnect/screens/modern_teacher_dashboard.dart';
 import 'package:campusconnect/screens/modern_admin_dashboard.dart';
 import 'package:campusconnect/screens/modern_register_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ModernLoginScreen extends StatefulWidget {
   const ModernLoginScreen({super.key});
@@ -31,34 +33,46 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
       _errorMessage = null;
     });
 
-    // Simulation d'une connexion
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+        setState(() {
+          _errorMessage = 'Veuillez remplir tous les champs';
+          _isLoading = false;
+        });
+        return;
+      }
 
-    // Validation simple
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (response.user != null && mounted) {
+        // S'assurer que le profil existe (en cas d'échec d'inscription dû au RLS)
+        await ProfileService.ensureProfileExists();
+        
+        // Récupérer le rôle pour rediriger vers le bon dashboard
+        final userData = await ProfileService.getCurrentUserProfile();
+        final role = userData?['role'] ?? 'Étudiant';
+        
+        if (mounted) {
+          if (role == 'Administratif' || role == 'Administrateur') {
+            Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          } else if (role == 'Enseignant') {
+            Navigator.pushReplacementNamed(context, '/teacher-dashboard');
+          } else {
+            Navigator.pushReplacementNamed(context, '/student-dashboard');
+          }
+        }
+      }
+    } on AuthException catch (e) {
       setState(() {
-        _errorMessage = 'Veuillez remplir tous les champs';
+        _errorMessage = e.message ?? 'Erreur de connexion';
         _isLoading = false;
       });
-      return;
-    }
-
-    // Simulation d'une connexion réussie avec détection du rôle
-    if (_emailController.text.contains('@') && _passwordController.text.length >= 6) {
-      String email = _emailController.text.toLowerCase();
-      
-      // Détection du rôle basée sur l'email
-      if (email.contains('admin@') || email.contains('admin.')) {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else if (email.contains('prof@') || email.contains('teacher@') || email.contains('enseignant@')) {
-        Navigator.pushReplacementNamed(context, '/teacher-dashboard');
-      } else {
-        // Par défaut, rediriger vers le dashboard étudiant
-        Navigator.pushReplacementNamed(context, '/student-dashboard');
-      }
-    } else {
+    } catch (e) {
       setState(() {
-        _errorMessage = 'Email ou mot de passe incorrect';
+        _errorMessage = 'Erreur de connexion';
         _isLoading = false;
       });
     }
