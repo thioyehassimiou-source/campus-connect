@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
+import 'package:campusconnect/core/services/supabase_auth_service.dart';
 
 class ModernRegisterScreen extends StatefulWidget {
   const ModernRegisterScreen({super.key});
@@ -19,12 +20,14 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   String _selectedRole = 'Étudiant';
   String _selectedLevel = 'Licence 1';
   final List<String> _levelOptions = ['Licence 1', 'Licence 2', 'Licence 3'];
-  int? _selectedFacultyId;
-  int? _selectedDepartmentId;
-  int? _selectedServiceId;
+  dynamic _selectedFacultyId;
+  dynamic _selectedDepartmentId;
+  dynamic _selectedServiceId;
   List<Map<String, dynamic>> _faculties = [];
   List<Map<String, dynamic>> _departments = [];
   List<Map<String, dynamic>> _services = [];
+  bool _isInitialLoading = true;
+  String? _initialLoadError;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
@@ -45,13 +48,28 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   }
 
   Future<void> _loadFaculties() async {
+    if (!mounted) return;
+    setState(() {
+      _isInitialLoading = true;
+      _initialLoadError = null;
+    });
+
     try {
       final response = await Supabase.instance.client.from('faculties').select();
-      setState(() {
-        _faculties = List<Map<String, dynamic>>.from(response);
-      });
+      if (mounted) {
+        setState(() {
+          _faculties = List<Map<String, dynamic>>.from(response);
+          _isInitialLoading = false;
+        });
+      }
     } catch (e) {
       print('Erreur chargement facultés: $e');
+      if (mounted) {
+        setState(() {
+          _initialLoadError = 'Impossible de charger les données universitaires. Vérifiez votre connexion.';
+          _isInitialLoading = false;
+        });
+      }
     }
   }
 
@@ -101,27 +119,77 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // ✅ Validation spécifique par rôle
+    if (_selectedRole == 'Administratif' && _selectedServiceId == null) {
+      setState(() {
+        _errorMessage = 'Veuillez sélectionner un service';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (_selectedFacultyId == null) {
+      setState(() {
+        _errorMessage = 'Veuillez sélectionner une faculté';
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
+      // ✅ Préparer les données à envoyer
+      final userData = {
+        'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+        'role': _selectedRole,
+        'faculty_id': _selectedFacultyId,
+        'department_id': _selectedRole == 'Étudiant' ? _selectedDepartmentId : null,
+        'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
+        'telephone': '',
+        'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
+        'filiere_id': null,
+      };
+
+      print('[Registration] Attempting registration with data:');
+      print('[Registration] Email: ${_emailController.text.trim()}');
+      print('[Registration] Role: ${userData['role']}');
+      print('[Registration] Faculty ID: ${userData['faculty_id']}');
+      print('[Registration] Department ID: ${userData['department_id']}');
+      print('[Registration] Service ID: ${userData['service_id']}');
+      print('[Registration] User metadata: $userData');
+
+      /*
+      // ANCIEN CODE: Causait une erreur "Database error" à cause d'un conflit de Trigger
       final response = await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         emailRedirectTo: null,
-        data: {
-          'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
-          'role': _selectedRole,
-          'faculty_id': _selectedFacultyId,
-          'department_id': _selectedRole != 'Administratif' ? _selectedDepartmentId : null,
-          'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
-          'telephone': '',
-          'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
-          'filiere_id': 'Non renseignée',
-        },
+        data: userData,
       );
+      */
+
+      // NOUVEAU CODE: Utilise le service centralisé avec "upsert" pour éviter l'erreur
+      print('[Registration] Calling SupabaseAuthService...');
+      final response = await SupabaseAuthService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        role: _selectedRole,
+        facultyId: _selectedFacultyId,
+        departementId: _selectedRole == 'Étudiant' ? _selectedDepartmentId : null,
+        serviceId: _selectedRole == 'Administratif' ? _selectedServiceId : null,
+        niveau: _selectedRole == 'Étudiant' ? _selectedLevel : null,
+        filiereId: null, // Pas géré dans ce formulaire pour l'instant
+        telephone: '',
+      );
+
+      print('[Registration] Response user ID: ${response.user?.id}');
+      print('[Registration] Response session: ${response.session != null}');
 
       if (response.user != null && mounted) {
         if (_selectedRole == 'Administratif') {
@@ -139,9 +207,11 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Erreur d\'inscription';
+        // Le service renvoie déjà un message d'erreur convivial (String)
+        _errorMessage = e.toString();
         _isLoading = false;
       });
+      print('Erreur d\'inscription UI: $e');
     }
   }
 
@@ -150,11 +220,18 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 80, // Subtracting vertical padding (40 * 2)
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
               children: [
                 // Header
                 Column(
@@ -166,14 +243,14 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                         color: const Color(0xFF2563EB),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_add_rounded,
                         color: Colors.white,
                         size: 40,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Créer un compte',
                       style: TextStyle(
                         fontSize: 28,
@@ -182,7 +259,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Rejoignez la communauté universitaire',
                       style: TextStyle(
                         fontSize: 16,
@@ -275,7 +352,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Rôle',
                               style: TextStyle(
                                 fontSize: 14,
@@ -395,24 +472,80 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
 
                         const SizedBox(height: 20),
 
-                        // Sélecteur de faculté
-                        if (_faculties.isNotEmpty) _buildDropdown(
-                          'Faculté',
-                          _selectedFacultyId,
-                          _faculties.map((f) => DropdownMenuItem<int>(
-                            value: f['id'] is int ? f['id'] as int : int.tryParse(f['id']?.toString() ?? '') ?? 0,
-                            child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
-                          )).toList(),
-                          (value) {
-                            setState(() {
-                              _selectedFacultyId = value;
-                              if (value != null) {
-                                _loadDepartments(value);
-                                _loadServices(value);
-                              }
-                            });
-                          },
-                        ),
+                        // États de chargement des données (Facultés, etc.)
+                        if (_isInitialLoading)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Column(
+                                children: [
+                                  const CircularProgressIndicator(strokeWidth: 3),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Chargement des facultés...',
+                                    style: TextStyle(
+                                      color: Color(0xFF64748B),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else if (_initialLoadError != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFEE2E2)),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _initialLoadError!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Color(0xFF991B1B), fontSize: 13),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton.icon(
+                                  onPressed: _loadFaculties,
+                                  icon: const Icon(Icons.refresh, size: 18),
+                                  label: const Text('Réessayer'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else ...[
+                          // Sélecteur de faculté
+                          _buildDropdown(
+                            'Faculté',
+                            _selectedFacultyId,
+                            _faculties.map((f) => DropdownMenuItem<dynamic>(
+                              value: f['id'],
+                              child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) {
+                              setState(() {
+                                _selectedFacultyId = value;
+                                if (value != null) {
+                                  int? fIdInt;
+                                  try {
+                                      fIdInt = value is int ? value : int.tryParse(value.toString());
+                                  } catch (_) {}
+                                  
+                                  if (fIdInt != null) {
+                                      _loadDepartments(fIdInt);
+                                      _loadServices(fIdInt);
+                                  }
+                                }
+                              });
+                            },
+                          ),
+                        ],
 
                         if (_selectedRole == 'Étudiant') ...[
                           const SizedBox(height: 20),
@@ -423,30 +556,32 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                               value: l,
                               child: Text(l),
                             )).toList(),
-                            (value) => setState(() => _selectedLevel = value!),
+                            (value) => setState(() => _selectedLevel = value as String),
                           ),
                         ],
 
                         if (_selectedFacultyId != null) const SizedBox(height: 20),
 
-                        // Sélecteur département/service
-                        if (_selectedRole != 'Administratif' && _departments.isNotEmpty)
+                        // Sélecteur département: uniquement pour ÉTUDIANT
+                        if (_selectedRole == 'Étudiant' && _departments.isNotEmpty)
                           _buildDropdown(
                             'Département',
                             _selectedDepartmentId,
-                            _departments.map((d) => DropdownMenuItem<int>(
-                              value: d['id'] is int ? d['id'] as int : int.tryParse(d['id']?.toString() ?? '') ?? 0,
+                            _departments.map((d) => DropdownMenuItem<dynamic>(
+                              value: d['id'],
                               child: Text(d['nom']?.toString() ?? d['name']?.toString() ?? 'Inconnu'),
                             )).toList(),
                             (value) => setState(() => _selectedDepartmentId = value),
                           ),
 
+
+                        // Service: OBLIGATOIRE pour Administratif
                         if (_selectedRole == 'Administratif' && _services.isNotEmpty)
                           _buildDropdown(
-                            'Service',
+                            'Service *', // ✅ Astérisque pour obligatoire
                             _selectedServiceId,
-                            _services.map((s) => DropdownMenuItem<int>(
-                              value: s['id'] is int ? s['id'] as int : int.tryParse(s['id']?.toString() ?? '') ?? 0,
+                            _services.map((s) => DropdownMenuItem<dynamic>(
+                              value: s['id'], // Peut être UUID string ou int
                               child: Text(s['nom']?.toString() ?? s['name']?.toString() ?? 'Inconnu'),
                             )).toList(),
                             (value) => setState(() => _selectedServiceId = value),
@@ -488,7 +623,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.error_outline,
                                   color: Color(0xFFDC2626),
                                   size: 16,
@@ -497,11 +632,13 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFFDC2626),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
+                                    softWrap: true,
+                                    overflow: TextOverflow.visible,
                                   ),
                                 ),
                               ],
@@ -536,7 +673,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                       ),
                                     ),
                                   )
-                                : const Text(
+                                : Text(
                                     'S\'inscrire',
                                     style: TextStyle(
                                       fontSize: 16,
@@ -555,7 +692,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                               Navigator.pop(context);
                             },
                             child: RichText(
-                              text: const TextSpan(
+                              text: TextSpan(
                                 text: 'Déjà un compte ? ',
                                 style: TextStyle(
                                   color: Color(0xFF6B7280),
@@ -583,7 +720,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                 const SizedBox(height: 32),
 
                 // Footer
-                const Text(
+                Text(
                   '© 2024 CampusConnect - Application universitaire officielle',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -593,11 +730,13 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                   ),
                 ),
               ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildTextField({
@@ -614,7 +753,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
@@ -626,13 +765,13 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           obscureText: isPassword && _obscurePassword,
           keyboardType: keyboardType,
           validator: validator,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               color: Color(0xFF9CA3AF),
               fontSize: 15,
             ),
@@ -710,12 +849,31 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
     List<DropdownMenuItem<T>> items,
     void Function(T?) onChanged,
   ) {
+    // ✅ Filtrer les items invalides pour éviter les doublons
+    final validItems = items.where((item) {
+      if (item.value is int) {
+        return (item.value as int) > 0; // Exclure 0 et valeurs négatives
+      }
+      return item.value != null;
+    }).toList();
+
+    // ✅ Vérifier si la valeur actuelle est valide
+    T? safeValue = value;
+    if (value is int && (value as int) <= 0) {
+      safeValue = null;
+    }
+    
+    // Si la valeur n'est pas dans les items valides, mettre à null
+    if (safeValue != null && !validItems.any((item) => item.value == safeValue)) {
+      safeValue = null;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF374151),
@@ -723,8 +881,9 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          value: value,
-          items: items,
+          isExpanded: true,
+          value: safeValue,
+          items: validItems,
           onChanged: onChanged,
           decoration: InputDecoration(
             filled: true,
@@ -738,6 +897,10 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
               borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
           ),
+          hint: Text(
+            'Sélectionner...',
+            style: TextStyle(color: Color(0xFF9CA3AF)),
+          ),
         ),
       ],
     );
@@ -748,8 +911,8 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmation requise'),
-        content: const Text(
+        title: Text('Confirmation requise'),
+        content: Text(
           'Un email de confirmation vous a été envoyé. '
           'Veuillez confirmer votre compte pour pouvoir vous connecter.',
         ),
@@ -759,7 +922,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
               Navigator.of(context).pop(); // Fermer le dialogue
               Navigator.of(context).pop(); // Retourner au login
             },
-            child: const Text('Compris'),
+            child: Text('Compris'),
           ),
         ],
       ),

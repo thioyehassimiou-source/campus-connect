@@ -55,25 +55,25 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Profil',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF64748B)),
+            icon: Icon(Icons.settings_outlined, color: Theme.of(context).iconTheme.color),
             onPressed: () {
               _showSettingsDialog();
             },
@@ -87,11 +87,11 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                      Text(_error!, style: TextStyle(color: Colors.red)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchProfile,
-                        child: const Text("Réessayer"),
+                        child: Text("Réessayer"),
                       ),
                     ],
                   ),
@@ -128,7 +128,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -150,7 +150,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                   color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(40),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person,
                   size: 40,
                   color: Colors.white,
@@ -165,10 +165,10 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                   children: [
                     Text(
                       userData?['nom'] ?? 'Utilisateur',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -192,9 +192,9 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                         const SizedBox(width: 8),
                         Text(
                           '${userData?['niveau'] ?? 'N/A'}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF64748B),
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -211,17 +211,17 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
           // Dernière connexion
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.access_time,
                 size: 16,
-                color: Color(0xFF94A3B8),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               const SizedBox(width: 8),
               Text(
                 'ID : ${userData?['id']?.substring(0, 8) ?? '...'}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -236,12 +236,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Informations personnelles',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),
@@ -249,7 +249,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -283,12 +283,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Informations académiques',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),
@@ -296,7 +296,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -369,12 +369,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            color: const Color(0xFF64748B),
+            color: Theme.of(context).iconTheme.color,
             size: 20,
           ),
         ),
@@ -385,18 +385,18 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -411,12 +411,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Actions',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),
@@ -429,13 +429,13 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
             onPressed: () {
               _showEditProfileDialog();
             },
-            icon: const Icon(Icons.edit_outlined, size: 20),
-            label: const Text(
-              'Modifier le profil',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+            icon: Icon(Icons.edit_outlined, size: 20),
+            label: Text(
+                'Modifier le profil',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
@@ -458,8 +458,8 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
             onPressed: () {
               _showLogoutDialog();
             },
-            icon: const Icon(Icons.logout_outlined, size: 20),
-            label: const Text(
+            icon: Icon(Icons.logout_outlined, size: 20),
+            label: Text(
               'Se déconnecter',
               style: TextStyle(
                 fontSize: 16,
@@ -513,16 +513,16 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Modifier le profil'),
-          content: const Text('Fonctionnalité de modification du profil en cours de développement.'),
+          title: Text('Modifier le profil'),
+          content: Text('Fonctionnalité de modification du profil en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Enregistrer'),
+              child: Text('Enregistrer'),
             ),
           ],
         );
@@ -535,12 +535,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Se déconnecter'),
-          content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+          title: Text('Se déconnecter'),
+          content: Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -555,7 +555,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Se déconnecter'),
+              child: Text('Se déconnecter'),
             ),
           ],
         );
@@ -568,12 +568,12 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Paramètres'),
-          content: const Text('Fonctionnalité des paramètres en cours de développement.'),
+          title: Text('Paramètres'),
+          content: Text('Fonctionnalité des paramètres en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

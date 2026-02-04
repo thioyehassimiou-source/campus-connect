@@ -3,6 +3,9 @@ import 'package:campusconnect/screens/modern_enhanced_announcements_screen.dart'
 import 'package:campusconnect/screens/modern_enhanced_schedule_screen.dart';
 import 'package:campusconnect/screens/modern_student_profile_screen.dart';
 import 'package:campusconnect/screens/modern_services_screen.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
+import 'package:campusconnect/core/services/theme_service.dart';
+import 'package:campusconnect/widgets/theme_toggle_button.dart';
 
 class ModernStudentDashboard extends StatefulWidget {
   const ModernStudentDashboard({super.key});
@@ -28,7 +31,7 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor, // ✅ Correction: Couleur dynamique
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -41,19 +44,19 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.transparent, // Garder transparent pour voir le container
           elevation: 0,
-          selectedItemColor: const Color(0xFF2563EB),
-          unselectedItemColor: const Color(0xFF64748B),
-          selectedLabelStyle: const TextStyle(
+          selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor, // ✅ Correction
+          unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor, // ✅ Correction
+          selectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
-          unselectedLabelStyle: const TextStyle(
+          unselectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
@@ -86,8 +89,37 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
   }
 }
 
-class DashboardHome extends StatelessWidget {
+class DashboardHome extends StatefulWidget {
   const DashboardHome({super.key});
+
+  @override
+  State<DashboardHome> createState() => _DashboardHomeState();
+}
+
+class _DashboardHomeState extends State<DashboardHome> {
+  String _fullName = 'Étudiant';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await ProfileService.getCurrentUserProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          _fullName = profile['nom'] ?? 'Étudiant';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +128,7 @@ class DashboardHome extends StatelessWidget {
     final dayName = _getDayName(now.weekday);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -106,10 +138,10 @@ class DashboardHome extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
+              color: Color(0xFF2563EB),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school_rounded,
               color: Colors.white,
               size: 20,
@@ -121,17 +153,17 @@ class DashboardHome extends StatelessWidget {
           children: [
             Text(
               greeting,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const Text(
-              'Étudiant',
+            Text(
+              _fullName,
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -142,10 +174,11 @@ class DashboardHome extends StatelessWidget {
             margin: const EdgeInsets.only(right: 16),
             child: Stack(
               children: [
+                const ThemeToggleButton(),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.notifications_outlined,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).iconTheme.color,
                   ),
                   onPressed: () {},
                 ),
@@ -194,7 +227,7 @@ class DashboardHome extends StatelessWidget {
                     'Notes',
                     '12.5/20',
                     'Moyenne générale',
-                    const Color(0xFF10B981),
+                    Color(0xFF10B981),
                     Icons.trending_up,
                   ),
                 ),
@@ -204,7 +237,7 @@ class DashboardHome extends StatelessWidget {
                     'Présence',
                     '95%',
                     'Ce semestre',
-                    const Color(0xFFF59E0B),
+                    Color(0xFFF59E0B),
                     Icons.check_circle,
                   ),
                 ),
@@ -220,7 +253,7 @@ class DashboardHome extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -239,10 +272,10 @@ class DashboardHome extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withOpacity(0.1),
+                  color: Color(0xFF2563EB).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_today,
                   color: Color(0xFF2563EB),
                   size: 24,
@@ -253,19 +286,19 @@ class DashboardHome extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Emploi du temps du jour',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     Text(
                       dayName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -273,10 +306,10 @@ class DashboardHome extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).iconTheme.color,
                 ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/schedule');
@@ -299,22 +332,22 @@ class DashboardHome extends StatelessWidget {
     Color typeColor;
     switch (type) {
       case 'CM':
-        typeColor = const Color(0xFF2563EB);
+        typeColor = Color(0xFF2563EB);
         break;
       case 'TD':
-        typeColor = const Color(0xFF10B981);
+        typeColor = Color(0xFF10B981);
         break;
       case 'TP':
-        typeColor = const Color(0xFFF59E0B);
+        typeColor = Color(0xFFF59E0B);
         break;
       default:
-        typeColor = const Color(0xFF64748B);
+        typeColor = Color(0xFF64748B);
     }
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -334,18 +367,18 @@ class DashboardHome extends StatelessWidget {
               children: [
                 Text(
                   subject,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '$time • $room',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ],
@@ -375,7 +408,7 @@ class DashboardHome extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -394,10 +427,10 @@ class DashboardHome extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  color: Color(0xFFEF4444).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.campaign_outlined,
                   color: Color(0xFFEF4444),
                   size: 24,
@@ -408,19 +441,19 @@ class DashboardHome extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Dernières annonces',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Informations importantes',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -428,10 +461,10 @@ class DashboardHome extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).iconTheme.color,
                 ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/news');
@@ -444,7 +477,7 @@ class DashboardHome extends StatelessWidget {
             'Inscription aux examens',
             'La période d\'inscription aux examens du semestre est ouverte jusqu\'au 15 mars.',
             'Urgent',
-            const Color(0xFFEF4444),
+            Color(0xFFEF4444),
             'Il y a 2 heures',
           ),
           const SizedBox(height: 12),
@@ -452,7 +485,7 @@ class DashboardHome extends StatelessWidget {
             'Nouveaux services en ligne',
             'Consultez vos notes et emploi du temps directement depuis l\'application.',
             'Information',
-            const Color(0xFF2563EB),
+            Color(0xFF2563EB),
             'Hier',
           ),
         ],
@@ -464,7 +497,7 @@ class DashboardHome extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -488,10 +521,10 @@ class DashboardHome extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
@@ -515,9 +548,9 @@ class DashboardHome extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -525,9 +558,9 @@ class DashboardHome extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   time,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF94A3B8),
+                    color: Theme.of(context).iconTheme.color,
                   ),
                 ),
               ],
@@ -542,12 +575,12 @@ class DashboardHome extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Accès rapide',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),
@@ -558,7 +591,7 @@ class DashboardHome extends StatelessWidget {
                 context,
                 'Emploi du temps',
                 Icons.calendar_today_outlined,
-                const Color(0xFF2563EB),
+                Color(0xFF2563EB),
                 '/schedule',
               ),
             ),
@@ -568,7 +601,7 @@ class DashboardHome extends StatelessWidget {
                 context,
                 'Documents',
                 Icons.folder_outlined,
-                const Color(0xFF10B981),
+                Color(0xFF10B981),
                 '/documents',
               ),
             ),
@@ -582,7 +615,7 @@ class DashboardHome extends StatelessWidget {
                 context,
                 'Notes',
                 Icons.grain_outlined,
-                const Color(0xFFF59E0B),
+                Color(0xFFF59E0B),
                 '/grades',
               ),
             ),
@@ -592,7 +625,7 @@ class DashboardHome extends StatelessWidget {
                 context,
                 'Services',
                 Icons.apps_outlined,
-                const Color(0xFF8B5CF6),
+                Color(0xFF8B5CF6),
                 '/services',
               ),
             ),
@@ -608,7 +641,7 @@ class DashboardHome extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -633,10 +666,10 @@ class DashboardHome extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ],
@@ -649,7 +682,7 @@ class DashboardHome extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -690,18 +723,18 @@ class DashboardHome extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -728,16 +761,16 @@ class ScheduleTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Annonces',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ),
@@ -760,16 +793,16 @@ class NewsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Services',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ),
@@ -792,16 +825,16 @@ class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Profil',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ),

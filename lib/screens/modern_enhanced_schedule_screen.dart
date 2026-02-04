@@ -226,13 +226,13 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Emploi du Temps',
               style: TextStyle(
                 fontSize: 18,
@@ -242,7 +242,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
             ),
             Text(
               '${_courses.length} cours cette semaine',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -253,11 +253,11 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
         actions: [
           if (widget.isTeacher || widget.isAdmin)
             IconButton(
-              icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+              icon: Icon(Icons.add, color: Color(0xFF2563EB)),
               onPressed: _showAddCourseDialog,
             ),
           IconButton(
-            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportSchedule,
           ),
         ],
@@ -286,11 +286,11 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Rechercher un cours...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: Color(0xFF9CA3AF),
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
                       color: Color(0xFF6B7280),
                       size: 20,
@@ -338,13 +338,13 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           child: DropdownButton<String>(
                             value: _selectedView,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Jour', 'Semaine', 'Mois']
                                 .map((view) => DropdownMenuItem(
                                       value: view,
                                       child: Text(
                                         view,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -385,13 +385,13 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           child: DropdownButton<String>(
                             value: 'Tous les cours',
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Tous les cours', 'Cours magistraux', 'TP', 'TD', 'Projets']
                                 .map((type) => DropdownMenuItem(
                                       value: type,
                                       child: Text(
                                         type,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -500,7 +500,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                   if (_selectedDay != null) ...[
                     Text(
                       'Cours du ${_formatDate(_selectedDay!)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -530,8 +530,8 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
               onPressed: _showAddCourseDialog,
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter cours'),
+              icon: Icon(Icons.add),
+              label: Text('Ajouter cours'),
             )
           : null,
     );
@@ -577,7 +577,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           Expanded(
                             child: Text(
                               course['title'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF0F172A),
@@ -612,7 +612,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           const SizedBox(width: 4),
                           Text(
                             course['teacher'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
                               fontWeight: FontWeight.w500,
@@ -627,7 +627,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           const SizedBox(width: 4),
                           Text(
                             course['room'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
                               fontWeight: FontWeight.w500,
@@ -646,7 +646,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           const SizedBox(width: 4),
                           Text(
                             '${course['startTime']} - ${course['endTime']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
                               fontWeight: FontWeight.w500,
@@ -662,7 +662,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                               ),
                               child: Text(
                                 course['module'],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF64748B),
@@ -682,7 +682,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                                 const SizedBox(width: 4),
                                 Text(
                                   '${course['students']} étudiants',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF64748B),
                                     fontWeight: FontWeight.w500,
@@ -697,7 +697,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                         const SizedBox(height: 8),
                         Text(
                           course['description'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
                             fontWeight: FontWeight.w400,
@@ -716,7 +716,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                             const SizedBox(width: 4),
                             Text(
                               'Matériel: ${(course['materials'] as List<String>).join(', ')}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF64748B),
                                 fontWeight: FontWeight.w500,
@@ -766,7 +766,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Gérer',
                         style: TextStyle(
                           fontSize: 12,
@@ -787,7 +787,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Rejoindre',
                         style: TextStyle(
                           fontSize: 12,
@@ -816,14 +816,14 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
               color: const Color(0xFF2563EB).withOpacity(0.1),
               borderRadius: BorderRadius.circular(40),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_available,
               color: Color(0xFF2563EB),
               size: 40,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aucun cours ce jour',
             style: TextStyle(
               fontSize: 18,
@@ -832,7 +832,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Profitez de votre journée libre!',
             style: TextStyle(
               fontSize: 14,
@@ -860,7 +860,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Ajouter un cours'),
+          title: Text('Ajouter un cours'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -904,7 +904,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
@@ -916,7 +916,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                   ),
                 );
               },
-              child: const Text('Ajouter'),
+              child: Text('Ajouter'),
             ),
           ],
         );
@@ -942,12 +942,12 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 if (course['module'] != null) Text('Module: ${course['module']}'),
                 if (course['description'] != null) ...[
                   const SizedBox(height: 8),
-                  const Text('Description:'),
+                  Text('Description:'),
                   Text(course['description']),
                 ],
                 if (course['materials'] != null && course['materials'].isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  const Text('Matériel requis:'),
+                  Text('Matériel requis:'),
                   ...(course['materials'] as List<String>).map((material) => Text('• $material')),
                 ],
                 if (course['students'] != null) Text('Nombre d\'étudiants: ${course['students']}'),
@@ -957,7 +957,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -975,8 +975,8 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Modifier le cours'),
+                leading: Icon(Icons.edit),
+                title: Text('Modifier le cours'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -985,8 +985,8 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.people),
-                title: const Text('Gérer les étudiants'),
+                leading: Icon(Icons.people),
+                title: Text('Gérer les étudiants'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -995,8 +995,8 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
-                title: const Text('Supprimer le cours', style: TextStyle(color: Color(0xFFEF4444))),
+                leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
+                title: Text('Supprimer le cours', style: TextStyle(color: Color(0xFFEF4444))),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1012,7 +1012,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );
@@ -1034,14 +1034,14 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exporter l\'emploi du temps'),
+          title: Text('Exporter l\'emploi du temps'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.calendar_today, color: Color(0xFF2563EB)),
-                title: const Text('Calendrier Google'),
-                subtitle: const Text('Synchroniser avec Google Calendar'),
+                leading: Icon(Icons.calendar_today, color: Color(0xFF2563EB)),
+                title: Text('Calendrier Google'),
+                subtitle: Text('Synchroniser avec Google Calendar'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1050,9 +1050,9 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: const Text('PDF'),
-                subtitle: const Text('Télécharger en format PDF'),
+                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: Text('PDF'),
+                subtitle: Text('Télécharger en format PDF'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1061,9 +1061,9 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.table_chart, color: Color(0xFF10B981)),
-                title: const Text('Excel'),
-                subtitle: const Text('Exporter en format Excel'),
+                leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
+                title: Text('Excel'),
+                subtitle: Text('Exporter en format Excel'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1076,7 +1076,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );

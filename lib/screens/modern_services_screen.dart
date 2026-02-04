@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ModernServicesScreen extends StatefulWidget {
   const ModernServicesScreen({super.key});
@@ -9,168 +10,106 @@ class ModernServicesScreen extends StatefulWidget {
 
 class _ModernServicesScreenState extends State<ModernServicesScreen> {
 
-  final List<Map<String, dynamic>> services = const [
-    {
-      'name': 'Scolarité',
-      'description': 'Inscriptions, relevés de notes, attestations, diplômes',
-      'icon': Icons.school,
-      'color': Color(0xFF2563EB),
-      'phone': '01 23 45 67 89',
-      'email': 'scolarite@univ-campus.fr',
-      'location': 'Bloc A - Étage 1',
-      'hours': 'Lun-Ven: 8h-17h',
-      'website': 'scolarite.univ-campus.fr',
-    },
-    {
-      'name': 'Bibliothèque',
-      'description': 'Prêt de livres, salles d\'étude, ressources numériques',
-      'icon': Icons.library_books,
-      'color': Color(0xFF10B981),
-      'phone': '01 23 45 67 90',
-      'email': 'bibliotheque@univ-campus.fr',
-      'location': 'Bloc B - Rez-de-chaussée',
-      'hours': 'Lun-Ven: 8h-22h, Sam: 9h-18h',
-      'website': 'biblio.univ-campus.fr',
-    },
-    {
-      'name': 'Examens',
-      'description': 'Calendrier des examens, salles, convocations, résultats',
-      'icon': Icons.assignment,
-      'color': Color(0xFFEF4444),
-      'phone': '01 23 45 67 91',
-      'email': 'examens@univ-campus.fr',
-      'location': 'Bloc A - Étage 2',
-      'hours': 'Lun-Ven: 9h-16h',
-      'website': 'examens.univ-campus.fr',
-    },
-    {
-      'name': 'Orientation',
-      'description': 'Conseil d\'orientation, réorientations, parcours professionnels',
-      'icon': Icons.explore,
-      'color': Color(0xFFF59E0B),
-      'phone': '01 23 45 67 92',
-      'email': 'orientation@univ-campus.fr',
-      'location': 'Bloc C - Étage 1',
-      'hours': 'Lun-Ven: 9h-17h',
-      'website': 'orientation.univ-campus.fr',
-    },
-    {
-      'name': 'Informatique',
-      'description': 'Support technique, comptes étudiants, salles informatiques',
-      'icon': Icons.computer,
-      'color': Color(0xFF8B5CF6),
-      'phone': '01 23 45 67 93',
-      'email': 'support@univ-campus.fr',
-      'location': 'Bloc D - Étage 0',
-      'hours': 'Lun-Ven: 8h-18h',
-      'website': 'support.univ-campus.fr',
-    },
-    {
-      'name': 'Cafétéria',
-      'description': 'Restauration, snacks, espace détente, distributeurs',
-      'icon': Icons.restaurant,
-      'color': Color(0xFF06B6D4),
-      'phone': '01 23 45 67 94',
-      'email': 'cafeteria@univ-campus.fr',
-      'location': 'Bloc E - Rez-de-chaussée',
-      'hours': 'Lun-Ven: 7h30-19h',
-      'website': null,
-    },
-    {
-      'name': 'Sport',
-      'description': 'Inscriptions sportives, équipements, équipes universitaires',
-      'icon': Icons.fitness_center,
-      'color': Color(0xFF10B981),
-      'phone': '01 23 45 67 95',
-      'email': 'sport@univ-campus.fr',
-      'location': 'Gymnase - Bloc F',
-      'hours': 'Lun-Ven: 10h-20h, Sam: 9h-17h',
-      'website': 'sport.univ-campus.fr',
-    },
-    {
-      'name': 'Santé',
-      'description': 'Service médical, psychologues, infirmerie, urgences',
-      'icon': Icons.local_hospital,
-      'color': Color(0xFFDC2626),
-      'phone': '01 23 45 67 96',
-      'email': 'sante@univ-campus.fr',
-      'location': 'Bloc G - Étage 0',
-      'hours': 'Lun-Ven: 8h-18h (Urgences 24/7)',
-      'website': 'sante.univ-campus.fr',
-    },
-    {
-      'name': 'Logement',
-      'description': 'Résidences universitaires, appartements, colocations',
-      'icon': Icons.home,
-      'color': Color(0xFF7C3AED),
-      'phone': '01 23 45 67 97',
-      'email': 'logement@univ-campus.fr',
-      'location': 'Bloc H - Étage 1',
-      'hours': 'Lun-Ven: 9h-17h',
-      'website': 'logement.univ-campus.fr',
-    },
-    {
-      'name': 'Transport',
-      'description': 'Navettes campus, cartes de transport, vélos, parking',
-      'icon': Icons.directions_bus,
-      'color': Color(0xFF059669),
-      'phone': '01 23 45 67 98',
-      'email': 'transport@univ-campus.fr',
-      'location': 'Bloc I - Extérieur',
-      'hours': 'Lun-Ven: 7h-19h',
-      'website': null,
-    },
-    {
-      'name': 'Associations',
-      'description': 'Clubs étudiants, BDE, associations culturelles et sportives',
-      'icon': Icons.groups,
-      'color': Color(0xFFEA580C),
-      'phone': '01 23 45 67 99',
-      'email': 'associations@univ-campus.fr',
-      'location': 'Bloc J - Étage 2',
-      'hours': 'Lun-Ven: 12h-14h, 17h-19h',
-      'website': 'bde.univ-campus.fr',
-    },
-    {
-      'name': 'International',
-      'description': 'Échanges, programmes ERASMUS, étudiants étrangers',
-      'icon': Icons.public,
-      'color': Color(0xFF0891B2),
-      'phone': '01 23 45 67 00',
-      'email': 'international@univ-campus.fr',
-      'location': 'Bloc K - Étage 1',
-      'hours': 'Lun-Ven: 9h-16h',
-      'website': 'international.univ-campus.fr',
-    },
-  ];
+  bool _isLoading = true;
+  List<Map<String, dynamic>> services = [];
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchServices();
+  }
+
+  Future<void> _fetchServices() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('services')
+          .select()
+          .order('nom', ascending: true);
+
+      setState(() {
+        services = List<Map<String, dynamic>>.from(response).map((data) {
+          return {
+            'name': data['nom'] ?? 'Service',
+            'description': data['description'] ?? 'Service disponible sur le campus',
+            'icon': _getIconForService(data['nom'] ?? ''),
+            'color': _getColorForService(data['nom'] ?? ''),
+            'phone': data['telephone'] ?? 'Non renseigné',
+            'email': data['email'] ?? 'Non renseigné',
+            'location': data['localisation'] ?? data['location'] ?? 'Campus',
+            'hours': data['horaires'] ?? 'Lun-Ven: 8h-17h',
+            'website': data['site_web'] ?? data['website'],
+          };
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erreur chargement services: $e');
+      setState(() {
+        _errorMessage = 'Impossible de charger les services';
+        _isLoading = false;
+      });
+    }
+  }
+
+  IconData _getIconForService(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('bibli')) return Icons.library_books;
+    if (lower.contains('scolar')) return Icons.school;
+    if (lower.contains('exam')) return Icons.assignment;
+    if (lower.contains('sport')) return Icons.fitness_center;
+    if (lower.contains('sant')) return Icons.local_hospital;
+    if (lower.contains('informatique') || lower.contains('numerique')) return Icons.computer;
+    if (lower.contains('logement')) return Icons.home;
+    if (lower.contains('transport')) return Icons.directions_bus;
+    if (lower.contains('resto') || lower.contains('cafe')) return Icons.restaurant;
+    if (lower.contains('bde') || lower.contains('assoc')) return Icons.groups;
+    if (lower.contains('inter')) return Icons.public;
+    return Icons.business; 
+  }
+
+  Color _getColorForService(String name) {
+    final colors = [
+      const Color(0xFF2563EB), // Blue
+      const Color(0xFF10B981), // Green
+      const Color(0xFFEF4444), // Red
+      const Color(0xFFF59E0B), // Orange
+      const Color(0xFF8B5CF6), // Purple
+      const Color(0xFF06B6D4), // Cyan
+      const Color(0xFFEA580C), // Dark Orange
+      const Color(0xFF7C3AED), // Violet
+      const Color(0xFF059669), // Emerald
+    ];
+    return colors[name.length % colors.length];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Services du Campus',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            const Text(
-              '12 services disponibles',
+            Text(
+              _isLoading ? 'Chargement...' : '${services.length} services disponibles',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -178,21 +117,40 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF64748B)),
+            icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
             onPressed: () {
               _showSearchDialog(context);
             },
           ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: services.length,
-        itemBuilder: (context, index) {
-          final service = services[index];
-          return _buildServiceCard(context, service);
-        },
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(_errorMessage!),
+                      TextButton(
+                        onPressed: _fetchServices,
+                        child: Text('Réessayer'),
+                      ),
+                    ],
+                  ),
+                )
+              : services.isEmpty
+                  ? const Center(child: Text('Aucun service trouvé'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: services.length,
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return _buildServiceCard(context, service);
+                      },
+                    ),
     );
   }
 
@@ -210,7 +168,7 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -220,7 +178,7 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
           ),
         ],
         border: Border.all(
-          color: const Color(0xFFE5E7EB),
+          color: Theme.of(context).dividerColor,
           width: 1,
         ),
       ),
@@ -262,18 +220,18 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           height: 1.4,
                         ),
                       ),
@@ -385,18 +343,18 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -474,8 +432,8 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Rechercher un service'),
-          content: const TextField(
+          title: Text('Rechercher un service'),
+          content: TextField(
             decoration: InputDecoration(
               hintText: 'Entrez le nom du service...',
               prefixIcon: Icon(Icons.search),
@@ -484,7 +442,7 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

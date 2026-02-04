@@ -48,13 +48,32 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
       );
 
       if (response.user != null && mounted) {
-        // S'assurer que le profil existe (en cas d'échec d'inscription dû au RLS)
-        await ProfileService.ensureProfileExists();
-        
-        // Récupérer le rôle pour rediriger vers le bon dashboard
-        final userData = await ProfileService.getCurrentUserProfile();
+        // ✅ Attendre que le profil existe (avec timeout)
+        try {
+          await ProfileService.ensureProfileExists();
+        } catch (e) {
+          print('[Login] Failed to ensure profile: $e');
+          // Continuer quand même
+        }
+
+        // ✅ Retry pour récupérer le rôle
+        final userData = await ProfileService.getCurrentUserProfile(
+          retryCount: 5,
+          delayMs: 1000,
+        );
+
+        if (userData == null && mounted) {
+          // ✅ Fallback si profil toujours absent
+          setState(() {
+            _errorMessage = 'Erreur de chargement du profil. Réessayez.';
+            _isLoading = false;
+          });
+          await Supabase.instance.client.auth.signOut();
+          return;
+        }
+
         final role = userData?['role'] ?? 'Étudiant';
-        
+
         if (mounted) {
           if (role == 'Administratif' || role == 'Administrateur') {
             Navigator.pushReplacementNamed(context, '/admin-dashboard');
@@ -99,14 +118,14 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                         color: const Color(0xFF2563EB),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.school_rounded,
                         color: Colors.white,
                         size: 40,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'CampusConnect',
                       style: TextStyle(
                         fontSize: 28,
@@ -115,7 +134,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Connexion à votre espace universitaire',
                       style: TextStyle(
                         fontSize: 16,
@@ -149,7 +168,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Email universitaire / Matricule',
                             style: TextStyle(
                               fontSize: 14,
@@ -161,17 +180,17 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
                               hintText: 'nom@univ-campus.fr, prof@univ-campus.fr ou MAT2024001',
-                              hintStyle: const TextStyle(
+                              hintStyle: TextStyle(
                                 color: Color(0xFF9CA3AF),
                                 fontSize: 15,
                               ),
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.person_outline_rounded,
                                 color: Color(0xFF6B7280),
                                 size: 20,
@@ -214,7 +233,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Mot de passe',
                             style: TextStyle(
                               fontSize: 14,
@@ -226,17 +245,20 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                           TextField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            style: const TextStyle(
+                            enableSuggestions: false,
+                            autocorrect: false,
+                            autofillHints: null,
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              hintStyle: const TextStyle(
+                              hintStyle: TextStyle(
                                 color: Color(0xFF9CA3AF),
                                 fontSize: 15,
                               ),
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.lock_outline_rounded,
                                 color: Color(0xFF6B7280),
                                 size: 20,
@@ -303,7 +325,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.error_outline,
                                 color: Color(0xFFDC2626),
                                 size: 16,
@@ -312,7 +334,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFFDC2626),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -351,7 +373,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                                     ),
                                   ),
                                 )
-                              : const Text(
+                              : Text(
                                   'Se connecter',
                                   style: TextStyle(
                                     fontSize: 16,
@@ -375,7 +397,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             );
                           },
                           child: RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                               text: 'Pas encore de compte ? ',
                               style: TextStyle(
                                 color: Color(0xFF6B7280),
@@ -402,7 +424,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                 const SizedBox(height: 32),
 
                 // Footer
-                const Text(
+                Text(
                   '© 2024 CampusConnect - Application universitaire officielle',
                   textAlign: TextAlign.center,
                   style: TextStyle(

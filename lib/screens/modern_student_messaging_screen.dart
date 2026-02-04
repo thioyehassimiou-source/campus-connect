@@ -145,13 +145,13 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Messages',
               style: TextStyle(
                 fontSize: 18,
@@ -161,7 +161,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
             ),
             Text(
               '${_conversations.where((c) => c['unread'] > 0).length} non lus',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -171,7 +171,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF64748B)),
+            icon: Icon(Icons.search, color: Color(0xFF64748B)),
             onPressed: _showSearchDialog,
           ),
         ],
@@ -195,11 +195,11 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Rechercher une conversation...',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 14,
                       ),
-                      prefixIcon: const Icon(
+                      prefixIcon: Icon(
                         Icons.search,
                         color: Color(0xFF6B7280),
                         size: 20,
@@ -240,7 +240,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                             color: const Color(0xFF2563EB).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Tous',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -259,7 +259,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                             color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Non lus',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -278,7 +278,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                             color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Enseignants',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -409,7 +409,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                       ),
                       Text(
                         conversation['time'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -421,7 +421,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                   if (conversation['course'] != null)
                     Text(
                       conversation['course'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: Color(0xFF2563EB),
                         fontWeight: FontWeight.w600,
@@ -433,7 +433,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                       Expanded(
                         child: Text(
                           conversation['lastMessage'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
                             fontWeight: FontWeight.w500,
@@ -450,7 +450,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                           ),
                           child: Text(
                             conversation['unread'].toString(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -502,7 +502,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                   children: [
                     Text(
                       _selectedConversation!['name'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -512,7 +512,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                       children: [
                         Text(
                           _selectedConversation!['role'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
                             fontWeight: FontWeight.w500,
@@ -522,7 +522,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                           const SizedBox(width: 8),
                           Text(
                             '• ${_selectedConversation!['course']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF2563EB),
                               fontWeight: FontWeight.w500,
@@ -535,7 +535,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                icon: Icon(Icons.more_vert, color: Color(0xFF64748B)),
                 onPressed: _showConversationOptions,
               ),
             ],
@@ -566,7 +566,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.attach_file, color: Color(0xFF64748B)),
+                icon: Icon(Icons.attach_file, color: Color(0xFF64748B)),
                 onPressed: _attachFile,
               ),
               Expanded(
@@ -574,7 +574,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                   controller: _messageController,
                   decoration: InputDecoration(
                     hintText: 'Écrire un message...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: Color(0xFF9CA3AF),
                       fontSize: 14,
                     ),
@@ -603,7 +603,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.send, color: Color(0xFF2563EB)),
+                icon: Icon(Icons.send, color: Color(0xFF2563EB)),
                 onPressed: _sendMessage,
               ),
             ],
@@ -629,7 +629,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                 color: const Color(0xFF2563EB).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 color: Color(0xFF2563EB),
                 size: 16,
@@ -646,7 +646,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       message['sender'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w600,
@@ -673,7 +673,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                 const SizedBox(height: 4),
                 Text(
                   message['time'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Color(0xFF9CA3AF),
                     fontWeight: FontWeight.w500,
@@ -691,7 +691,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
                 color: const Color(0xFF10B981).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 color: Color(0xFF10B981),
                 size: 16,
@@ -715,14 +715,14 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
               color: const Color(0xFF2563EB).withOpacity(0.1),
               borderRadius: BorderRadius.circular(40),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.chat_bubble_outline,
               color: Color(0xFF2563EB),
               size: 40,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Sélectionnez une conversation',
             style: TextStyle(
               fontSize: 18,
@@ -731,7 +731,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Choisissez une conversation pour commencer à discuter',
             style: TextStyle(
               fontSize: 14,
@@ -804,8 +804,8 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Rechercher'),
-          content: const TextField(
+          title: Text('Rechercher'),
+          content: TextField(
             decoration: InputDecoration(
               hintText: 'Rechercher des messages ou conversations...',
             ),
@@ -813,11 +813,11 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Rechercher'),
+              child: Text('Rechercher'),
             ),
           ],
         );
@@ -836,24 +836,24 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
             children: [
               if (_selectedConversation!['role'] == 'Enseignant')
                 ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('Voir le profil'),
+                  leading: Icon(Icons.info_outline),
+                  title: Text('Voir le profil'),
                   subtitle: Text(_selectedConversation!['course'] ?? ''),
                   onTap: () {
                     Navigator.of(context).pop();
                   },
                 ),
               ListTile(
-                leading: const Icon(Icons.notifications_off),
-                title: const Text('Désactiver les notifications'),
+                leading: Icon(Icons.notifications_off),
+                title: Text('Désactiver les notifications'),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
               ),
               if (_selectedConversation!['role'] != 'Service')
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
-                  title: const Text('Supprimer la conversation', style: TextStyle(color: Color(0xFFEF4444))),
+                  leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
+                  title: Text('Supprimer la conversation', style: TextStyle(color: Color(0xFFEF4444))),
                   onTap: () {
                     Navigator.of(context).pop();
                   },
@@ -863,7 +863,7 @@ class _ModernStudentMessagingScreenState extends State<ModernStudentMessagingScr
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

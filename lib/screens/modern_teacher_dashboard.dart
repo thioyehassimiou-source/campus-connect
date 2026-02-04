@@ -5,6 +5,8 @@ import 'package:campusconnect/screens/modern_teacher_profile_screen.dart';
 import 'package:campusconnect/screens/modern_course_management_screen.dart';
 import 'package:campusconnect/screens/modern_resources_screen.dart';
 
+import 'package:campusconnect/core/services/profile_service.dart';
+
 class ModernTeacherDashboard extends StatefulWidget {
   const ModernTeacherDashboard({super.key});
 
@@ -47,15 +49,15 @@ class _ModernTeacherDashboardState extends State<ModernTeacherDashboard> {
           elevation: 0,
           selectedItemColor: const Color(0xFF2563EB),
           unselectedItemColor: const Color(0xFF64748B),
-          selectedLabelStyle: const TextStyle(
+          selectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
-          unselectedLabelStyle: const TextStyle(
+          unselectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard),
@@ -101,6 +103,29 @@ class TeacherDashboardHome extends StatefulWidget {
 }
 
 class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
+  String _fullName = 'Enseignant';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await ProfileService.getCurrentUserProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          _fullName = profile['nom'] ?? 'Enseignant';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +146,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
               color: const Color(0xFF10B981),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school_rounded,
               color: Colors.white,
               size: 20,
@@ -133,14 +158,14 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
           children: [
             Text(
               greeting,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const Text(
-              'Enseignant',
+            Text(
+              _fullName,
               style: TextStyle(
                 fontSize: 16,
                 color: Color(0xFF0F172A),
@@ -153,7 +178,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.notifications_outlined,
                 color: Color(0xFF64748B),
               ),
@@ -209,14 +234,14 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today,
                 color: Color(0xFF2563EB),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: const Text(
+                child: Text(
                   'Aperçu emploi du temps',
                   style: TextStyle(
                     fontSize: 16,
@@ -232,7 +257,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
                     // Naviguer vers l'onglet emploi du temps
                   });
                 },
-                child: const Text(
+                child: Text(
                   'Voir tout',
                   style: TextStyle(
                     fontSize: 12,
@@ -293,7 +318,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
               children: [
                 Text(
                   subject,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
@@ -301,7 +326,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
                 ),
                 Text(
                   '$time • $room • $students étudiants',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF64748B),
                   ),
@@ -333,7 +358,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Actions rapides',
           style: TextStyle(
             fontSize: 16,
@@ -379,7 +404,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
       icon: Icon(icon, size: 18),
       label: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -415,13 +440,13 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.folder_open,
                 color: Color(0xFF10B981),
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Documents publiés',
                 style: TextStyle(
                   fontSize: 16,
@@ -436,7 +461,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
                   color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   '12 documents',
                   style: TextStyle(
                     fontSize: 12,
@@ -504,7 +529,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
@@ -512,7 +537,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
                 ),
                 Text(
                   '$size • $time',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF64748B),
                   ),
@@ -520,7 +545,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.more_vert,
             size: 16,
             color: Color(0xFF94A3B8),
@@ -576,7 +601,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF0F172A),
@@ -584,7 +609,7 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
           ),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               color: Color(0xFF64748B),
             ),
@@ -599,16 +624,16 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Publier un document'),
-          content: const Text('Fonctionnalité de publication de document en cours de développement.'),
+          title: Text('Publier un document'),
+          content: Text('Fonctionnalité de publication de document en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Publier'),
+              child: Text('Publier'),
             ),
           ],
         );
@@ -621,16 +646,16 @@ class _TeacherDashboardHomeState extends State<TeacherDashboardHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Publier une annonce'),
-          content: const Text('Fonctionnalité de publication d\'annonce en cours de développement.'),
+          title: Text('Publier une annonce'),
+          content: Text('Fonctionnalité de publication d\'annonce en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Publier'),
+              child: Text('Publier'),
             ),
           ],
         );
@@ -655,7 +680,7 @@ class TeacherScheduleTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Emploi du temps',
           style: TextStyle(
             fontSize: 18,
@@ -687,7 +712,7 @@ class TeacherDocumentsTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Documents',
           style: TextStyle(
             fontSize: 18,
@@ -719,7 +744,7 @@ class TeacherProfileTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Profil',
           style: TextStyle(
             fontSize: 18,

@@ -11,15 +11,19 @@ class SupabaseAuthService {
     required String firstName,
     required String lastName,
     required String role,
-    String? filiereId,
+    dynamic filiereId,
     String? niveau,
-    String? departementId,
+    dynamic departementId,
+    dynamic facultyId,
+    dynamic serviceId,
     String? telephone,
   }) async {
     try {
       print('Starting registration for email: $email');
       
-      // Create user with email and password
+      // ✅ Envoi des métadonnées complètes au signUp
+      // Le Trigger SQL 'on_auth_user_created' utilisera ces données pour créer le profil.
+      // Cela contourne l'erreur RLS 42501 car le Trigger agit en tant que SuperAdmin.
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
@@ -27,25 +31,21 @@ class SupabaseAuthService {
           'first_name': firstName,
           'last_name': lastName,
           'role': role,
+          'filiere_id': filiereId,
+          'niveau': niveau,
+          'department_id': departementId,
+          'faculty_id': facultyId,
+          'service_id': serviceId,
+          'telephone': telephone,
         },
       );
 
-      if (response.user != null) {
-        // Create user profile in database
-        await _supabase.from('users').insert({
-          'id': response.user!.id,
-          'nom': '$firstName $lastName',
-          'email': email,
-          'role': role,
-          'filiere_id': filiereId,
-          'niveau': niveau,
-          'departement_id': departementId,
-          'telephone': telephone,
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
-
       print('User registered successfully: ${response.user?.id}');
+      
+      // ⚠️ PLUS BESOIN D'INSERTION MANUELLE ICI
+      // Le Trigger s'en occupe. Si on essayait, on aurait l'erreur RLS 42501
+      // car la session peut ne pas être encore active (email confirmation).
+      
       return response;
     } on AuthException catch (e) {
       print('Auth Exception: ${e.message}');
@@ -95,10 +95,10 @@ class SupabaseAuthService {
       final userId = SupabaseService.currentUserId;
       if (userId != null) {
         final response = await _supabase
-            .from('users')
+            .from('profiles') // Corrected table name
             .select()
             .eq('id', userId)
-            .single();
+            .maybeSingle(); // Utiliser maybeSingle() pour éviter crash
         return response;
       }
       return null;

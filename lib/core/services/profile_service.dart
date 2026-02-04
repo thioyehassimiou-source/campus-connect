@@ -5,42 +5,47 @@ class ProfileService {
   static final SupabaseClient _supabase = SupabaseService.database;
 
   /// Récupère le profil de l'utilisateur actuellement connecté.
-  static Future<Map<String, dynamic>?> getCurrentUserProfile({int retryCount = 3}) async {
+  /// Utilise maybeSingle() pour éviter les crashes et retry avec backoff exponentiel.
+  static Future<Map<String, dynamic>?> getCurrentUserProfile({
+    int retryCount = 5,
+    int delayMs = 800,
+  }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      print('No authenticated user found');
+      print('[ProfileService] No authenticated user');
       return null;
     }
 
-    // Essayer différents noms de tables
-    final tableNames = ['profiles', 'users', 'user_profiles'];
-    
-    for (final tableName in tableNames) {
-      for (int attempt = 0; attempt < retryCount; attempt++) {
-        try {
-          final response = await _supabase
-              .from(tableName)
-              .select('*, faculties(nom), departments(nom), services(nom)')
-              .eq('id', userId)
-              .single();
-          
-          print('Profile loaded successfully from table: $tableName');
+    for (int attempt = 0; attempt < retryCount; attempt++) {
+      try {
+        final response = await _supabase
+            .from('profiles')
+            .select('*, faculties(nom), departments(nom), services(nom)')
+            .eq('id', userId)
+            .maybeSingle(); // ✅ Ne crash pas si vide
+
+        if (response != null) {
+          print('[ProfileService] Profile loaded (attempt ${attempt + 1})');
           return response;
-        } catch (e) {
-          print('Error fetching from $tableName (attempt ${attempt + 1}/$retryCount): $e');
-          
-          if (attempt == retryCount - 1) {
-            // Dernière tentative pour cette table échouée
-            break;
-          }
-          
-          // Attendre avant de réessayer
-          await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
         }
+
+        print('[ProfileService] Profile not found, retry ${attempt + 1}/$retryCount');
+        
+        // Attendre avant retry (backoff exponentiel)
+        if (attempt < retryCount - 1) {
+          await Future.delayed(Duration(milliseconds: delayMs * (attempt + 1)));
+        }
+      } catch (e) {
+        print('[ProfileService] Error attempt ${attempt + 1}: $e');
+        
+        if (attempt == retryCount - 1) {
+          return null;
+        }
+        
+        await Future.delayed(Duration(milliseconds: delayMs));
       }
     }
-    
-    print('Failed to load profile from all tables: $tableNames');
+
     return null;
   }
 
@@ -53,29 +58,28 @@ class ProfileService {
 
     final profile = await getCurrentUserProfile(retryCount: 1);
     if (profile == null) {
-      print('Profile manquant pour ${user.id}, création par défaut...');
+      print('[ProfileService] Creating missing profile for ${user.id}');
       try {
         final metadata = user.userMetadata ?? {};
-        final fullName = metadata['nom'] ?? 'Utilisateur';
         final role = metadata['role'] ?? 'Étudiant';
-        final niveau = role == 'Étudiant' ? (metadata['niveau'] ?? 'Licence 1') : 'Non renseigné';
         
         await _supabase.from('profiles').insert({
           'id': user.id,
-          'nom': fullName,
+          'nom': metadata['nom'] ?? 'Utilisateur',
           'email': user.email,
           'role': role,
           'faculty_id': metadata['faculty_id'],
           'department_id': metadata['department_id'],
           'service_id': metadata['service_id'],
           'telephone': metadata['telephone'] ?? '',
-          'niveau': niveau,
-          'filiere_id': metadata['filiere_id'] ?? 'Non renseignée',
-          'created_at': DateTime.now().toIso8601String(),
+          'niveau': role == 'Étudiant' ? (metadata['niveau'] ?? 'Licence 1') : 'Non renseigné',
+          'filiere_id': metadata['filiere_id'], // ✅ null si non renseignée
         });
-        print('Profil créé automatiquement avec succès (Rôle: $role, Niveau: $niveau).');
+        
+        print('[ProfileService] Profile created successfully');
       } catch (e) {
-        print('Échec de la création automatique du profil : $e');
+        print('[ProfileService] Failed to create profile: $e');
+        rethrow;
       }
     }
   }

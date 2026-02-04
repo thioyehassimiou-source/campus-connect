@@ -91,13 +91,13 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Annonces',
               style: TextStyle(
                 fontSize: 18,
@@ -107,7 +107,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
             ),
             Text(
               '${announcements.length} annonces',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -125,7 +125,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                 },
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
-                child: const Icon(Icons.add, size: 20),
+                child: Icon(Icons.add, size: 20),
               ),
             ),
         ],
@@ -158,7 +158,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Catégories',
               style: TextStyle(
                 fontSize: 14,
@@ -250,7 +250,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                     if (isPinned)
                       Container(
                         margin: const EdgeInsets.only(right: 8, top: 2),
-                        child: const Icon(
+                        child: Icon(
                           Icons.push_pin,
                           size: 16,
                           color: Color(0xFF2563EB),
@@ -259,7 +259,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                     Expanded(
                       child: Text(
                         announcement['title'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -331,7 +331,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Text(
               announcement['content'],
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF64748B),
                 height: 1.4,
@@ -349,7 +349,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                 // Auteur
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person_outline,
                       size: 14,
                       color: Color(0xFF94A3B8),
@@ -357,7 +357,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       announcement['author'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -370,7 +370,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                 // Date
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.access_time,
                       size: 14,
                       color: Color(0xFF94A3B8),
@@ -378,7 +378,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(date),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -391,7 +391,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                 
                 // Actions
                 PopupMenuButton<String>(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert,
                     size: 16,
                     color: Color(0xFF94A3B8),
@@ -416,7 +416,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                           const SizedBox(width: 8),
                           Text(
                             isPinned ? 'Désépingler' : 'Épingler',
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
@@ -517,16 +517,16 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Créer une annonce'),
-          content: const Text('Fonctionnalité de création d\'annonce en cours de développement.'),
+          title: Text('Créer une annonce'),
+          content: Text('Fonctionnalité de création d\'annonce en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Créer'),
+              child: Text('Créer'),
             ),
           ],
         );

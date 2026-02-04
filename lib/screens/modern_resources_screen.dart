@@ -125,13 +125,13 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Ressources Pédagogiques',
               style: TextStyle(
                 fontSize: 18,
@@ -141,7 +141,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
             ),
             Text(
               '${_resources.length} ressources disponibles',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -151,11 +151,11 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.upload, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.upload, color: Color(0xFF2563EB)),
             onPressed: _showUploadDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Color(0xFF64748B)),
+            icon: Icon(Icons.filter_list, color: Color(0xFF64748B)),
             onPressed: _showFilterDialog,
           ),
         ],
@@ -181,11 +181,11 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Rechercher une ressource...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 14,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
                   color: Color(0xFF6B7280),
                   size: 20,
@@ -234,13 +234,13 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                        icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                         items: ['Toutes', 'Cours', 'Exercices', 'Tutoriel', 'Code', 'Résumé']
                             .map((category) => DropdownMenuItem(
                                   value: category,
                                   child: Text(
                                     category,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF0F172A),
@@ -270,13 +270,13 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                       child: DropdownButton<String>(
                         value: _selectedType,
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                        icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                         items: ['Tous', 'PDF', 'Vidéo', 'Code', 'Audio']
                             .map((type) => DropdownMenuItem(
                                   value: type,
                                   child: Text(
                                     type,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF0F172A),
@@ -359,8 +359,8 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         onPressed: _showUploadDialog,
         backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.upload),
-        label: const Text('Ajouter'),
+        icon: Icon(Icons.upload),
+        label: Text('Ajouter'),
       ),
     );
   }
@@ -406,7 +406,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Color(0xFF0F172A),
@@ -414,7 +414,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         ),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: Color(0xFF64748B),
             fontWeight: FontWeight.w500,
@@ -468,7 +468,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                           Expanded(
                             child: Text(
                               resource['title'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF0F172A),
@@ -492,7 +492,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         resource['description'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w400,
@@ -535,7 +535,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   ),
                   child: Text(
                     resource['category'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -545,7 +545,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                 const Spacer(),
                 Text(
                   resource['size'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
@@ -569,7 +569,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   ),
                   child: Text(
                     '#$tag',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -589,7 +589,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   children: [
                     Text(
                       resource['author'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF0F172A),
@@ -597,7 +597,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                     ),
                     Text(
                       '${resource['course']} • ${resource['level']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -612,7 +612,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                     const SizedBox(width: 2),
                     Text(
                       resource['rating'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF64748B),
@@ -627,7 +627,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                     const SizedBox(width: 2),
                     Text(
                       resource['downloads'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF64748B),
@@ -638,7 +638,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                 const SizedBox(width: 16),
                 Text(
                   resource['uploadDate'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Color(0xFF9CA3AF),
                     fontWeight: FontWeight.w500,
@@ -684,7 +684,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Télécharger',
                       style: TextStyle(
                         fontSize: 12,
@@ -720,7 +720,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ajouter une ressource'),
+        title: Text('Ajouter une ressource'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -737,7 +737,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text('Annuler'),
           ),
           TextButton(
             onPressed: () {
@@ -749,7 +749,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                 ),
               );
             },
-            child: const Text('Ajouter'),
+            child: Text('Ajouter'),
           ),
         ],
       ),
@@ -760,22 +760,22 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Filtres avancés'),
+        title: Text('Filtres avancés'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CheckboxListTile(
-              title: const Text('Favoris uniquement'),
+              title: Text('Favoris uniquement'),
               value: false,
               onChanged: (value) {},
             ),
             CheckboxListTile(
-              title: const Text('Mes ressources'),
+              title: Text('Mes ressources'),
               value: false,
               onChanged: (value) {},
             ),
             CheckboxListTile(
-              title: const Text('Récemment ajoutées'),
+              title: Text('Récemment ajoutées'),
               value: false,
               onChanged: (value) {},
             ),
@@ -784,11 +784,11 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text('Annuler'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Appliquer'),
+            child: Text('Appliquer'),
           ),
         ],
       ),

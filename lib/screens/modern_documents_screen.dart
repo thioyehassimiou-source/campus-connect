@@ -140,13 +140,13 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Documents Pédagogiques',
               style: TextStyle(
                 fontSize: 18,
@@ -156,7 +156,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             ),
             Text(
               '${filteredDocuments.length} documents',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -166,7 +166,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF64748B)),
+            icon: Icon(Icons.search, color: Color(0xFF64748B)),
             onPressed: () {
               _showSearchDialog();
             },
@@ -222,7 +222,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF0F172A),
@@ -330,7 +330,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     children: [
                       Text(
                         document['title'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -340,7 +340,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         document['description'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: Color(0xFF64748B),
                           height: 1.3,
@@ -357,7 +357,9 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             const SizedBox(height: 16),
             
             // Métadonnées
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 // Type et taille
                 Container(
@@ -376,8 +378,6 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                   ),
                 ),
                 
-                const SizedBox(width: 8),
-                
                 // Matière et filière
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -388,7 +388,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                   ),
                   child: Text(
                     '${document['matiere']} • ${document['filiere']}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -401,12 +401,17 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             const SizedBox(height: 12),
             
             // Pied du document
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
               children: [
                 // Auteur et date
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person_outline,
                       size: 14,
                       color: Color(0xFF94A3B8),
@@ -414,7 +419,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       document['author'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -423,12 +428,11 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                   ],
                 ),
                 
-                const SizedBox(width: 16),
-                
                 // Téléchargements
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.download_outlined,
                       size: 14,
                       color: Color(0xFF94A3B8),
@@ -436,7 +440,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '$downloads téléchargements',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -445,36 +449,36 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                   ],
                 ),
                 
-                const Spacer(),
-                
-                // Date
-                Text(
-                  _formatDate(date),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF94A3B8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                
-                const SizedBox(width: 12),
-                
-                // Bouton télécharger
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _downloadDocument(document);
-                  },
-                  icon: const Icon(Icons.download, size: 16),
-                  label: const Text('Télécharger'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                // Date et Bouton
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatDate(date),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    elevation: 0,
-                  ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _downloadDocument(document);
+                      },
+                      icon: Icon(Icons.download, size: 16),
+                      label: Text('Télécharger'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -496,14 +500,14 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.folder_open,
               size: 40,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aucun document trouvé',
             style: TextStyle(
               fontSize: 18,
@@ -512,7 +516,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Essayez de modifier vos filtres ou votre recherche',
             style: TextStyle(
               fontSize: 14,
@@ -585,7 +589,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Rechercher un document'),
+          title: Text('Rechercher un document'),
           content: TextField(
             onChanged: (value) {
               setState(() {
@@ -600,7 +604,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

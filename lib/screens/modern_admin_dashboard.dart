@@ -47,15 +47,15 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           elevation: 0,
           selectedItemColor: const Color(0xFFDC2626),
           unselectedItemColor: const Color(0xFF64748B),
-          selectedLabelStyle: const TextStyle(
+          selectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
-          unselectedLabelStyle: const TextStyle(
+          unselectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard),
@@ -118,7 +118,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
               color: const Color(0xFFDC2626),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.admin_panel_settings,
               color: Colors.white,
               size: 20,
@@ -128,7 +128,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Panneau d\'administration',
               style: TextStyle(
                 fontSize: 12,
@@ -136,7 +136,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const Text(
+            Text(
               'Administrateur',
               style: TextStyle(
                 fontSize: 16,
@@ -150,7 +150,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.notifications_outlined,
                 color: Color(0xFF64748B),
               ),
@@ -243,7 +243,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           const SizedBox(height: 2),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: Color(0xFF0F172A),
@@ -251,7 +251,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           ),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
               color: Color(0xFF64748B),
             ),
@@ -280,18 +280,20 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.people,
                 color: Color(0xFF2563EB),
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Gestion des utilisateurs',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Gestion des utilisateurs',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -301,8 +303,8 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                     // Naviguer vers l'onglet utilisateurs
                   });
                 },
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Ajouter'),
+                icon: Icon(Icons.add, size: 16),
+                label: Text('Ajouter'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
@@ -315,7 +317,13 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildUserTable(),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 600),
+              child: _buildUserTable(),
+            ),
+          ),
         ],
       ),
     );
@@ -364,8 +372,8 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
       ),
       child: Row(
         children: [
-          Expanded(flex: 2, child: Text(name, style: const TextStyle(fontSize: 12))),
-          Expanded(flex: 2, child: Text(email, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)))),
+          Expanded(flex: 2, child: Text(name, style: TextStyle(fontSize: 12))),
+          Expanded(flex: 2, child: Text(email, style: TextStyle(fontSize: 12, color: Color(0xFF64748B)))),
           Expanded(flex: 1, child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -385,13 +393,13 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           Expanded(flex: 1, child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.edit, size: 16, color: Color(0xFF2563EB)),
+                icon: Icon(Icons.edit, size: 16, color: Color(0xFF2563EB)),
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               ),
               IconButton(
-                icon: const Icon(Icons.delete, size: 16, color: Color(0xFFEF4444)),
+                icon: Icon(Icons.delete, size: 16, color: Color(0xFFEF4444)),
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -422,18 +430,20 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.campaign,
                 color: Color(0xFF10B981),
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Annonces officielles',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Annonces officielles',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -441,8 +451,8 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                 onPressed: () {
                   _showCreateAnnouncementDialog(context);
                 },
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Nouvelle'),
+                icon: Icon(Icons.add, size: 16),
+                label: Text('Nouvelle'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
@@ -499,7 +509,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF0F172A),
@@ -526,14 +536,14 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
                   ),
                 ),
                 Text(
                   time,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Color(0xFF94A3B8),
                   ),
@@ -542,7 +552,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             ),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF94A3B8)),
+            icon: Icon(Icons.more_vert, size: 16, color: Color(0xFF94A3B8)),
             onSelected: (value) {
               // Gérer les actions
             },
@@ -593,18 +603,20 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.meeting_room,
                 color: Color(0xFFF59E0B),
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Gestion des blocs et salles',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Gestion des blocs et salles',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -612,8 +624,8 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                 onPressed: () {
                   _showAddRoomDialog(context);
                 },
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Ajouter'),
+                icon: Icon(Icons.add, size: 16),
+                label: Text('Ajouter'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
                   foregroundColor: Colors.white,
@@ -716,18 +728,20 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.settings,
                 color: Color(0xFF8B5CF6),
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Supervision des services',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Supervision des services',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -737,7 +751,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   '8 actifs',
                   style: TextStyle(
                     fontSize: 12,
@@ -789,7 +803,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0F172A),
@@ -814,7 +828,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
           const SizedBox(width: 8),
           Text(
             uptime,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               color: Color(0xFF64748B),
               fontWeight: FontWeight.w500,
@@ -830,16 +844,16 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Créer une annonce'),
-          content: const Text('Fonctionnalité de création d\'annonce en cours de développement.'),
+          title: Text('Créer une annonce'),
+          content: Text('Fonctionnalité de création d\'annonce en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Créer'),
+              child: Text('Créer'),
             ),
           ],
         );
@@ -852,16 +866,16 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Ajouter une salle'),
-          content: const Text('Fonctionnalité d\'ajout de salle en cours de développement.'),
+          title: Text('Ajouter une salle'),
+          content: Text('Fonctionnalité d\'ajout de salle en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Ajouter'),
+              child: Text('Ajouter'),
             ),
           ],
         );
@@ -880,7 +894,7 @@ class AdminUsersTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Gestion des utilisateurs',
           style: TextStyle(
             fontSize: 18,
@@ -912,7 +926,7 @@ class AdminAnnouncementsTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Gestion des annonces',
           style: TextStyle(
             fontSize: 18,
@@ -944,7 +958,7 @@ class AdminSettingsTab extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Paramètres',
           style: TextStyle(
             fontSize: 18,

@@ -123,13 +123,13 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Devoirs',
               style: TextStyle(
                 fontSize: 18,
@@ -139,7 +139,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
             ),
             Text(
               '${_assignments.where((a) => a['status'] == 'pending').length} en attente',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -149,7 +149,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Color(0xFF64748B)),
+            icon: Icon(Icons.filter_list, color: Color(0xFF64748B)),
             onPressed: _showFilterDialog,
           ),
         ],
@@ -173,7 +173,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.assignment,
                   color: Color(0xFF2563EB),
                   size: 20,
@@ -305,7 +305,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Color(0xFF0F172A),
@@ -313,7 +313,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
         ),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: Color(0xFF64748B),
             fontWeight: FontWeight.w500,
@@ -356,7 +356,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                         children: [
                           Text(
                             assignment['title'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF0F172A),
@@ -383,7 +383,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         '${assignment['course']} • ${assignment['teacher']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -392,7 +392,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                       const SizedBox(height: 8),
                       Text(
                         assignment['description'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w400,
@@ -448,7 +448,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                   ),
                   child: Text(
                     assignment['type'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -481,7 +481,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     ),
                     child: Text(
                       '${assignment['attachments'].length} pièce(s)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF8B5CF6),
@@ -494,7 +494,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
             if (assignment['grade'] != null)
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'Note obtenue : ',
                     style: TextStyle(
                       fontSize: 12,
@@ -526,7 +526,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Voir détails',
                       style: TextStyle(
                         fontSize: 12,
@@ -548,7 +548,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Soumettre',
                         style: TextStyle(
                           fontSize: 12,
@@ -569,7 +569,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Voir feedback',
                         style: TextStyle(
                           fontSize: 12,
@@ -669,27 +669,27 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Filtrer les devoirs'),
+          title: Text('Filtrer les devoirs'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('Par priorité'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                title: Text('Par priorité'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                title: const Text('Par date d\'échéance'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                title: Text('Par date d\'échéance'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                title: const Text('Par cours'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                title: Text('Par cours'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
@@ -699,7 +699,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -734,7 +734,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -747,7 +747,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Soumettre le devoir'),
+          title: Text('Soumettre le devoir'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -765,7 +765,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
@@ -777,7 +777,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                   ),
                 );
               },
-              child: const Text('Soumettre'),
+              child: Text('Soumettre'),
             ),
           ],
         );
@@ -790,21 +790,21 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Feedback du professeur'),
+          title: Text('Feedback du professeur'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Note: ${assignment['grade']}/${assignment['maxGrade']}'),
               const SizedBox(height: 16),
-              const Text('Commentaires:'),
-              const Text('Excellent travail! L\'analyse est pertinente et la présentation est claire. Quelques petites améliorations possibles sur la conclusion.'),
+              Text('Commentaires:'),
+              Text('Excellent travail! L\'analyse est pertinente et la présentation est claire. Quelques petites améliorations possibles sur la conclusion.'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

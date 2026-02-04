@@ -128,13 +128,13 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Ma Présence',
               style: TextStyle(
                 fontSize: 18,
@@ -144,7 +144,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
             ),
             Text(
               '${_attendanceRecords.length} séances ce mois',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -154,7 +154,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportAttendance,
           ),
         ],
@@ -193,7 +193,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(25),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           color: Colors.white,
                           size: 25,
@@ -206,7 +206,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                           children: [
                             Text(
                               _studentInfo!['name'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -296,13 +296,13 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_month,
                   color: Color(0xFF10B981),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'Mois',
                   style: TextStyle(
                     fontSize: 14,
@@ -321,7 +321,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedMonth,
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                      icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                       items: [
                         'Novembre 2024',
                         'Décembre 2024',
@@ -331,7 +331,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                                 value: month,
                                 child: Text(
                                   month,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF0F172A),
@@ -400,7 +400,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -481,7 +481,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                     children: [
                       Text(
                         record['course'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -490,7 +490,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                       const SizedBox(height: 4),
                       Text(
                         record['teacher'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -538,7 +538,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                   ),
                   child: Text(
                     record['date'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -554,7 +554,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                   ),
                   child: Text(
                     record['time'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF2563EB),
@@ -570,7 +570,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                   ),
                   child: Text(
                     record['room'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF8B5CF6),
@@ -585,7 +585,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                       color: const Color(0xFF10B981).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Justifié',
                       style: TextStyle(
                         fontSize: 10,
@@ -646,14 +646,14 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exporter ma présence'),
+          title: Text('Exporter ma présence'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: const Text('Attestation de présence PDF'),
-                subtitle: const Text('Document officiel pour administration'),
+                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: Text('Attestation de présence PDF'),
+                subtitle: Text('Document officiel pour administration'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -665,9 +665,9 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.table_chart, color: Color(0xFF10B981)),
-                title: const Text('Historique Excel'),
-                subtitle: const Text('Détail complet des présences'),
+                leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
+                title: Text('Historique Excel'),
+                subtitle: Text('Détail complet des présences'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -683,7 +683,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );

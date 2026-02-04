@@ -46,10 +46,10 @@ class _ModernCourseManagementScreenState extends State<ModernCourseManagementScr
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Gestion des Cours'),
+        title: Text('Gestion des Cours'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
             onPressed: _showCreateCourseDialog,
           ),
         ],
@@ -100,7 +100,7 @@ class _ModernCourseManagementScreenState extends State<ModernCourseManagementScr
                   children: [
                     Text(
                       course['title'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -109,7 +109,7 @@ class _ModernCourseManagementScreenState extends State<ModernCourseManagementScr
                     const SizedBox(height: 4),
                     Text(
                       '${course['id']} • ${course['level']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -144,7 +144,7 @@ class _ModernCourseManagementScreenState extends State<ModernCourseManagementScr
               const Spacer(),
               TextButton(
                 onPressed: () => _manageCourse(course),
-                child: const Text('Gérer'),
+                child: Text('Gérer'),
               ),
             ],
           ),
@@ -157,18 +157,18 @@ class _ModernCourseManagementScreenState extends State<ModernCourseManagementScr
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Créer un cours'),
-        content: const TextField(
+        title: Text('Créer un cours'),
+        content: TextField(
           decoration: InputDecoration(labelText: 'Nom du cours'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text('Annuler'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Créer'),
+            child: Text('Créer'),
           ),
         ],
       ),

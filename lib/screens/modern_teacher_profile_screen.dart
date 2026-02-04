@@ -76,10 +76,10 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Mon Profil',
           style: TextStyle(
             fontSize: 18,
@@ -132,7 +132,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                           borderRadius: BorderRadius.circular(50),
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           color: Colors.white,
                           size: 50,
@@ -150,7 +150,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: Colors.white, width: 2),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.camera_alt,
                               color: Colors.white,
                               size: 16,
@@ -165,7 +165,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                   if (!_isEditing) ...[
                     Text(
                       '${_firstNameController.text} ${_lastNameController.text}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -178,7 +178,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Professeur de Mathématiques',
                         style: TextStyle(
                           fontSize: 12,
@@ -193,10 +193,10 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                         Expanded(
                           child: TextField(
                             controller: _firstNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: 'Prénom',
-                              labelStyle: const TextStyle(color: Colors.white70),
+                              labelStyle: TextStyle(color: Colors.white70),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: const BorderSide(color: Colors.white54),
                                 borderRadius: BorderRadius.circular(8),
@@ -212,10 +212,10 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                         Expanded(
                           child: TextField(
                             controller: _lastNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: 'Nom',
-                              labelStyle: const TextStyle(color: Colors.white70),
+                              labelStyle: TextStyle(color: Colors.white70),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: const BorderSide(color: Colors.white54),
                                 borderRadius: BorderRadius.circular(8),
@@ -274,7 +274,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       _bioController.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF64748B),
                         height: 1.4,
@@ -318,7 +318,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                       ),
                       child: Text(
                         skill,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF10B981),
@@ -427,7 +427,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Exporter le profil',
                         style: TextStyle(
                           fontSize: 14,
@@ -448,7 +448,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Tableau de bord',
                         style: TextStyle(
                           fontSize: 14,
@@ -473,7 +473,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Se déconnecter',
                     style: TextStyle(
                       fontSize: 14,
@@ -498,7 +498,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: Colors.white,
@@ -540,7 +540,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -570,7 +570,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF64748B),
@@ -595,7 +595,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                       Expanded(
                         child: Text(
                           controller.text,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: Color(0xFF0F172A),
                             fontWeight: FontWeight.w500,
@@ -624,7 +624,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             ),
             child: Text(
               code,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF10B981),
@@ -639,7 +639,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
@@ -647,7 +647,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 ),
                 Text(
                   level,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
@@ -664,7 +664,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             ),
             child: Text(
               '$students étudiants',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF2563EB),
@@ -692,7 +692,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 ),
                 child: Text(
                   year,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF8B5CF6),
@@ -704,7 +704,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Color(0xFF0F172A),
@@ -712,7 +712,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           ),
           Text(
             journal,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: Color(0xFF64748B),
               fontWeight: FontWeight.w500,
@@ -732,7 +732,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             width: 60,
             child: Text(
               day,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF64748B),
@@ -742,7 +742,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           Expanded(
             child: Text(
               hours,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF0F172A),
                 fontWeight: FontWeight.w500,
@@ -763,7 +763,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           const SizedBox(width: 12),
           Text(
             platform,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Color(0xFF64748B),
@@ -773,7 +773,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF0F172A),
                 fontWeight: FontWeight.w500,
@@ -795,7 +795,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0F172A),
@@ -804,14 +804,14 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               color: Color(0xFF64748B),
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(
+          Icon(
             Icons.chevron_right,
             color: Color(0xFF9CA3AF),
             size: 16,
@@ -857,14 +857,14 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exporter le profil'),
+          title: Text('Exporter le profil'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: const Text('CV académique'),
-                subtitle: const Text('Générer un CV académique complet'),
+                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: Text('CV académique'),
+                subtitle: Text('Générer un CV académique complet'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -873,9 +873,9 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.share, color: Color(0xFF10B981)),
-                title: const Text('Partager le profil'),
-                subtitle: const Text('Lien de partage du profil enseignant'),
+                leading: Icon(Icons.share, color: Color(0xFF10B981)),
+                title: Text('Partager le profil'),
+                subtitle: Text('Lien de partage du profil enseignant'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -888,7 +888,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );
@@ -905,19 +905,19 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Se déconnecter'),
-          content: const Text('Êtes-vous sûr de vouloir vous déconnecter?'),
+          title: Text('Se déconnecter'),
+          content: Text('Êtes-vous sûr de vouloir vous déconnecter?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text('Se déconnecter'),
+              child: Text('Se déconnecter'),
             ),
           ],
         );
@@ -935,7 +935,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF64748B),
@@ -950,7 +950,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF0F172A),
                       fontWeight: FontWeight.w500,

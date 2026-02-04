@@ -56,13 +56,13 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Carte du Campus',
               style: TextStyle(
                 fontSize: 18,
@@ -70,7 +70,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                 color: Color(0xFF0F172A),
               ),
             ),
-            const Text(
+            Text(
               'Orientation rapide',
               style: TextStyle(
                 fontSize: 12,
@@ -82,7 +82,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Color(0xFF64748B)),
+            icon: Icon(Icons.info_outline, color: Color(0xFF64748B)),
             onPressed: () {
               _showInfoDialog(context);
             },
@@ -306,7 +306,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             topRight: Radius.circular(15),
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.login,
           color: Colors.white,
           size: 20,
@@ -334,7 +334,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             width: 2,
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.local_parking,
           color: Color(0xFF64748B),
           size: 24,
@@ -398,7 +398,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
               children: [
                 Text(
                   bloc['name'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF0F172A),
@@ -407,7 +407,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                 const SizedBox(height: 4),
                 Text(
                   bloc['description'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF64748B),
                   ),
@@ -439,7 +439,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
           ),
           
           // Flèche
-          const Icon(
+          Icon(
             Icons.arrow_forward_ios,
             size: 16,
             color: Color(0xFF94A3B8),
@@ -467,13 +467,13 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             children: [
               Text(
                 bloc['description'],
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Services disponibles :',
                 style: TextStyle(
                   fontSize: 14,
@@ -487,7 +487,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                   padding: const EdgeInsets.only(left: 8, top: 4),
                   child: Text(
                     '• $service',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF64748B),
                     ),
@@ -499,7 +499,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -512,7 +512,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Comment utiliser la carte'),
+          title: Text('Comment utiliser la carte'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +536,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Compris'),
+              child: Text('Compris'),
             ),
           ],
         );

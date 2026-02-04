@@ -140,30 +140,30 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
     final canCreateAnnouncement = widget.isTeacher || widget.isAdmin;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Annonces',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Text(
               '${_announcements.length} publications',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -172,11 +172,11 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
         actions: [
           if (canCreateAnnouncement)
             IconButton(
-              icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+              icon: Icon(Icons.add, color: Color(0xFF2563EB)),
               onPressed: _showCreateAnnouncementDialog,
             ),
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFF64748B)),
+            icon: Icon(Icons.notifications, color: Color(0xFF64748B)),
             onPressed: _showNotificationSettings,
           ),
         ],
@@ -188,7 +188,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -205,18 +205,18 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Rechercher une annonce...',
-                    hintStyle: const TextStyle(
-                      color: Color(0xFF9CA3AF),
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).hintColor,
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFF6B7280),
+                      color: Theme.of(context).iconTheme.color,
                       size: 20,
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Color(0xFF6B7280)),
+                            icon: Icon(Icons.clear, color: Color(0xFF6B7280)),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
@@ -224,22 +224,22 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                           )
                         : null,
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 12,
                       horizontal: 16,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
                         width: 1,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
                         width: 1,
                       ),
                     ),
@@ -258,24 +258,24 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedCategory,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Toutes', 'Académique', 'Technique', 'Ressources', 'Événement']
                                 .map((category) => DropdownMenuItem(
                                       value: category,
                                       child: Text(
                                         category,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                     ))
@@ -294,24 +294,24 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: Theme.of(context).dividerColor),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedPriority,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Toutes', 'Élevée', 'Moyenne', 'Basse']
                                 .map((priority) => DropdownMenuItem(
                                       value: priority,
                                       child: Text(
                                         priority,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                     ))
@@ -394,8 +394,8 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
               onPressed: _showCreateAnnouncementDialog,
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Nouvelle annonce'),
+              icon: Icon(Icons.add),
+              label: Text('Nouvelle annonce'),
             )
           : null,
     );
@@ -449,17 +449,17 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: Color(0xFF64748B),
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -471,7 +471,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -499,7 +499,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                       color: const Color(0xFF2563EB).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.push_pin,
                       color: Color(0xFF2563EB),
                       size: 16,
@@ -514,7 +514,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                       fontWeight: FontWeight.w700,
                       color: announcement['isPinned']
                           ? const Color(0xFF2563EB)
-                          : const Color(0xFF0F172A),
+                          : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                 ),
@@ -539,50 +539,57 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
             const SizedBox(height: 12),
             
             // Métadonnées
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: _getRoleColor(announcement['authorRole']).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    _getRoleIcon(announcement['authorRole']),
-                    color: _getRoleColor(announcement['authorRole']),
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        announcement['author'],
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF0F172A),
-                        ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: _getRoleColor(announcement['authorRole']).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      Text(
-                        '${announcement['authorRole']} • ${announcement['category']}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Icon(
+                        _getRoleIcon(announcement['authorRole']),
+                        color: _getRoleColor(announcement['authorRole']),
+                        size: 16,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          announcement['author'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        Text(
+                          '${announcement['authorRole']} • ${announcement['category']}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 Text(
                   '${announcement['date']} • ${announcement['time']}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -594,9 +601,9 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
             // Contenu
             Text(
               announcement['content'],
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -614,15 +621,15 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '#$tag',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   );
@@ -635,17 +642,17 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.attach_file,
                     size: 16,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).iconTheme.color,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${announcement['attachments'].length} pièce(s) jointe(s)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -660,17 +667,17 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.visibility,
                       size: 16,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).iconTheme.color,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       announcement['views'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -679,17 +686,17 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                 const SizedBox(width: 16),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.thumb_up_outlined,
                       size: 16,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).iconTheme.color,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       announcement['likes'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -698,17 +705,17 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                 const SizedBox(width: 16),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.chat_bubble_outline,
                       size: 16,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).iconTheme.color,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       announcement['comments'].toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -717,7 +724,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                 const Spacer(),
                 TextButton(
                   onPressed: () => _viewAnnouncementDetails(announcement),
-                  child: const Text(
+                  child: Text(
                     'Lire la suite',
                     style: TextStyle(
                       fontSize: 12,
@@ -778,7 +785,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Créer une annonce'),
+          title: Text('Créer une annonce'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -801,7 +808,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
@@ -813,7 +820,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                   ),
                 );
               },
-              child: const Text('Publier'),
+              child: Text('Publier'),
             ),
           ],
         );
@@ -835,19 +842,19 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Paramètres de notification'),
+          title: Text('Paramètres de notification'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SwitchListTile(
-                title: const Text('Annonces épinglées'),
-                subtitle: const Text('Recevoir une notification pour les annonces importantes'),
+                title: Text('Annonces épinglées'),
+                subtitle: Text('Recevoir une notification pour les annonces importantes'),
                 value: true,
                 onChanged: (value) {},
               ),
               SwitchListTile(
-                title: const Text('Nouvelles annonces'),
-                subtitle: const Text('Être notifié des nouvelles publications'),
+                title: Text('Nouvelles annonces'),
+                subtitle: Text('Être notifié des nouvelles publications'),
                 value: true,
                 onChanged: (value) {},
               ),
@@ -856,7 +863,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -873,29 +880,29 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Détails de l\'annonce',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share, color: Color(0xFF64748B)),
+            icon: Icon(Icons.share, color: Theme.of(context).iconTheme.color),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.bookmark_border, color: Color(0xFF64748B)),
+            icon: Icon(Icons.bookmark_border, color: Theme.of(context).iconTheme.color),
             onPressed: () {},
           ),
         ],
@@ -909,7 +916,7 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -928,10 +935,10 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           announcement['title'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
@@ -943,7 +950,7 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                         ),
                         child: Text(
                           announcement['priority'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFFEF4444),
@@ -965,7 +972,7 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                           color: const Color(0xFF10B981).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           color: Color(0xFF10B981),
                           size: 20,
@@ -978,17 +985,17 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                           children: [
                             Text(
                               announcement['author'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                               ),
                             ),
                             Text(
                               '${announcement['authorRole']} • ${announcement['category']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -997,9 +1004,9 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                       ),
                       Text(
                         '${announcement['date']} • ${announcement['time']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1009,20 +1016,20 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   
                   // Contenu
-                  const Text(
+                  Text(
                     'Contenu',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     announcement['content'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w400,
                       height: 1.6,
                     ),
@@ -1031,12 +1038,12 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                   // Tags
                   if (announcement['tags'].isNotEmpty) ...[
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Tags',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1047,15 +1054,15 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
                             '#$tag',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
                         );
@@ -1066,12 +1073,12 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                   // Pièces jointes
                   if (announcement['attachments'].isNotEmpty) ...[
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Pièces jointes',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1080,29 +1087,29 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.insert_drive_file,
-                              color: Color(0xFF64748B),
+                              color: Theme.of(context).iconTheme.color,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 file,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF0F172A),
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
                                 ),
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.download, color: Color(0xFF2563EB)),
+                              icon: Icon(Icons.download, color: Color(0xFF2563EB)),
                               onPressed: () {},
                             ),
                           ],
@@ -1120,7 +1127,7 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -1135,25 +1142,25 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                 children: [
                   Column(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.visibility,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).iconTheme.color,
                         size: 20,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         announcement['views'].toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Vues',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1161,25 +1168,25 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                   ),
                   Column(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.thumb_up,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).iconTheme.color,
                         size: 20,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         announcement['likes'].toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'J\'aime',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1187,25 +1194,25 @@ class _AnnouncementDetailsScreen extends StatelessWidget {
                   ),
                   Column(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.chat_bubble,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).iconTheme.color,
                         size: 20,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         announcement['comments'].toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Commentaires',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

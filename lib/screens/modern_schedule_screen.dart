@@ -54,13 +54,13 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Emploi du temps',
               style: TextStyle(
                 fontSize: 18,
@@ -70,7 +70,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
             ),
             Text(
               '${selectedDate.day} ${_getMonthName(selectedDate.month)} ${selectedDate.year}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -80,7 +80,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month, color: Color(0xFF64748B)),
+            icon: Icon(Icons.calendar_month, color: Color(0xFF64748B)),
             onPressed: () {
               _showCalendarDialog();
             },
@@ -116,7 +116,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
               children: [
                 Text(
                   'Semaine du ${DateTime.now().day} ${_getMonthName(DateTime.now().month)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF64748B),
@@ -127,7 +127,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
                   onPressed: () {
                     _showCalendarDialog();
                   },
-                  child: const Text(
+                  child: Text(
                     'Voir calendrier',
                     style: TextStyle(
                       fontSize: 12,
@@ -274,7 +274,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
                             Expanded(
                               child: Text(
                                 course['subject'],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF0F172A),
@@ -365,7 +365,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF0F172A),
@@ -373,7 +373,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
               ),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   color: Color(0xFF94A3B8),
                 ),
@@ -397,14 +397,14 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_available,
               size: 40,
               color: Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aucun cours aujourd\'hui',
             style: TextStyle(
               fontSize: 18,
@@ -413,7 +413,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Profitez de votre journée libre',
             style: TextStyle(
               fontSize: 14,
@@ -453,12 +453,12 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Calendrier'),
-          content: const Text('Vue calendrier complète en cours de développement.'),
+          title: Text('Calendrier'),
+          content: Text('Vue calendrier complète en cours de développement.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

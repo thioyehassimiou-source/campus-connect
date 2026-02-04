@@ -105,13 +105,13 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Mes Notes',
               style: TextStyle(
                 fontSize: 18,
@@ -121,7 +121,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
             ),
             Text(
               '${_grades.length} évaluations',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -131,7 +131,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportGrades,
           ),
         ],
@@ -170,7 +170,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.school,
                           color: Colors.white,
                           size: 30,
@@ -183,7 +183,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                           children: [
                             Text(
                               _studentInfo!['name'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -262,13 +262,13 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_today,
                   color: Color(0xFF2563EB),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   'Semestre',
                   style: TextStyle(
                     fontSize: 14,
@@ -287,13 +287,13 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedSemester,
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                      icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                       items: ['Semestre 1', 'Semestre 2']
                           .map((semester) => DropdownMenuItem(
                                 value: semester,
                                 child: Text(
                                   semester,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF0F172A),
@@ -343,7 +343,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -389,7 +389,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                     children: [
                       Text(
                         grade['course'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -398,7 +398,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         grade['evaluation'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -407,7 +407,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Prof. ${grade['teacher']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF9CA3AF),
                           fontWeight: FontWeight.w500,
@@ -462,7 +462,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                   ),
                   child: Text(
                     'Coeff. ${grade['coefficient']}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -478,7 +478,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                   ),
                   child: Text(
                     '${grade['credits']} crédits',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF2563EB),
@@ -488,7 +488,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                 const Spacer(),
                 Text(
                   grade['date'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
@@ -534,14 +534,14 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exporter mes notes'),
+          title: Text('Exporter mes notes'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: const Text('Relevé de notes PDF'),
-                subtitle: const Text('Format officiel pour impression'),
+                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: Text('Relevé de notes PDF'),
+                subtitle: Text('Format officiel pour impression'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -553,9 +553,9 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.table_chart, color: Color(0xFF10B981)),
-                title: const Text('Excel'),
-                subtitle: const Text('Pour analyse personnelle'),
+                leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
+                title: Text('Excel'),
+                subtitle: Text('Pour analyse personnelle'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -571,7 +571,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );

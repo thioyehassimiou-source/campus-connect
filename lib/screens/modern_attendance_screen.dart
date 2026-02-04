@@ -76,13 +76,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Gestion des Présences',
               style: TextStyle(
                 fontSize: 18,
@@ -92,7 +92,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
             ),
             Text(
               '${_students.length} étudiants',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -102,11 +102,11 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.save, color: Color(0xFF2563EB)),
             onPressed: _saveAttendance,
           ),
           IconButton(
-            icon: const Icon(Icons.share, color: Color(0xFF64748B)),
+            icon: Icon(Icons.share, color: Color(0xFF64748B)),
             onPressed: _shareAttendance,
           ),
         ],
@@ -133,13 +133,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                           child: DropdownButton<String>(
                             value: _selectedCourse,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Mathématiques', 'Physique', 'Informatique', 'Chimie']
                                 .map((course) => DropdownMenuItem(
                                       value: course,
                                       child: Text(
                                         course,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -169,13 +169,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                           child: DropdownButton<String>(
                             value: _selectedDate,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Aujourd\'hui', 'Hier', 'Cette semaine', 'Ce mois']
                                 .map((date) => DropdownMenuItem(
                                       value: date,
                                       child: Text(
                                         date,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -225,7 +225,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                           color: const Color(0xFF10B981).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.check_circle,
                           color: Color(0xFF10B981),
                           size: 20,
@@ -234,13 +234,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '${_attendanceStatus.values.where((present) => present).length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Présents',
                         style: TextStyle(
                           fontSize: 12,
@@ -261,7 +261,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                           color: const Color(0xFFEF4444).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.cancel,
                           color: Color(0xFFEF4444),
                           size: 20,
@@ -270,13 +270,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '${_attendanceStatus.values.where((present) => !present).length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Absents',
                         style: TextStyle(
                           fontSize: 12,
@@ -297,7 +297,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                           color: const Color(0xFF2563EB).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.percent,
                           color: Color(0xFF2563EB),
                           size: 20,
@@ -306,13 +306,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '${((_attendanceStatus.values.where((present) => present).length / _students.length) * 100).toStringAsFixed(0)}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Présence',
                         style: TextStyle(
                           fontSize: 12,
@@ -343,7 +343,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Tous présents',
                       style: TextStyle(
                         fontSize: 14,
@@ -364,7 +364,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Tous absents',
                       style: TextStyle(
                         fontSize: 14,
@@ -446,7 +446,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                 children: [
                   Text(
                     student['name'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F172A),
@@ -463,7 +463,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         ),
                         child: Text(
                           student['id'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF64748B),
@@ -479,7 +479,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         ),
                         child: Text(
                           student['group'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF2563EB),

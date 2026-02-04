@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:campusconnect/core/services/supabase_auth_service.dart';
 
@@ -42,54 +43,102 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       _isLoading = true;
     });
 
-    final data = await ProfileService.getCurrentUserProfile();
+    // ✅ Retry robuste
+    final data = await ProfileService.getCurrentUserProfile(
+      retryCount: 5,
+      delayMs: 1000,
+    );
 
     if (mounted) {
       setState(() {
         if (data != null) {
-          // Gestion robuste des noms
           final fullName = data['nom'] ?? data['full_name'] ?? 'Utilisateur';
           final nameParts = fullName.split(' ');
           _firstNameController.text = nameParts.isNotEmpty ? nameParts.first : 'Prénom';
           _lastNameController.text = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Nom';
-          
-          // Gestion des autres champs avec valeurs par défaut
+
           _emailController.text = data['email'] ?? 'email@campus.fr';
           _phoneController.text = data['telephone'] ?? data['phone'] ?? 'Non renseigné';
           _addressController.text = data['address'] ?? 'Non renseignée';
           _bioController.text = data['bio'] ?? 'Étudiant sur CampusConnect';
-          
-          // Stocker toutes les données
+
           _studentData = {
             ...data,
             'role': data['role'] ?? 'Étudiant',
             'niveau': data['niveau'] ?? data['level'] ?? 'Non renseigné',
-            'filiere_id': data['filiere_id'] ?? data['program'] ?? 'Non renseignée',
-            'faculty_name': data['faculties'] != null ? (data['faculties']['nom'] ?? data['faculties']['name']) : 'Non renseignée',
-            'department_name': data['departments'] != null ? (data['departments']['nom'] ?? data['departments']['name']) : null,
-            'service_name': data['services'] != null ? (data['services']['nom'] ?? data['services']['name']) : null,
+            // ✅ filiere_id peut être null
+            'filiere_id': data['filiere_id'] != null 
+                ? data['filiere_id'].toString() 
+                : 'Non renseignée',
+            'faculty_name': data['faculties'] != null 
+                ? (data['faculties']['nom'] ?? data['faculties']['name']) 
+                : 'Non renseignée',
+            'department_name': data['departments'] != null 
+                ? (data['departments']['nom'] ?? data['departments']['name']) 
+                : null,
+            'service_name': data['services'] != null 
+                ? (data['services']['nom'] ?? data['services']['name']) 
+                : null,
           };
         } else {
-          // Données par défaut si aucune donnée n'est récupérée
-          _firstNameController.text = 'Utilisateur';
-          _lastNameController.text = 'CampusConnect';
-          _emailController.text = 'utilisateur@campus.fr';
-          _phoneController.text = 'Non renseigné';
-          _addressController.text = 'Non renseignée';
-          _bioController.text = 'Étudiant sur CampusConnect';
-          
-          _studentData = {
-            'id': 'user_id',
-            'role': 'Étudiant',
-            'niveau': 'Non renseigné',
-            'filiere_id': 'Non renseignée',
-            'email': 'utilisateur@campus.fr',
-            'telephone': 'Non renseigné',
-          };
+          // ✅ Données par défaut + montrer le dialogue seulement si vraiment un problème
+          final user = Supabase.instance.client.auth.currentUser;
+          if (user != null) {
+            // Utilisateur connecté mais profil absent → vraie erreur
+            _showProfileLoadError();
+          } else {
+            // Pas d'utilisateur → juste mettre des valeurs par défaut
+            _firstNameController.text = 'Utilisateur';
+            _lastNameController.text = 'CampusConnect';
+            _emailController.text = 'utilisateur@campus.fr';
+            _phoneController.text = 'Non renseigné';
+            _addressController.text = 'Non renseignée';
+            _bioController.text = 'Étudiant sur CampusConnect';
+            
+            _studentData = {
+              'id': 'user_id',
+              'role': 'Étudiant',
+              'niveau': 'Non renseigné',
+              'filiere_id': 'Non renseignée',
+              'email': 'utilisateur@campus.fr',
+              'telephone': 'Non renseigné',
+            };
+          }
         }
         _isLoading = false;
       });
     }
+  }
+
+  void _showProfileLoadError() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Erreur'),
+        content: Text(
+          'Impossible de charger votre profil. Veuillez vous reconnecter.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await SupabaseAuthService.signOut();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+            child: Text('Se déconnecter'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _loadStudentData(); // Retry
+            },
+            child: Text('Réessayer'),
+          ),
+        ],
+      ),
+    );
   }
 
   Map<String, dynamic>? _studentData;
@@ -97,20 +146,20 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Mon Profil',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         actions: [
@@ -160,7 +209,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                           borderRadius: BorderRadius.circular(50),
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           color: Colors.white,
                           size: 50,
@@ -178,7 +227,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: Colors.white, width: 2),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.camera_alt,
                               color: Colors.white,
                               size: 16,
@@ -193,7 +242,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                   if (!_isEditing) ...[
                     Text(
                       '${_firstNameController.text} ${_lastNameController.text}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -208,7 +257,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                       ),
                       child: Text(
                         '${_studentData?['role'] ?? 'Étudiant'} • ${_studentData?['niveau'] ?? ''}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -221,10 +270,10 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         Expanded(
                           child: TextField(
                             controller: _firstNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: 'Prénom',
-                              labelStyle: const TextStyle(color: Colors.white70),
+                              labelStyle: TextStyle(color: Colors.white70),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: const BorderSide(color: Colors.white54),
                                 borderRadius: BorderRadius.circular(8),
@@ -240,10 +289,10 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         Expanded(
                           child: TextField(
                             controller: _lastNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               labelText: 'Nom',
-                              labelStyle: const TextStyle(color: Colors.white70),
+                              labelStyle: TextStyle(color: Colors.white70),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: const BorderSide(color: Colors.white54),
                                 borderRadius: BorderRadius.circular(8),
@@ -283,12 +332,13 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
               [
                 _buildInfoRow('ID', _getShortId(_studentData?['id'])),
                 _buildInfoRow('Faculté', _studentData?['faculty_name'] ?? 'Non renseignée'),
-                if (_studentData?['role'] != 'Administratif' && _studentData?['department_name'] != null)
+                // ✅ Département: uniquement pour Étudiant
+                if (_studentData?['role'] == 'Étudiant' && _studentData?['department_name'] != null)
                   _buildInfoRow('Département', _studentData?['department_name']),
+                // ✅ Service: uniquement pour Administratif
                 if (_studentData?['role'] == 'Administratif' && _studentData?['service_name'] != null)
                   _buildInfoRow('Service', _studentData?['service_name']),
-                if (_studentData?['role'] == 'Étudiant') ...[
-                  _buildInfoRow('Programme', _studentData?['filiere_id'] ?? 'Non renseigné'),
+                if (_studentData?['role'] == 'Étudiant') ...[ _buildInfoRow('Programme', _studentData?['filiere_id'] ?? 'Non renseigné'),
                   _buildInfoRow('Niveau', _studentData?['niveau'] ?? 'Non renseigné'),
                 ],
                 _buildInfoRow('Date d\'inscription', _formatDate(_studentData?['created_at']) ?? '2024'),
@@ -321,9 +371,9 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       _bioController.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         height: 1.4,
                       ),
                     ),
@@ -365,7 +415,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                       ),
                       child: Text(
                         skill,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF2563EB),
@@ -399,7 +449,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                       ),
                       child: Text(
                         interest,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF10B981),
@@ -454,7 +504,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Exporter le profil',
                         style: TextStyle(
                           fontSize: 14,
@@ -467,7 +517,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                   const SizedBox(width: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, '/create-profile'),
-                child: const Text('Créer Profil'),
+                child: Text('Créer Profil'),
               ),
                   Expanded(
                     child: OutlinedButton(
@@ -479,7 +529,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Confidentialité',
                         style: TextStyle(
                           fontSize: 14,
@@ -504,7 +554,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Se déconnecter',
                     style: TextStyle(
                       fontSize: 14,
@@ -529,7 +579,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: Colors.white,
@@ -550,7 +600,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
   Widget _buildSectionCard(String title, IconData icon, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -571,10 +621,10 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
@@ -601,19 +651,19 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -633,10 +683,10 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -645,7 +695,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 ? TextField(
                     controller: controller,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(icon, size: 18, color: const Color(0xFF64748B)),
+                      prefixIcon: Icon(icon, size: 18, color: Theme.of(context).iconTheme.color),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -653,14 +703,14 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                   )
                 : Row(
                     children: [
-                      Icon(icon, size: 16, color: const Color(0xFF64748B)),
+                      Icon(icon, size: 16, color: Theme.of(context).iconTheme.color),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           controller.text,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF0F172A),
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -678,23 +728,23 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF64748B), size: 16),
+          Icon(icon, color: Theme.of(context).iconTheme.color, size: 16),
           const SizedBox(width: 12),
           Text(
             platform,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -709,30 +759,30 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF64748B), size: 16),
+          Icon(icon, color: Theme.of(context).iconTheme.color, size: 16),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(
+          Icon(
             Icons.chevron_right,
-            color: Color(0xFF9CA3AF),
+            color: Theme.of(context).iconTheme.color,
             size: 16,
           ),
         ],
@@ -776,14 +826,14 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Exporter le profil'),
+          title: Text('Exporter le profil'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: const Text('CV au format PDF'),
-                subtitle: const Text('Générer un CV professionnel'),
+                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: Text('CV au format PDF'),
+                subtitle: Text('Générer un CV professionnel'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -792,9 +842,9 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.share, color: Color(0xFF2563EB)),
-                title: const Text('Partager le profil'),
-                subtitle: const Text('Lien de partage du profil'),
+                leading: Icon(Icons.share, color: Color(0xFF2563EB)),
+                title: Text('Partager le profil'),
+                subtitle: Text('Lien de partage du profil'),
                 onTap: () {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -807,7 +857,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
           ],
         );
@@ -820,25 +870,25 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Paramètres de confidentialité'),
+          title: Text('Paramètres de confidentialité'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SwitchListTile(
-                title: const Text('Profil public'),
-                subtitle: const Text('Rendre votre profil visible par tous'),
+                title: Text('Profil public'),
+                subtitle: Text('Rendre votre profil visible par tous'),
                 value: false,
                 onChanged: (value) {},
               ),
               SwitchListTile(
-                title: const Text('Partager les informations académiques'),
-                subtitle: const Text('Autoriser le partage des notes et diplômes'),
+                title: Text('Partager les informations académiques'),
+                subtitle: Text('Autoriser le partage des notes et diplômes'),
                 value: true,
                 onChanged: (value) {},
               ),
               SwitchListTile(
-                title: const Text('Recherches'),
-                subtitle: const Text('Permettre aux autres de vous trouver'),
+                title: Text('Recherches'),
+                subtitle: Text('Permettre aux autres de vous trouver'),
                 value: true,
                 onChanged: (value) {},
               ),
@@ -847,7 +897,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -880,19 +930,19 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Se déconnecter'),
-          content: const Text('Êtes-vous sûr de vouloir vous déconnecter?'),
+          title: Text('Se déconnecter'),
+          content: Text('Êtes-vous sûr de vouloir vous déconnecter?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text('Se déconnecter'),
+              child: Text('Se déconnecter'),
             ),
           ],
         );

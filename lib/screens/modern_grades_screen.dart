@@ -84,13 +84,13 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Gestion des Notes',
               style: TextStyle(
                 fontSize: 18,
@@ -100,7 +100,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
             ),
             Text(
               '${_grades.length} évaluations',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -110,11 +110,11 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
             onPressed: _showAddGradeDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportGrades,
           ),
         ],
@@ -141,13 +141,13 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           child: DropdownButton<String>(
                             value: _selectedCourse,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Tous les cours', 'Mathématiques', 'Physique', 'Informatique']
                                 .map((course) => DropdownMenuItem(
                                       value: course,
                                       child: Text(
                                         course,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -177,13 +177,13 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           child: DropdownButton<String>(
                             value: _selectedSemester,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                             items: ['Semestre 1', 'Semestre 2']
                                 .map((semester) => DropdownMenuItem(
                                       value: semester,
                                       child: Text(
                                         semester,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF0F172A),
@@ -233,14 +233,14 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           color: const Color(0xFF10B981).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.trending_up,
                           color: Color(0xFF10B981),
                           size: 20,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         '15.2',
                         style: TextStyle(
                           fontSize: 20,
@@ -248,7 +248,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Moyenne',
                         style: TextStyle(
                           fontSize: 12,
@@ -269,7 +269,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           color: const Color(0xFF2563EB).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.people,
                           color: Color(0xFF2563EB),
                           size: 20,
@@ -278,13 +278,13 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '${_grades.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Étudiants',
                         style: TextStyle(
                           fontSize: 12,
@@ -305,7 +305,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                           color: const Color(0xFFF59E0B).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.pending,
                           color: Color(0xFFF59E0B),
                           size: 20,
@@ -314,13 +314,13 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '${_grades.where((g) => g['status'] == 'draft').length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Brouillons',
                         style: TextStyle(
                           fontSize: 12,
@@ -380,7 +380,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                     children: [
                       Text(
                         grade['studentName'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -388,7 +388,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                       ),
                       Text(
                         '${grade['studentId']} • ${grade['course']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -443,7 +443,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                   ),
                   child: Text(
                     grade['evaluation'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -459,7 +459,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                   ),
                   child: Text(
                     'Coeff. ${grade['coefficient']}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -469,7 +469,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                 const Spacer(),
                 Text(
                   grade['date'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
@@ -487,7 +487,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                       color: const Color(0xFFF59E0B).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Brouillon',
                       style: TextStyle(
                         fontSize: 10,
@@ -499,7 +499,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                 const Spacer(),
                 TextButton(
                   onPressed: () => _editGrade(grade),
-                  child: const Text(
+                  child: Text(
                     'Modifier',
                     style: TextStyle(
                       fontSize: 12,
@@ -511,7 +511,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                 if (isPublished)
                   TextButton(
                     onPressed: () => _viewGradeDetails(grade),
-                    child: const Text(
+                    child: Text(
                       'Détails',
                       style: TextStyle(
                         fontSize: 12,
@@ -541,12 +541,12 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Ajouter une note'),
-          content: const Text('Fonctionnalité à implémenter'),
+          title: Text('Ajouter une note'),
+          content: Text('Fonctionnalité à implémenter'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
@@ -559,12 +559,12 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Modifier la note'),
+          title: Text('Modifier la note'),
           content: Text('Modifier la note de ${grade['studentName']}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () {
@@ -576,7 +576,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
                   ),
                 );
               },
-              child: const Text('Enregistrer'),
+              child: Text('Enregistrer'),
             ),
           ],
         );
@@ -603,7 +603,7 @@ class _ModernGradesScreenState extends State<ModernGradesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );

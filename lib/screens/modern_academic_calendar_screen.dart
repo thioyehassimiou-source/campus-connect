@@ -154,13 +154,13 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Calendrier Académique',
               style: TextStyle(
                 fontSize: 18,
@@ -170,7 +170,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             ),
             Text(
               'Semestre 1 - 2024/2025',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -180,11 +180,11 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
             onPressed: _showAddEventDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportCalendar,
           ),
         ],
@@ -208,7 +208,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.filter_list,
                   color: Color(0xFF2563EB),
                   size: 20,
@@ -339,7 +339,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                 if (_selectedDay != null) ...[
                   Text(
                     'Événements du ${_formatDate(_selectedDay!)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F172A),
@@ -367,8 +367,8 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         onPressed: _showAddEventDialog,
         backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Événement'),
+        icon: Icon(Icons.add),
+        label: Text('Événement'),
       ),
     );
   }
@@ -421,7 +421,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                 children: [
                   Text(
                     event['title'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F172A),
@@ -447,7 +447,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+              icon: Icon(Icons.more_vert, color: Color(0xFF64748B)),
               onPressed: () => _showEventOptions(event),
             ),
           ],
@@ -468,14 +468,14 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               color: const Color(0xFF2563EB).withOpacity(0.1),
               borderRadius: BorderRadius.circular(40),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_available,
               color: Color(0xFF2563EB),
               size: 40,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aucun événement ce jour',
             style: TextStyle(
               fontSize: 18,
@@ -484,7 +484,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Sélectionnez un autre jour ou ajoutez un événement',
             style: TextStyle(
               fontSize: 14,
@@ -511,7 +511,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ajouter un événement'),
+        title: Text('Ajouter un événement'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -528,7 +528,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text('Annuler'),
           ),
           TextButton(
             onPressed: () {
@@ -540,7 +540,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                 ),
               );
             },
-            child: const Text('Ajouter'),
+            child: Text('Ajouter'),
           ),
         ],
       ),
@@ -556,8 +556,8 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Modifier'),
+              leading: Icon(Icons.edit),
+              title: Text('Modifier'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -566,8 +566,8 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               },
             ),
             ListTile(
-              leading: const Icon(Icons.share),
-              title: const Text('Partager'),
+              leading: Icon(Icons.share),
+              title: Text('Partager'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -576,8 +576,8 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
-              title: const Text('Supprimer', style: TextStyle(color: Color(0xFFEF4444))),
+              leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
+              title: Text('Supprimer', style: TextStyle(color: Color(0xFFEF4444))),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -593,7 +593,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
+            child: Text('Fermer'),
           ),
         ],
       ),
@@ -604,14 +604,14 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exporter le calendrier'),
+        title: Text('Exporter le calendrier'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.calendar_today, color: Color(0xFF2563EB)),
-              title: const Text('Google Calendar'),
-              subtitle: const Text('Synchroniser avec Google Calendar'),
+              leading: Icon(Icons.calendar_today, color: Color(0xFF2563EB)),
+              title: Text('Google Calendar'),
+              subtitle: Text('Synchroniser avec Google Calendar'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -620,9 +620,9 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               },
             ),
             ListTile(
-              leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-              title: const Text('PDF'),
-              subtitle: const Text('Télécharger en format PDF'),
+              leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+              title: Text('PDF'),
+              subtitle: Text('Télécharger en format PDF'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -635,7 +635,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text('Annuler'),
           ),
         ],
       ),

@@ -132,13 +132,13 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Messagerie',
               style: TextStyle(
                 fontSize: 18,
@@ -148,7 +148,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
             ),
             Text(
               '${_conversations.where((c) => c['unread'] > 0).length} non lus',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -158,11 +158,11 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Color(0xFF64748B)),
+            icon: Icon(Icons.search, color: Color(0xFF64748B)),
             onPressed: _showSearchDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
             onPressed: _showNewMessageDialog,
           ),
         ],
@@ -186,11 +186,11 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Rechercher une conversation...',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 14,
                       ),
-                      prefixIcon: const Icon(
+                      prefixIcon: Icon(
                         Icons.search,
                         color: Color(0xFF6B7280),
                         size: 20,
@@ -335,7 +335,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                       ),
                       Text(
                         conversation['time'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -349,7 +349,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                       Expanded(
                         child: Text(
                           conversation['lastMessage'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
                             fontWeight: FontWeight.w500,
@@ -366,7 +366,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                           ),
                           child: Text(
                             conversation['unread'].toString(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -418,7 +418,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                   children: [
                     Text(
                       _selectedConversation!['name'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
@@ -426,7 +426,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                     ),
                     Text(
                       _selectedConversation!['role'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -436,7 +436,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                icon: Icon(Icons.more_vert, color: Color(0xFF64748B)),
                 onPressed: _showConversationOptions,
               ),
             ],
@@ -467,7 +467,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.attach_file, color: Color(0xFF64748B)),
+                icon: Icon(Icons.attach_file, color: Color(0xFF64748B)),
                 onPressed: _attachFile,
               ),
               Expanded(
@@ -475,7 +475,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                   controller: _messageController,
                   decoration: InputDecoration(
                     hintText: 'Écrire un message...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       color: Color(0xFF9CA3AF),
                       fontSize: 14,
                     ),
@@ -504,7 +504,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.send, color: Color(0xFF2563EB)),
+                icon: Icon(Icons.send, color: Color(0xFF2563EB)),
                 onPressed: _sendMessage,
               ),
             ],
@@ -530,7 +530,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 color: const Color(0xFF2563EB).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 color: Color(0xFF2563EB),
                 size: 16,
@@ -547,7 +547,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       message['sender'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w600,
@@ -574,7 +574,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 const SizedBox(height: 4),
                 Text(
                   message['time'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Color(0xFF9CA3AF),
                     fontWeight: FontWeight.w500,
@@ -592,7 +592,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 color: const Color(0xFF10B981).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 color: Color(0xFF10B981),
                 size: 16,
@@ -616,14 +616,14 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
               color: const Color(0xFF2563EB).withOpacity(0.1),
               borderRadius: BorderRadius.circular(40),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.chat_bubble_outline,
               color: Color(0xFF2563EB),
               size: 40,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Sélectionnez une conversation',
             style: TextStyle(
               fontSize: 18,
@@ -632,7 +632,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Choisissez une conversation pour commencer à discuter',
             style: TextStyle(
               fontSize: 14,
@@ -705,8 +705,8 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Rechercher'),
-          content: const TextField(
+          title: Text('Rechercher'),
+          content: TextField(
             decoration: InputDecoration(
               hintText: 'Rechercher des messages ou conversations...',
             ),
@@ -714,11 +714,11 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Rechercher'),
+              child: Text('Rechercher'),
             ),
           ],
         );
@@ -731,8 +731,8 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Nouveau message'),
-          content: const TextField(
+          title: Text('Nouveau message'),
+          content: TextField(
             decoration: InputDecoration(
               hintText: 'Destinataire...',
             ),
@@ -740,11 +740,11 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
+              child: Text('Annuler'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Envoyer'),
+              child: Text('Envoyer'),
             ),
           ],
         );
@@ -762,22 +762,22 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Voir le profil'),
+                leading: Icon(Icons.info_outline),
+                title: Text('Voir le profil'),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.notifications_off),
-                title: const Text('Désactiver les notifications'),
+                leading: Icon(Icons.notifications_off),
+                title: Text('Désactiver les notifications'),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
-                title: const Text('Supprimer la conversation', style: TextStyle(color: Color(0xFFEF4444))),
+                leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
+                title: Text('Supprimer la conversation', style: TextStyle(color: Color(0xFFEF4444))),
                 onTap: () {
                   Navigator.of(context).pop();
                 },
@@ -787,7 +787,7 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              child: Text('Fermer'),
             ),
           ],
         );
