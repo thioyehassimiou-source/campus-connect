@@ -60,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
@@ -70,10 +69,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.school_rounded,
-                        size: 60,
-                        color: Color(0xFF2563EB),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: Transform.scale(
+                          scale: 1.35,
+                          child: Image.asset(
+                            'assets/logo/app_logo.png',
+                            fit: BoxFit.fill,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),

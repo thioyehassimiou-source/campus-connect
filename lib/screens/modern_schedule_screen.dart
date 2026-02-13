@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/schedule_service.dart';
+import 'package:campusconnect/core/services/export_service.dart';
+import 'package:campusconnect/core/services/download_service.dart';
+import 'package:campusconnect/shared/models/course_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ModernScheduleScreen extends StatefulWidget {
-  const ModernScheduleScreen({super.key});
+  final bool isTeacher;
+  final bool isDP; // Directeur de Programme
+
+  const ModernScheduleScreen({
+    super.key,
+    this.isTeacher = false,
+    this.isDP = false, // Par défaut non-DP
+  });
 
   @override
   State<ModernScheduleScreen> createState() => _ModernScheduleScreenState();
@@ -9,70 +21,108 @@ class ModernScheduleScreen extends StatefulWidget {
 
 class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
   DateTime selectedDate = DateTime.now();
-  int selectedDayIndex = DateTime.now().weekday - 1; // 0 = Lundi
-  
+  late Future<List<CourseModel>> _scheduleFuture;
   final List<String> weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  final List<String> fullWeekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-  
-  final Map<String, List<Map<String, dynamic>>> weekSchedule = {
-    'Lundi': [
-      {'subject': 'Mathématiques', 'time': '08:00-09:30', 'room': 'Amphi A', 'teacher': 'Dr. Martin', 'type': 'CM'},
-      {'subject': 'Physique', 'time': '10:00-11:30', 'room': 'Labo B205', 'teacher': 'Prof. Dubois', 'type': 'TP'},
-      {'subject': 'Anglais', 'time': '14:00-15:30', 'room': 'Salle C302', 'teacher': 'Mme. Bernard', 'type': 'TD'},
-    ],
-    'Mardi': [
-      {'subject': 'Informatique', 'time': '08:00-10:00', 'room': 'Labo Info', 'teacher': 'Dr. Robert', 'type': 'TP'},
-      {'subject': 'Chimie', 'time': '10:30-12:00', 'room': 'Labo Chimie', 'teacher': 'Prof. Laurent', 'type': 'TP'},
-      {'subject': 'Économie', 'time': '14:00-15:30', 'room': 'Salle D201', 'teacher': 'Dr. Petit', 'type': 'CM'},
-    ],
-    'Mercredi': [
-      {'subject': 'Mathématiques', 'time': '08:00-09:30', 'room': 'Salle A101', 'teacher': 'Dr. Martin', 'type': 'TD'},
-      {'subject': 'Physique', 'time': '10:00-11:30', 'room': 'Salle B201', 'teacher': 'Prof. Dubois', 'type': 'CM'},
-      {'subject': 'Sport', 'time': '15:00-17:00', 'room': 'Gymnase', 'teacher': 'M. Durand', 'type': 'Autre'},
-    ],
-    'Jeudi': [
-      {'subject': 'Informatique', 'time': '08:00-09:30', 'room': 'Salle C301', 'teacher': 'Dr. Robert', 'type': 'CM'},
-      {'subject': 'Chimie', 'time': '10:00-11:30', 'room': 'Salle D101', 'teacher': 'Prof. Laurent', 'type': 'TD'},
-      {'subject': 'Anglais', 'time': '14:00-15:30', 'room': 'Salle E201', 'teacher': 'Mme. Bernard', 'type': 'CM'},
-    ],
-    'Vendredi': [
-      {'subject': 'Mathématiques', 'time': '08:00-10:00', 'room': 'Amphi B', 'teacher': 'Dr. Martin', 'type': 'CM'},
-      {'subject': 'Économie', 'time': '10:30-12:00', 'room': 'Salle F301', 'teacher': 'Dr. Petit', 'type': 'TD'},
-      {'subject': 'Projet', 'time': '14:00-17:00', 'room': 'Labo Projet', 'teacher': 'M. Leroy', 'type': 'Projet'},
-    ],
-    'Samedi': [],
-    'Dimanche': [],
-  };
+  bool _isDpMode = false; // Toggle local pour la démo si isDP n'est pas passé explicitement ou pour switch
+
+  @override
+  void initState() {
+    super.initState();
+    _isDpMode = widget.isDP;
+    _refreshSchedule();
+  }
+
+  void _refreshSchedule() {
+    setState(() {
+      if (_isDpMode) {
+        _scheduleFuture = _fetchPendingSchedules();
+      } else if (widget.isTeacher) {
+        _scheduleFuture = _fetchTeacherProposals();
+      } else {
+        _scheduleFuture = _fetchValidatedSchedule();
+      }
+    });
+  }
+
+  Future<List<CourseModel>> _fetchValidatedSchedule() async {
+    final items = await ScheduleService.getValidatedSchedule();
+    return items.map(_mapToCourse).toList();
+  }
+
+  Future<List<CourseModel>> _fetchTeacherProposals() async {
+    final items = await ScheduleService.getTeacherProposals();
+    return items.map(_mapToCourse).toList();
+  }
+
+  Future<List<CourseModel>> _fetchPendingSchedules() async {
+    final items = await ScheduleService.getPendingSchedules();
+    return items.map(_mapToCourse).toList();
+  }
+
+  CourseModel _mapToCourse(ScheduleItem item) {
+    return CourseModel(
+      id: item.id,
+      subject: item.subject,
+      teacher: item.teacher, // Utilise le nom directement
+      room: item.room,
+      startTime: item.startTime,
+      endTime: item.endTime,
+      day: DayOfWeek.values[item.startTime.weekday - 1], // 1=Lun -> 0
+      color: _getStatusColor(item.status),
+      status: _mapStatus(item.status),
+    );
+  }
+
+  CourseStatus _mapStatus(int status) {
+    switch (status) {
+      case 3: return CourseStatus.pending;
+      case 0: return CourseStatus.validated;
+      case 4: return CourseStatus.rejected;
+      default: return CourseStatus.scheduled;
+    }
+  }
+
+  String _getStatusColor(int status) {
+    switch (status) {
+      case 3: return '#F59E0B'; // Orange
+      case 0: return '#10B981'; // Green
+      case 4: return '#EF4444'; // Red
+      default: return '#3B82F6'; // Blue
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final currentDayCourses = weekSchedule[fullWeekDays[selectedDayIndex]] ?? [];
-    
+    // Si mode DP, on montre une liste globale (pas filtrée par jour pour faciliter la supervision)
+    // ou on garde le filtre jour ? Pour la supervision, souvent on veut voir tout ce qui est en attente.
+    // On va garder le filtre jour pour l'emploi du temps classique, mais pour DP "En attente", on pourrait tout montrer.
+    // Disons qu'on garde la structure par jour pour l'instant pour cohérence.
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Emploi du temps',
+              _isDpMode ? 'Supervision (DP)' : 'Emploi du temps',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            Text(
+             Text(
               '${selectedDate.day} ${_getMonthName(selectedDate.month)} ${selectedDate.year}',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -80,389 +130,422 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month, color: Color(0xFF64748B)),
-            onPressed: () {
-              _showCalendarDialog();
-            },
+            icon: Icon(Icons.download, color: Theme.of(context).iconTheme.color),
+            onPressed: _exportSchedule,
+            tooltip: 'Exporter l\'emploi du temps',
           ),
+          IconButton(
+            icon: Icon(Icons.refresh, color: Theme.of(context).iconTheme.color),
+            onPressed: _refreshSchedule,
+          ),
+          // Toggle DP Mode pour la démo si Enseignant (Simule switch rôle)
+          if (widget.isTeacher)
+            IconButton(
+              icon: Icon(_isDpMode ? Icons.person : Icons.admin_panel_settings, 
+                color: _isDpMode ? Theme.of(context).primaryColor : Theme.of(context).iconTheme.color),
+              onPressed: () {
+                setState(() {
+                  _isDpMode = !_isDpMode;
+                  _refreshSchedule();
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(_isDpMode ? 'Mode Supervision activé' : 'Mode Enseignant activé')),
+                );
+              },
+              tooltip: 'Basculer mode Supervision',
+            ),
         ],
       ),
       body: Column(
         children: [
-          // Sélecteur de jour
           _buildDaySelector(),
-          
-          // Liste des cours
           Expanded(
-            child: currentDayCourses.isEmpty
-                ? _buildEmptySchedule()
-                : _buildCourseList(currentDayCourses),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDaySelector() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: [
-          // En-tête de la semaine
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Text(
-                  'Semaine du ${DateTime.now().day} ${_getMonthName(DateTime.now().month)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    _showCalendarDialog();
-                  },
-                  child: Text(
-                    'Voir calendrier',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF2563EB),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Sélecteur de jours
-          Container(
-            height: 80,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 5, // Lundi à Vendredi
-              itemBuilder: (context, index) {
-                final isSelected = selectedDayIndex == index;
-                final dayDate = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1 - index));
-                final isToday = dayDate.day == DateTime.now().day && 
-                               dayDate.month == DateTime.now().month;
+            child: FutureBuilder<List<CourseModel>>(
+              future: _scheduleFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Erreur: ${snapshot.error}'));
+                }
                 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedDayIndex = index;
-                      selectedDate = dayDate;
-                    });
+                final allCourses = snapshot.data ?? [];
+                
+                // Filtrer par jour sélectionné
+                final dayCourses = allCourses.where((c) => 
+                  c.startTime.day == selectedDate.day && 
+                  c.startTime.month == selectedDate.month && 
+                  c.startTime.year == selectedDate.year
+                ).toList();
+
+                if (dayCourses.isEmpty) {
+                   // Si DP et rien ce jour, on affiche peut être un message "Rien en attente ce jour"
+                   return Center(child: Text(_isDpMode 
+                     ? 'Aucune proposition en attente pour ce jour.' 
+                     : 'Aucun cours prévu.', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: dayCourses.length,
+                  itemBuilder: (context, index) {
+                    return _buildCourseCard(dayCourses[index]);
                   },
-                  child: Container(
-                    width: 60,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF2563EB) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
-                        width: 1,
-                      ),
-                      boxShadow: isSelected ? [
-                        BoxShadow(
-                          color: const Color(0xFF2563EB).withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ] : null,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          weekDays[index],
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : const Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${dayDate.day}',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: isSelected ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        if (isToday)
-                          Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : const Color(0xFF2563EB),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Auj.',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected ? const Color(0xFF2563EB) : Colors.white,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
                 );
               },
             ),
           ),
         ],
       ),
+      floatingActionButton: (widget.isTeacher && !_isDpMode) 
+          ? FloatingActionButton.extended(
+              onPressed: _showAddCourseDialog,
+              label: const Text('Proposer'),
+              icon: const Icon(Icons.add),
+              backgroundColor: Theme.of(context).primaryColor,
+            )
+          : null,
     );
   }
 
-  Widget _buildCourseList(List<Map<String, dynamic>> courses) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: courses.length,
-      itemBuilder: (context, index) {
-        final course = courses[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildDaySelector() {
+    return Container(
+      color: Theme.of(context).cardColor,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: SizedBox(
+        height: 80,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 14, // 2 semaines
+          itemBuilder: (context, index) {
+             final dayDate = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)).add(Duration(days: index));
+             final isSelected = selectedDate.day == dayDate.day && selectedDate.month == dayDate.month;
+             
+             return GestureDetector(
+               onTap: () => setState(() => selectedDate = dayDate),
+               child: Container(
+                 width: 60,
+                 margin: const EdgeInsets.symmetric(horizontal: 4),
+                 decoration: BoxDecoration(
+                   color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+                   borderRadius: BorderRadius.circular(12),
+                   border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).dividerColor),
+                 ),
+                 child: Column(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                     Text(weekDays[dayDate.weekday - 1], 
+                       style: TextStyle(color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color)),
+                     Text('${dayDate.day}',
+                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                         color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color)),
+                   ],
+                 ),
+               ),
+             );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourseCard(CourseModel course) {
+    Color color = _parseColor(course.color);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                // Barre latérale colorée
                 Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: _getCourseTypeColor(course['type']),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
-                    ),
-                  ),
+                  width: 4, height: 40,
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
                 ),
-                // Contenu du cours
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // En-tête du cours
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                course['subject'],
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getCourseTypeColor(course['type']).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                course['type'],
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: _getCourseTypeColor(course['type']),
-                                ),
-                              ),
-                            ),
-                          ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(course.subject, 
+                        style: TextStyle(
+                          fontSize: 16, 
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
-                        const SizedBox(height: 12),
-                        
-                        // Informations du cours en grille
-                        Row(
-                          children: [
-                            // Heure
-                            Expanded(
-                              child: _buildCourseInfo(
-                                Icons.access_time,
-                                course['time'],
-                                'Horaires',
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            // Salle
-                            Expanded(
-                              child: _buildCourseInfo(
-                                Icons.room_outlined,
-                                course['room'],
-                                'Salle',
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Enseignant
-                        _buildCourseInfo(
-                          Icons.person_outline,
-                          course['teacher'],
-                          'Enseignant',
-                        ),
-                      ],
-                    ),
+                      ),
+                      Text('${course.startTimeFormatted} - ${course.endTimeFormatted}', 
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                    ],
                   ),
                 ),
+                _buildStatusBadge(course.status),
               ],
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.room, size: 16, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                const SizedBox(width: 4),
+                Text(course.room),
+                const Spacer(),
+                if (_isDpMode && course.status == CourseStatus.pending) ...[
+                  IconButton(
+                    icon: const Icon(Icons.check_circle, color: Colors.green),
+                    onPressed: () => _validateCourse(course),
+                    tooltip: 'Valider',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    onPressed: () => _rejectCourse(course),
+                    tooltip: 'Rejeter',
+                  ),
+                ]
+              ],
+            )
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildCourseInfo(IconData icon, String value, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: const Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+  Widget _buildStatusBadge(CourseStatus status) {
+    Color color;
+    String text;
+    switch (status) {
+      case CourseStatus.pending:
+        color = Colors.orange;
+        text = 'EN ATTENTE';
+        break;
+      case CourseStatus.validated:
+        color = Colors.green;
+        text = 'VALIDÉ';
+        break;
+      case CourseStatus.rejected:
+        color = Colors.red;
+        text = 'REJETÉ';
+        break;
+      default:
+        color = Colors.blue;
+        text = 'PROGRAMMÉ';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildEmptySchedule() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.event_available,
-              size: 40,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aucun cours aujourd\'hui',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Profitez de votre journée libre',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-            ),
+  Color _parseColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return Colors.blue;
+    }
+  }
+
+  String _getMonthName(int month) {
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    if (month >= 1 && month <= 12) return months[month - 1];
+    return '';
+  }
+
+  Future<void> _validateCourse(CourseModel course) async {
+    try {
+      await ScheduleService.validateSchedule(course.id);
+      _refreshSchedule();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Validé !')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+    }
+  }
+
+  Future<void> _rejectCourse(CourseModel course) async {
+    // Show dialog for reason
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Motif du rejet'),
+        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Raison...')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ScheduleService.rejectSchedule(course.id, controller.text);
+                _refreshSchedule();
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rejeté.')));
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+              }
+            },
+            child: const Text('Confirmer'),
           ),
         ],
       ),
     );
   }
 
-  Color _getCourseTypeColor(String type) {
-    switch (type) {
-      case 'CM':
-        return const Color(0xFF2563EB);
-      case 'TD':
-        return const Color(0xFF10B981);
-      case 'TP':
-        return const Color(0xFFF59E0B);
-      case 'Projet':
-        return const Color(0xFF8B5CF6);
-      default:
-        return const Color(0xFF64748B);
-    }
-  }
+  void _showAddCourseDialog() {
+    String subject = '';
+    String room = '';
+    TimeOfDay start = const TimeOfDay(hour: 8, minute: 0);
+    TimeOfDay end = const TimeOfDay(hour: 10, minute: 0);
 
-  String _getMonthName(int month) {
-    const months = [
-      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-    ];
-    return months[month - 1];
-  }
-
-  void _showCalendarDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Calendrier'),
-          content: Text('Vue calendrier complète en cours de développement.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Proposer un cours'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Matière'),
+                  onChanged: (v) => subject = v,
+                ),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Salle'),
+                  onChanged: (v) => room = v,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        final t = await showTimePicker(context: context, initialTime: start);
+                        if (t != null) setDialogState(() => start = t);
+                      },
+                      child: Text('Début: ${start.format(context)}'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final t = await showTimePicker(context: context, initialTime: end);
+                        if (t != null) setDialogState(() => end = t);
+                      },
+                      child: Text('Fin: ${end.format(context)}'),
+                    ),
+                  ],
+                )
+              ],
             ),
-          ],
-        );
-      },
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+              ElevatedButton(
+                onPressed: () async {
+                  if (subject.isNotEmpty && room.isNotEmpty) {
+                    try {
+                      final now = selectedDate;
+                      final startDt = DateTime(now.year, now.month, now.day, start.hour, start.minute);
+                      final endDt = DateTime(now.year, now.month, now.day, end.hour, end.minute);
+                      
+                      await ScheduleService.proposeSchedule(
+                        subject: subject,
+                        startTime: startDt,
+                        endTime: endDt,
+                        room: room,
+                        day: startDt.weekday - 1,
+                        type: 'CM', // Default or add selector
+                      );
+                      Navigator.pop(context);
+                      _refreshSchedule();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proposition envoyée')));
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                    }
+                  }
+                },
+                child: const Text('Proposer'),
+              ),
+            ],
+          );
+        }
+      ),
     );
+  }
+
+  void _exportSchedule() async {
+    try {
+      final schedules = await _scheduleFuture;
+      
+      if (schedules.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun cours à exporter')),
+        );
+        return;
+      }
+
+      // Convertir CourseModel en ScheduleItem pour le service
+      final scheduleItems = schedules.map((course) => ScheduleItem(
+        id: course.id,
+        subject: course.subject,
+        teacher: course.teacher,
+        room: course.room,
+        startTime: course.startTime,
+        endTime: course.endTime,
+        day: course.day.index,
+        type: 'CM',
+        status: course.status == CourseStatus.validated ? 0 : 3,
+      )).toList();
+
+      // Générer le PDF
+      final pdfBytes = await ExportService.generateSchedulePdf(scheduleItems);
+      
+      // Afficher le dialogue de choix
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exporter l\'emploi du temps'),
+            content: const Text('Choisissez une action :'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await DownloadService.sharePdf(
+                    pdfBytes,
+                    'emploi_du_temps_${DateTime.now().millisecondsSinceEpoch}.pdf',
+                  );
+                },
+                child: const Text('Partager'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await DownloadService.savePdfWithPreview(
+                    pdfBytes,
+                    'emploi_du_temps_${DateTime.now().millisecondsSinceEpoch}.pdf',
+                    context,
+                  );
+                },
+                child: const Text('Prévisualiser'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'export: $e')),
+        );
+      }
+    }
   }
 }

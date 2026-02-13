@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'campus_design_tokens.dart';
 
 class CampusIcons {
   // Navigation

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'campus_button.dart';
+import 'campus_design_tokens.dart';
 
 class CampusCard extends StatelessWidget {
   final Widget? child;

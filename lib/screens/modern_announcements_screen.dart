@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/announcement_service.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
 
 class ModernAnnouncementsScreen extends StatefulWidget {
   const ModernAnnouncementsScreen({super.key});
@@ -10,77 +12,27 @@ class ModernAnnouncementsScreen extends StatefulWidget {
 class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
   String selectedCategory = 'Toutes';
   bool isTeacherOrAdmin = true; // Simuler le rôle de l'utilisateur
+  late Future<List<Announcement>> _announcementsFuture;
   
-  final List<Map<String, dynamic>> announcements = [
-    {
-      'id': 1,
-      'title': 'Férié universitaire - Journée portes ouvertes',
-      'content': 'L\'université organise sa journée portes ouvertes ce samedi. Venez découvrir nos installations, rencontrer nos enseignants et obtenir des informations sur nos programmes. Des activités sont prévues tout au long de la journée.',
-      'category': 'Académique',
-      'author': 'Administration',
-      'date': DateTime.now().subtract(const Duration(hours: 2)),
-      'priority': 'Haute',
-      'isPinned': true,
-    },
-    {
-      'id': 2,
-      'title': 'Maintenance système - Interruption des services',
-      'content': 'Une maintenance technique est prévée ce dimanche de 2h à 6h du matin. Les services en ligne seront temporairement indisponibles. Merci de votre compréhension.',
-      'category': 'Administratif',
-      'author': 'Direction IT',
-      'date': DateTime.now().subtract(const Duration(hours: 5)),
-      'priority': 'Urgente',
-      'isPinned': true,
-    },
-    {
-      'id': 3,
-      'title': 'Nouveau cours de programmation avancée',
-      'content': 'Un nouveau cours optionnel "Programmation Avancée et Algorithmes" sera proposé au semestre prochain. Les inscriptions ouvrent la semaine prochaine. Places limitées à 30 étudiants.',
-      'category': 'Académique',
-      'author': 'Département Informatique',
-      'date': DateTime.now().subtract(const Duration(days: 1)),
-      'priority': 'Moyenne',
-      'isPinned': false,
-    },
-    {
-      'id': 4,
-      'title': 'Changement d\'horaire - Examens finaux',
-      'content': 'Les horaires des examens finaux ont été modifiés. Consultez votre emploi du temps mis à jour pour les nouvelles dates et salles d\'examen.',
-      'category': 'Académique',
-      'author': 'Secrétariat Pédagogique',
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'priority': 'Haute',
-      'isPinned': false,
-    },
-    {
-      'id': 5,
-      'title': 'Ouverture des inscriptions aux clubs étudiants',
-      'content': 'La période d\'inscription aux clubs et associations étudiantes est ouverte. Plus de 20 clubs disponibles : sport, culture, technologie, et plus encore.',
-      'category': 'Vie Étudiante',
-      'author': 'Bureau Des Étudiants',
-      'date': DateTime.now().subtract(const Duration(days: 3)),
-      'priority': 'Basse',
-      'isPinned': false,
-    },
-    {
-      'id': 6,
-      'title': 'Nouveaux services bibliothèque',
-      'content': 'La bibliothèque étend ses horaires d\'ouverture jusqu\'à 22h du lundi au jeudi. De plus, un nouveau service de prêt de livres numériques est maintenant disponible.',
-      'category': 'Administratif',
-      'author': 'Direction Bibliothèque',
-      'date': DateTime.now().subtract(const Duration(days: 4)),
-      'priority': 'Moyenne',
-      'isPinned': false,
-    },
-  ];
-
   final List<String> categories = ['Toutes', 'Académique', 'Administratif', 'Vie Étudiante'];
 
-  List<Map<String, dynamic>> get filteredAnnouncements {
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncements();
+  }
+
+  void _loadAnnouncements() {
+    setState(() {
+      _announcementsFuture = AnnouncementService.getAnnouncements();
+    });
+  }
+
+  List<Announcement> _filterAnnouncements(List<Announcement> announcements) {
     if (selectedCategory == 'Toutes') {
       return announcements;
     }
-    return announcements.where((a) => a['category'] == selectedCategory).toList();
+    return announcements.where((a) => a.category == selectedCategory).toList();
   }
 
   @override
@@ -106,7 +58,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
               ),
             ),
             Text(
-              '${announcements.length} annonces',
+              'Actualités du campus',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -137,12 +89,51 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
           
           // Liste des annonces
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: filteredAnnouncements.length,
-              itemBuilder: (context, index) {
-                final announcement = filteredAnnouncements[index];
-                return _buildAnnouncementCard(announcement);
+            child: FutureBuilder<List<Announcement>>(
+              future: _announcementsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text('Erreur de chargement des annonces'),
+                        SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: _loadAnnouncements,
+                          child: Text('Réessayer'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                final allAnnouncements = snapshot.data ?? [];
+                final filteredAnnouncements = _filterAnnouncements(allAnnouncements);
+                
+                if (filteredAnnouncements.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Aucune annonce disponible',
+                      style: TextStyle(color: Color(0xFF64748B)),
+                    ),
+                  );
+                }
+                
+                return ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: filteredAnnouncements.length,
+                  itemBuilder: (context, index) {
+                    final announcement = filteredAnnouncements[index];
+                    return _buildAnnouncementCard(announcement);
+                  },
+                );
               },
             ),
           ),
@@ -211,11 +202,11 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
     );
   }
 
-  Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
-    final priority = announcement['priority'] as String;
-    final category = announcement['category'] as String;
-    final date = announcement['date'] as DateTime;
-    final isPinned = announcement['isPinned'] as bool;
+  Widget _buildAnnouncementCard(Announcement announcement) {
+    final priority = announcement.priority;
+    final category = announcement.category;
+    final date = announcement.createdAt;
+    final isPinned = announcement.isPinned;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -258,7 +249,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                       ),
                     Expanded(
                       child: Text(
-                        announcement['title'],
+                        announcement.title,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -330,7 +321,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Text(
-              announcement['content'],
+              announcement.content,
               style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF64748B),
@@ -356,7 +347,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      announcement['author'],
+                      announcement.authorName,
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
@@ -398,7 +389,7 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
                   ),
                   onSelected: (value) {
                     if (value == 'pin') {
-                      _togglePin(announcement['id']);
+                      _togglePin(announcement.id, announcement.isPinned);
                     } else if (value == 'share') {
                       _shareAnnouncement(announcement);
                     }
@@ -495,14 +486,21 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
     }
   }
 
-  void _togglePin(int announcementId) {
-    setState(() {
-      final announcement = announcements.firstWhere((a) => a['id'] == announcementId);
-      announcement['isPinned'] = !(announcement['isPinned'] as bool);
-    });
+  void _togglePin(String announcementId, bool currentStatus) async {
+    try {
+      await AnnouncementService.togglePin(announcementId, currentStatus);
+      _loadAnnouncements(); // Reload to show updated status
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(currentStatus ? 'Annonce désépinglée' : 'Annonce épinglée')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e')),
+      );
+    }
   }
 
-  void _shareAnnouncement(Map<String, dynamic> announcement) {
+  void _shareAnnouncement(Announcement announcement) {
     // Implémenter le partage
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -513,22 +511,113 @@ class _ModernAnnouncementsScreenState extends State<ModernAnnouncementsScreen> {
   }
 
   void _showCreateAnnouncementDialog() {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+    String selectedCategory = 'Académique';
+    String selectedPriority = 'Moyenne';
+    String selectedScope = 'license'; // Par défaut à la licence
+    String? selectedNiveau;
+    
+    // On récupère le profil pour présélectionner les valeurs
+    ProfileService.getCurrentUserProfile().then((profile) {
+      if (profile != null) {
+        selectedNiveau = profile['niveau'];
+      }
+    });
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Créer une annonce'),
-          content: Text('Fonctionnalité de création d\'annonce en cours de développement.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text('Créer une annonce'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(labelText: 'Titre'),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: contentController,
+                    decoration: InputDecoration(labelText: 'Contenu'),
+                    maxLines: 3,
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: InputDecoration(labelText: 'Catégorie'),
+                    items: categories.where((c) => c != 'Toutes').map((cat) {
+                      return DropdownMenuItem(value: cat, child: Text(cat));
+                    }).toList(),
+                    onChanged: (value) => setDialogState(() => selectedCategory = value!),
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedPriority,
+                    decoration: InputDecoration(labelText: 'Priorité'),
+                    items: ['Basse', 'Moyenne', 'Haute', 'Urgente'].map((p) {
+                      return DropdownMenuItem(value: p, child: Text(p));
+                    }).toList(),
+                    onChanged: (value) => setDialogState(() => selectedPriority = value!),
+                  ),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedScope,
+                    decoration: InputDecoration(labelText: 'Visibilité (Scope)'),
+                    items: [
+                      DropdownMenuItem(value: 'license', child: Text('Ma licence')),
+                      DropdownMenuItem(value: 'department', child: Text('Mon département')),
+                      DropdownMenuItem(value: 'university', child: Text('Toute l\'université (Admin)')),
+                    ],
+                    onChanged: (value) => setDialogState(() => selectedScope = value!),
+                  ),
+                ],
+              ),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Créer'),
-            ),
-          ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (titleController.text.isEmpty || contentController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Veuillez remplir tous les champs')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final profile = await ProfileService.getCurrentUserProfile();
+                    await AnnouncementService.createAnnouncement(
+                      title: titleController.text,
+                      content: contentController.text,
+                      category: selectedCategory,
+                      priority: selectedPriority,
+                      scope: selectedScope,
+                      departmentId: profile?['department_id']?.toString(),
+                      niveau: selectedScope == 'license' ? (profile?['niveau']) : null,
+                      facultyId: profile?['faculty_id']?.toString(),
+                    );
+                    Navigator.of(context).pop();
+                    _loadAnnouncements(); // Reload to show new announcement
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Annonce créée avec succès')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: $e')),
+                    );
+                  }
+                },
+                child: Text('Créer'),
+              ),
+            ],
+          ),
         );
       },
     );

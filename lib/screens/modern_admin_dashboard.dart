@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusconnect/screens/modern_enhanced_announcements_screen.dart';
 import 'package:campusconnect/screens/modern_enhanced_schedule_screen.dart';
 import 'package:campusconnect/screens/modern_academic_calendar_screen.dart';
 import 'package:campusconnect/screens/modern_course_management_screen.dart';
 import 'package:campusconnect/screens/modern_resources_screen.dart';
+import 'package:campusconnect/widgets/theme_toggle_button.dart';
+import 'package:campusconnect/controllers/admin_providers.dart';
+import 'package:campusconnect/core/services/admin_service.dart';
+import 'package:campusconnect/core/services/room_service.dart';
+import 'package:campusconnect/controllers/announcement_providers.dart';
+import 'package:campusconnect/core/services/announcement_service.dart';
+import 'package:campusconnect/controllers/auth_providers.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
   const ModernAdminDashboard({super.key});
@@ -28,9 +36,16 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],
+      floatingActionButton: _currentIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () => Navigator.pushNamed(context, '/ai-assistant'),
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.psychology, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -45,8 +60,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: const Color(0xFFDC2626),
-          unselectedItemColor: const Color(0xFF64748B),
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
           selectedLabelStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -93,19 +108,22 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   }
 }
 
-class AdminDashboardHome extends StatefulWidget {
+class AdminDashboardHome extends ConsumerStatefulWidget {
   const AdminDashboardHome({super.key});
 
   @override
-  State<AdminDashboardHome> createState() => _AdminDashboardHomeState();
+  ConsumerState<AdminDashboardHome> createState() => _AdminDashboardHomeState();
 }
 
-class _AdminDashboardHomeState extends State<AdminDashboardHome> {
+class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
 
   @override
   Widget build(BuildContext context) {
+    final statsAsync = ref.watch(adminStatsProvider);
+    final usersAsync = ref.watch(allUsersProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -115,10 +133,10 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFDC2626),
+              color: Theme.of(context).primaryColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.admin_panel_settings,
               color: Colors.white,
               size: 20,
@@ -132,7 +150,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
               'Panneau d\'administration',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -140,75 +158,100 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
               'Administrateur',
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
         actions: [
+          const ThemeToggleButton(),
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: IconButton(
               icon: Icon(
                 Icons.notifications_outlined,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).iconTheme.color,
               ),
               onPressed: () {},
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Statistiques générales
-            _buildStatsOverview(),
-            
-            const SizedBox(height: 24),
-            
-            // Gestion des utilisateurs
-            _buildUserManagement(context),
-            
-            const SizedBox(height: 24),
-            
-            // Gestion des annonces officielles
-            _buildAnnouncementManagement(context),
-            
-            const SizedBox(height: 24),
-            
-            // Gestion des blocs et salles
-            _buildRoomManagement(context),
-            
-            const SizedBox(height: 24),
-            
-            // Supervision des services
-            _buildServiceSupervision(context),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(adminStatsProvider);
+          ref.invalidate(allUsersProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Statistiques générales
+              statsAsync.when(
+                data: (stats) => _buildStatsOverview(stats),
+                loading: () => const Center(child: LinearProgressIndicator()),
+                error: (e, st) => Text('Erreur stats: $e'),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Gestion des utilisateurs
+              usersAsync.when(
+                data: (users) => _buildUserManagement(context, users),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => Text('Erreur utilisateurs: $e'),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Gestion des annonces officielles
+              Consumer(
+                builder: (context, ref, child) {
+                  final announcementsAsync = ref.watch(allAnnouncementsProvider);
+                  return announcementsAsync.when(
+                    data: (announcements) => _buildAnnouncementManagement(context, announcements),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, st) => Text('Erreur annonces: $e'),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Gestion des blocs et salles
+              _buildRoomManagement(context),
+              
+              const SizedBox(height: 24),
+              
+              // Supervision des services
+              _buildServiceSupervision(context),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsOverview() {
+  Widget _buildStatsOverview(AdminStats stats) {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard('Utilisateurs', '1,247', 'Total', const Color(0xFF2563EB), Icons.people),
+          child: _buildStatCard('Utilisateurs', stats.totalUsers.toString(), 'Total', const Color(0xFF2563EB), Icons.people),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Annonces', '48', 'Ce mois', const Color(0xFF10B981), Icons.campaign),
+          child: _buildStatCard('Annonces', stats.totalAnnouncements.toString(), 'Ce mois', const Color(0xFF10B981), Icons.campaign),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Salles', '126', 'Disponibles', const Color(0xFFF59E0B), Icons.meeting_room),
+          child: _buildStatCard('Salles', stats.totalRooms.toString(), 'Disponibles', const Color(0xFFF59E0B), Icons.meeting_room),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Services', '8', 'Actifs', const Color(0xFF8B5CF6), Icons.settings),
+          child: _buildStatCard('Services', stats.activeServices.toString(), 'Actifs', const Color(0xFF8B5CF6), Icons.settings),
         ),
       ],
     );
@@ -218,7 +261,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -246,14 +289,14 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           Text(
             subtitle,
             style: TextStyle(
               fontSize: 9,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -261,15 +304,15 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     );
   }
 
-  Widget _buildUserManagement(BuildContext context) {
+  Widget _buildUserManagement(BuildContext context, List<Map<String, dynamic>> users) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -282,7 +325,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             children: [
               Icon(
                 Icons.people,
-                color: Color(0xFF2563EB),
+                color: Theme.of(context).primaryColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -292,21 +335,19 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () {
-                  setState(() {
-                    // Naviguer vers l'onglet utilisateurs
-                  });
+                  _showAddUserDialog(context);
                 },
-                icon: Icon(Icons.add, size: 16),
+                icon: const Icon(Icons.add, size: 16),
                 label: Text('Ajouter'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -316,12 +357,16 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 600),
-              child: _buildUserTable(),
+          const SizedBox(height: 14),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 700),
+                child: SingleChildScrollView(
+                  child: _buildUserTable(700, users),
+                ),
+              ),
             ),
           ),
         ],
@@ -329,78 +374,101 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     );
   }
 
-  Widget _buildUserTable() {
+  Widget _buildUserTable(double totalWidth, List<Map<String, dynamic>> users) {
+    double colName = totalWidth * 0.25;
+    double colEmail = totalWidth * 0.35;
+    double colRole = totalWidth * 0.15;
+    double colStatus = totalWidth * 0.15;
+    double colActions = totalWidth * 0.1;
+
     return Column(
       children: [
         // En-tête du tableau
         Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Expanded(flex: 2, child: Text('Nom', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-              Expanded(flex: 2, child: Text('Email', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-              Expanded(flex: 1, child: Text('Rôle', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-              Expanded(flex: 1, child: Text('Statut', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-              Expanded(flex: 1, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+              SizedBox(width: colName, child: Text('Nom', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
+              SizedBox(width: colEmail, child: Text('Email', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
+              SizedBox(width: colRole, child: Text('Rôle', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
+              SizedBox(width: colStatus, child: Text('Statut', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
+              SizedBox(width: colActions, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
             ],
           ),
         ),
         const SizedBox(height: 8),
         // Lignes du tableau
-        _buildUserRow('Jean Dupont', 'jean@univ.fr', 'Étudiant', 'Actif', true),
-        _buildUserRow('Marie Martin', 'marie@univ.fr', 'Enseignant', 'Actif', true),
-        _buildUserRow('Pierre Durand', 'pierre@univ.fr', 'Étudiant', 'Inactif', false),
-        _buildUserRow('Sophie Bernard', 'sophie@univ.fr', 'Admin', 'Actif', true),
+        if (users.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Center(child: Text('Aucun utilisateur trouvé')),
+          )
+        else
+          ...users.map((user) => _buildUserRow(
+                user['nom'] ?? 'Inconnu',
+                user['email'] ?? '-',
+                user['role'] ?? 'Étudiant',
+                'Actif', // Statut par défaut car non présent dans profile par défaut
+                true,
+                totalWidth,
+                user['id'],
+              )),
       ],
     );
   }
 
-  Widget _buildUserRow(String name, String email, String role, String status, bool isActive) {
-    Color statusColor = isActive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-    Color roleColor = role == 'Admin' ? const Color(0xFFDC2626) : 
-                     role == 'Enseignant' ? const Color(0xFF2563EB) : 
-                     const Color(0xFF64748B);
+  Widget _buildUserRow(String name, String email, String role, String status, bool isActive, double totalWidth, String userId) {
+    double colName = totalWidth * 0.25;
+    double colEmail = totalWidth * 0.35;
+    double colRole = totalWidth * 0.15;
+    double colStatus = totalWidth * 0.15;
+    double colActions = totalWidth * 0.1;
+    Color statusColor = isActive ? const Color(0xFF10B981) : Theme.of(context).colorScheme.error;
+    Color roleColor = role == 'Admin' ? Theme.of(context).colorScheme.error : 
+                     role == 'Enseignant' ? Theme.of(context).primaryColor : 
+                     const Color(0xFF94A3B8);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: const Color(0xFFE5E7EB), width: 1)),
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1)),
       ),
       child: Row(
         children: [
-          Expanded(flex: 2, child: Text(name, style: TextStyle(fontSize: 12))),
-          Expanded(flex: 2, child: Text(email, style: TextStyle(fontSize: 12, color: Color(0xFF64748B)))),
-          Expanded(flex: 1, child: Container(
+          SizedBox(width: colName, child: Text(name, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface), overflow: TextOverflow.ellipsis)),
+          SizedBox(width: colEmail, child: Text(email, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant), overflow: TextOverflow.ellipsis)),
+          SizedBox(width: colRole, child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: roleColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(role, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: roleColor)),
+            child: Text(role, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: roleColor), textAlign: TextAlign.center),
           )),
-          Expanded(flex: 1, child: Container(
+          SizedBox(width: colStatus, child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: statusColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor)),
+            child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor), textAlign: TextAlign.center),
           )),
-          Expanded(flex: 1, child: Row(
+          SizedBox(width: colActions, child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: Icon(Icons.edit, size: 16, color: Color(0xFF2563EB)),
+                icon: const Icon(Icons.edit, size: 16, color: Color(0xFF2563EB)),
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               ),
               IconButton(
-                icon: Icon(Icons.delete, size: 16, color: Color(0xFFEF4444)),
-                onPressed: () {},
+                icon: const Icon(Icons.delete, size: 16, color: Color(0xFFEF4444)),
+                onPressed: () => _confirmDeleteUser(userId),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               ),
@@ -411,11 +479,12 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     );
   }
 
-  Widget _buildAnnouncementManagement(BuildContext context) {
+
+  Widget _buildAnnouncementManagement(BuildContext context, List<Announcement> announcements) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -430,7 +499,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.campaign,
                 color: Color(0xFF10B981),
                 size: 20,
@@ -442,7 +511,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -451,10 +520,10 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                 onPressed: () {
                   _showCreateAnnouncementDialog(context);
                 },
-                icon: Icon(Icons.add, size: 16),
-                label: Text('Nouvelle'),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Nouvelle'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -465,20 +534,34 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildAnnouncementList(),
+          _buildAnnouncementList(announcements.take(3).toList()),
         ],
       ),
     );
   }
 
-  Widget _buildAnnouncementList() {
+  Widget _buildAnnouncementList(List<Announcement> announcements) {
+    if (announcements.isEmpty) {
+      return const Center(child: Text('Aucune annonce récente'));
+    }
     return Column(
-      children: [
-        _buildAnnouncementItem('Fermeture administrative', 'L\'université sera fermée le 25 Décembre', 'Urgent', const Color(0xFFEF4444), 'Il y a 2h'),
-        _buildAnnouncementItem('Inscription semestre 2', 'Ouverture des inscriptions pour le semestre 2', 'Important', const Color(0xFFF59E0B), 'Hier'),
-        _buildAnnouncementItem('Nouveaux services', 'Nouveaux services en ligne disponibles', 'Information', const Color(0xFF2563EB), 'Il y a 3j'),
-      ],
+      children: announcements.map((a) => _buildAnnouncementItem(
+        a.title, 
+        a.content, 
+        a.category, 
+        _getCategoryColor(a.category), 
+        a.timeAgo
+      )).toList(),
     );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'urgent': return const Color(0xFFEF4444);
+      case 'important': return const Color(0xFFF59E0B);
+      case 'information': return const Color(0xFF2563EB);
+      default: return const Color(0xFF10B981);
+    }
   }
 
   Widget _buildAnnouncementItem(String title, String description, String priority, Color priorityColor, String time) {
@@ -486,7 +569,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -512,7 +595,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
@@ -538,14 +621,14 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   description,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
                 Text(
                   time,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF94A3B8),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -588,7 +671,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -615,17 +698,17 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () {
-                  _showAddRoomDialog(context);
+                  Navigator.pushNamed(context, '/admin-rooms');
                 },
-                icon: Icon(Icons.add, size: 16),
-                label: Text('Ajouter'),
+                icon: Icon(Icons.settings, size: 16),
+                label: Text('Gérer'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
                   foregroundColor: Colors.white,
@@ -713,7 +796,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -740,7 +823,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -786,7 +869,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -806,7 +889,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
@@ -830,7 +913,7 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
             uptime,
             style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -839,23 +922,185 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
     );
   }
 
-  void _showCreateAnnouncementDialog(BuildContext context) {
+  void _confirmDeleteUser(String userId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Créer une annonce'),
-          content: Text('Fonctionnalité de création d\'annonce en cours de développement.'),
+          title: const Text('Supprimer l\'utilisateur'),
+          content: const Text('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Créer'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                try {
+                  await ref.read(adminControllerProvider.notifier).deleteUser(userId, ref);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Utilisateur supprimé avec succès')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur lors de la suppression: $e')),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+              child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showCreateAnnouncementDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+    String category = 'Information';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Créer une annonce'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Titre'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: contentController,
+                      decoration: const InputDecoration(labelText: 'Contenu'),
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: category,
+                      decoration: const InputDecoration(labelText: 'Catégorie'),
+                      items: ['Information', 'Important', 'Urgent']
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (v) => setState(() => category = v!),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (titleController.text.isEmpty || contentController.text.isEmpty) return;
+                    Navigator.of(context).pop();
+                    try {
+                      await ref.read(announcementControllerProvider.notifier).createAnnouncement(
+                        title: titleController.text,
+                        content: contentController.text,
+                        category: category,
+                        ref: ref,
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Annonce publiée')),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Créer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddUserDialog(BuildContext context) {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final firstNameController = TextEditingController();
+    final lastNameController = TextEditingController();
+    String role = 'Étudiant';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Ajouter un utilisateur'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(controller: firstNameController, decoration: const InputDecoration(labelText: 'Prénom')),
+                    TextField(controller: lastNameController, decoration: const InputDecoration(labelText: 'Nom')),
+                    TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
+                    TextField(controller: passwordController, decoration: const InputDecoration(labelText: 'Mot de passe'), obscureText: true),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: role,
+                      decoration: const InputDecoration(labelText: 'Rôle'),
+                      items: ['Étudiant', 'Enseignant', 'Admin']
+                          .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                          .toList(),
+                      onChanged: (v) => setState(() => role = v!),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (emailController.text.isEmpty || passwordController.text.isEmpty) return;
+                    Navigator.pop(context);
+                    try {
+                      await ref.read(adminControllerProvider.notifier).createUser(
+                        email: emailController.text,
+                        password: passwordController.text,
+                        firstName: firstNameController.text,
+                        lastName: lastNameController.text,
+                        role: role,
+                        ref: ref,
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Utilisateur créé')));
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                      }
+                    }
+                  },
+                  child: const Text('Créer'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -884,98 +1129,234 @@ class _AdminDashboardHomeState extends State<AdminDashboardHome> {
   }
 }
 
-class AdminUsersTab extends StatelessWidget {
+class AdminUsersTab extends ConsumerWidget {
   const AdminUsersTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usersAsync = ref.watch(allUsersProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Gestion des utilisateurs',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(allUsersProvider),
+          ),
+        ],
       ),
-      body: const Center(
-        child: Text(
-          'Gestion des utilisateurs - En cours de développement',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 16,
-          ),
+      body: usersAsync.when(
+        data: (users) => ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  child: Text(user['nom']?[0] ?? 'U', style: TextStyle(color: Theme.of(context).primaryColor)),
+                ),
+                title: Text(user['nom'] ?? 'Utilisateur inconnu'),
+                subtitle: Text('${user['email']}\n${user['role']}'),
+                isThreeLine: true,
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () => _confirmDeleteUser(context, ref, user['id']),
+                ),
+              ),
+            );
+          },
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Erreur: $e')),
+      ),
+    );
+  }
+
+  void _confirmDeleteUser(BuildContext context, WidgetRef ref, String userId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ?'),
+        content: const Text('Voulez-vous vraiment supprimer cet utilisateur ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Non')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref.read(adminControllerProvider.notifier).deleteUser(userId, ref);
+            }, 
+            child: const Text('Oui', style: TextStyle(color: Colors.red))
+          ),
+        ],
       ),
     );
   }
 }
 
-class AdminAnnouncementsTab extends StatelessWidget {
+class AdminAnnouncementsTab extends ConsumerWidget {
   const AdminAnnouncementsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final announcementsAsync = ref.watch(allAnnouncementsProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Gestion des annonces',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(allAnnouncementsProvider),
+          ),
+        ],
       ),
-      body: const Center(
-        child: Text(
-          'Gestion des annonces - En cours de développement',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 16,
-          ),
+      body: announcementsAsync.when(
+        data: (announcements) => ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: announcements.length,
+          itemBuilder: (context, index) {
+            final a = announcements[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                title: Text(a.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('${a.category} • ${a.timeAgo}\n${a.content}'),
+                isThreeLine: true,
+                leading: Icon(Icons.campaign, color: _getCategoryColor(a.category)),
+              ),
+            );
+          },
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Erreur: $e')),
       ),
     );
   }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'urgent': return const Color(0xFFEF4444);
+      case 'important': return const Color(0xFFF59E0B);
+      case 'information': return const Color(0xFF2563EB);
+      default: return const Color(0xFF10B981);
+    }
+  }
 }
 
-class AdminSettingsTab extends StatelessWidget {
+class AdminSettingsTab extends ConsumerWidget {
   const AdminSettingsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Paramètres',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
       ),
-      body: const Center(
-        child: Text(
-          'Paramètres - En cours de développement',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 16,
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _buildSettingsGroup(context, 'Compte', [
+            _buildSettingsItem(context, Icons.person_outline, 'Profil', 'Gérer vos informations'),
+            _buildSettingsItem(context, Icons.security, 'Sécurité', 'Mot de passe et authentification'),
+          ]),
+          const SizedBox(height: 24),
+          _buildSettingsGroup(context, 'Application', [
+            _buildSettingsItem(context, Icons.notifications_outlined, 'Notifications', 'Alertes et messages'),
+            _buildSettingsItem(context, Icons.language, 'Langue', 'Français'),
+            _buildSettingsItem(context, Icons.dark_mode_outlined, 'Apparence', 'Thème clair/sombre'),
+          ]),
+          const SizedBox(height: 24),
+          _buildSettingsGroup(context, 'Support', [
+            _buildSettingsItem(context, Icons.help_outline, 'Aide', 'Centre d\'assistance'),
+            _buildSettingsItem(context, Icons.info_outline, 'À propos', 'Version 1.0.0'),
+          ]),
+          const SizedBox(height: 32),
+          TextButton.icon(
+            onPressed: () async {
+              await ref.read(supabaseAuthProvider.notifier).signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
+            },
+            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
+            label: const Text('Se déconnecter', style: TextStyle(color: Color(0xFFEF4444))),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: const Color(0xFFEF4444).withOpacity(0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(BuildContext context, String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 12),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
           ),
         ),
-      ),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+          ),
+          child: Column(children: items),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsItem(BuildContext context, IconData icon, String title, String subtitle) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFFDC2626)),
+      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+      trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFF94A3B8)),
+      onTap: () {},
     );
   }
 }

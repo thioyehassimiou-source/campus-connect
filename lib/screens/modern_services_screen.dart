@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/shared/widgets/campus_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ModernServicesScreen extends StatefulWidget {
   const ModernServicesScreen({super.key});
@@ -41,6 +43,21 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
             'website': data['site_web'] ?? data['website'],
           };
         }).toList();
+
+        // Ajout de l'Assistant IA en tête de liste
+        services.insert(0, {
+          'name': 'Assistant IA Académique',
+          'description': 'Votre assistant intelligent pour toutes vos questions universitaires.',
+          'icon': Icons.psychology_outlined,
+          'color': const Color(0xFF6366F1), // Indigo
+          'phone': 'Numérique',
+          'email': 'Disponible 24h/24',
+          'location': 'Application CampusConnect',
+          'hours': '24/7',
+          'website': null,
+          'isAi': true, // Marqueur pour navigation spéciale
+        });
+
         _isLoading = false;
       });
     } catch (e) {
@@ -268,36 +285,48 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
                 const SizedBox(height: 16),
                 
                 // Contact
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildContactButton(
-                        Icons.phone,
-                        phone,
-                        'Appeler',
-                        color,
-                        () {
-                          _makePhoneCall(phone);
-                        },
-                      ),
+                if (service['isAi'] == true)
+                  SizedBox(
+                    width: double.infinity,
+                    child: CampusButton.primary(
+                      text: "Lancer l'Assistant",
+                      icon: Icons.chat_bubble_outline,
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/ai-assistant');
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildContactButton(
-                        Icons.email,
-                        email,
-                        'Email',
-                        color,
-                        () {
-                          _sendEmail(email);
-                        },
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildContactButton(
+                          Icons.phone,
+                          phone,
+                          'Appeler',
+                          color,
+                          () {
+                            _makePhoneCall(phone);
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildContactButton(
+                          Icons.email,
+                          email,
+                          'Email',
+                          color,
+                          () {
+                            _sendEmail(email);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 
                 // Site web (si disponible)
-                if (website != null) ...[
+                if (website != null && service['isAi'] != true) ...[
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -388,42 +417,58 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
     );
   }
 
-  void _makePhoneCall(String phone) {
-    // Implémenter l'appel téléphonique
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Appel du $phone...'),
-          backgroundColor: const Color(0xFF10B981),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  Future<void> _makePhoneCall(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanPhone);
+    try {
+      if (!await launchUrl(launchUri)) {
+        throw Exception('Impossible de lancer l\'appel');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
     }
   }
 
-  void _sendEmail(String email) {
-    // Implémenter l'envoi d'email
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ouverture du client email pour $email...'),
-          backgroundColor: const Color(0xFF2563EB),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  Future<void> _sendEmail(String email) async {
+    final Uri launchUri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
+    try {
+      if (!await launchUrl(launchUri)) {
+        throw Exception('Impossible d\'ouvrir l\'email');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
     }
   }
 
-  void _openWebsite(String website) {
-    // Implémenter l'ouverture du site web
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ouverture de $website...'),
-          backgroundColor: const Color(0xFF8B5CF6),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  Future<void> _openWebsite(String website) async {
+    // Ensure scheme exists
+    String urlObj = website;
+    if (!website.startsWith('http')) {
+      urlObj = 'https://$website';
+    }
+    
+    final Uri launchUri = Uri.parse(urlObj);
+    try {
+      if (!await launchUrl(launchUri, mode: LaunchMode.externalApplication)) {
+        throw Exception('Impossible d\'ouvrir le site web');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
     }
   }
 

@@ -1,82 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:campusconnect/controllers/attendance_providers.dart';
+import 'package:campusconnect/controllers/course_providers.dart';
 
-class ModernAttendanceScreen extends StatefulWidget {
+class ModernAttendanceScreen extends ConsumerStatefulWidget {
   const ModernAttendanceScreen({super.key});
 
   @override
-  State<ModernAttendanceScreen> createState() => _ModernAttendanceScreenState();
+  ConsumerState<ModernAttendanceScreen> createState() => _ModernAttendanceScreenState();
 }
 
-class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
-  String _selectedCourse = 'Mathématiques';
-  String _selectedDate = 'Aujourd\'hui';
-  List<Map<String, dynamic>> _students = [];
-  Map<String, bool> _attendanceStatus = {};
+class _ModernAttendanceScreenState extends ConsumerState<ModernAttendanceScreen> {
+  String? _selectedCourseId;
+  DateTime _selectedDate = DateTime.now();
+  final Map<String, String> _attendanceStatus = {}; // studentId -> status (present/absent/late)
+  bool _isInit = false;
 
   @override
   void initState() {
     super.initState();
-    _loadStudents();
+    // Initialisé via Riverpod
   }
 
-  void _loadStudents() {
-    // Simulation de chargement des étudiants
-    setState(() {
-      _students = [
-        {
-          'id': 'ET2024001',
-          'name': 'Alice Martin',
-          'photo': null,
-          'group': 'Groupe A',
-        },
-        {
-          'id': 'ET2024002',
-          'name': 'Bob Bernard',
-          'photo': null,
-          'group': 'Groupe A',
-        },
-        {
-          'id': 'ET2024003',
-          'name': 'Claire Dubois',
-          'photo': null,
-          'group': 'Groupe B',
-        },
-        {
-          'id': 'ET2024004',
-          'name': 'David Petit',
-          'photo': null,
-          'group': 'Groupe B',
-        },
-        {
-          'id': 'ET2024005',
-          'name': 'Emma Leroy',
-          'photo': null,
-          'group': 'Groupe A',
-        },
-        {
-          'id': 'ET2024006',
-          'name': 'François Moreau',
-          'photo': null,
-          'group': 'Groupe B',
-        },
-      ];
-      
-      // Initialiser le statut de présence
-      for (var student in _students) {
-        _attendanceStatus[student['id']] = true; // Présent par défaut
-      }
-    });
+  void _refreshStudents() {
+    if (_selectedCourseId != null) {
+      ref.invalidate(studentsForCourseProvider(_selectedCourseId!));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -87,14 +48,14 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Text(
-              '${_students.length} étudiants',
+              'Émargement numérique',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -102,11 +63,11 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.save, color: Theme.of(context).primaryColor),
             onPressed: _saveAttendance,
           ),
           IconButton(
-            icon: Icon(Icons.share, color: Color(0xFF64748B)),
+            icon: Icon(Icons.share, color: Theme.of(context).iconTheme.color?.withOpacity(0.6)),
             onPressed: _shareAttendance,
           ),
         ],
@@ -115,217 +76,91 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
         children: [
           // Filtres
           Container(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedCourse,
-                            isExpanded: true,
-                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-                            items: ['Mathématiques', 'Physique', 'Informatique', 'Chimie']
-                                .map((course) => DropdownMenuItem(
-                                      value: course,
-                                      child: Text(
-                                        course,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCourse = value!;
-                              });
-                            },
+                Expanded(
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final coursesAsync = ref.watch(teacherCoursesProvider);
+                      
+                      return coursesAsync.when(
+                        data: (courses) {
+                          if (courses.isEmpty) return const Text('Aucun cours');
+                          _selectedCourseId ??= courses.first.id;
+                          
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedCourseId,
+                                isExpanded: true,
+                                icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
+                                items: courses.map((c) => DropdownMenuItem(
+                                  value: c.id,
+                                  child: Text(c.title, style: const TextStyle(fontSize: 14)),
+                                )).toList(),
+                                onChanged: (v) => setState(() => _selectedCourseId = v),
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const CircularProgressIndicator(),
+                        error: (e, st) => Text('Erreur: $e'),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedDate = picked;
+                          _isInit = false;
+                          _attendanceStatus.clear();
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(_selectedDate),
+                            style: const TextStyle(fontSize: 14),
                           ),
-                        ),
+                          Icon(Icons.calendar_today, size: 16, color: Theme.of(context).primaryColor),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedDate,
-                            isExpanded: true,
-                            icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-                            items: ['Aujourd\'hui', 'Hier', 'Cette semaine', 'Ce mois']
-                                .map((date) => DropdownMenuItem(
-                                      value: date,
-                                      child: Text(
-                                        date,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedDate = value!;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
           
-          // Statistiques
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.check_circle,
-                          color: Color(0xFF10B981),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${_attendanceStatus.values.where((present) => present).length}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        'Présents',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.cancel,
-                          color: Color(0xFFEF4444),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${_attendanceStatus.values.where((present) => !present).length}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        'Absents',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.percent,
-                          color: Color(0xFF2563EB),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${((_attendanceStatus.values.where((present) => present).length / _students.length) * 100).toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        'Présence',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Statistiques gérées dynamiquement par la liste
+          const SizedBox(height: 16),
           
           // Actions rapides
           Container(
@@ -334,7 +169,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _markAllPresent,
+                    onPressed: () => _markAll(true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: Colors.white,
@@ -343,19 +178,13 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Tous présents',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: const Text('Tous présents'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _markAllAbsent,
+                    onPressed: () => _markAll(false),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFEF4444),
                       foregroundColor: Colors.white,
@@ -364,13 +193,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Tous absents',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: const Text('Tous absents'),
                   ),
                 ),
               ],
@@ -379,30 +202,72 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
           
           // Liste des étudiants
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _students.length,
-              itemBuilder: (context, index) {
-                final student = _students[index];
-                final isPresent = _attendanceStatus[student['id']] ?? true;
-                return _buildStudentCard(student, isPresent);
-              },
-            ),
+            child: _selectedCourseId == null 
+              ? const Center(child: Text('Veuillez sélectionner un cours'))
+              : Consumer(
+                  builder: (context, ref, child) {
+                    final studentsAsync = ref.watch(studentsForCourseProvider(_selectedCourseId!));
+                    
+                    // On observe aussi les présences existantes si on ne les a pas encore chargées
+                    if (!_isInit) {
+                      ref.listen(attendanceByDateProvider((course: _selectedCourseId!, date: _selectedDate)), (previous, next) {
+                        next.whenData((records) {
+                          if (records.isNotEmpty && !_isInit) {
+                            setState(() {
+                              for (var r in records) {
+                                _attendanceStatus[r.studentId] = r.status;
+                              }
+                              _isInit = true;
+                            });
+                          }
+                        });
+                      });
+                    }
+
+                    return studentsAsync.when(
+                      data: (students) {
+                        if (students.isEmpty) return const Center(child: Text('Aucun étudiant.'));
+                        
+                        // Initialisation par défaut si pas de données existantes
+                        if (!_isInit && students.isNotEmpty) {
+                          for (var s in students) {
+                            if (!_attendanceStatus.containsKey(s['id'])) {
+                              _attendanceStatus[s['id']] = 'present';
+                            }
+                          }
+                          _isInit = true;
+                        }
+
+                        return ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: students.length,
+                          itemBuilder: (context, index) {
+                            final student = students[index];
+                            final status = _attendanceStatus[student['id']] ?? 'present';
+                            return _buildStudentCard(student, status);
+                          },
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, st) => Center(child: Text('Erreur: $e')),
+                    );
+                  },
+                ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStudentCard(Map<String, dynamic> student, bool isPresent) {
+  Widget _buildStudentCard(Map<String, dynamic> student, String status) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -412,7 +277,7 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Photo de l'étudiant
+            // Photo - unchanged
             Container(
               width: 50,
               height: 50,
@@ -430,16 +295,9 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                         fit: BoxFit.cover,
                       ),
                     )
-                  : Icon(
-                      Icons.person,
-                      color: const Color(0xFF2563EB),
-                      size: 24,
-                    ),
+                  : const Icon(Icons.person, color: Color(0xFF2563EB), size: 24),
             ),
-            
             const SizedBox(width: 16),
-            
-            // Informations de l'étudiant
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,133 +305,27 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
                   Text(
                     student['name'],
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 16, 
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          student['id'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          student['group'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2563EB),
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    student['id'], 
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    ),
                   ),
                 ],
               ),
             ),
-            
-            // Boutons de présence
+            // Statuts
             Row(
               children: [
-                // Bouton Présent
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _attendanceStatus[student['id']] = true;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isPresent ? const Color(0xFF10B981) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isPresent ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
-                        width: 2,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: isPresent ? Colors.white : const Color(0xFF64748B),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Présent',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isPresent ? Colors.white : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
+                _buildStatusBtn(student['id'], 'present', Icons.check_circle, Colors.green, status == 'present'),
                 const SizedBox(width: 8),
-                
-                // Bouton Absent
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _attendanceStatus[student['id']] = false;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: !isPresent ? const Color(0xFFEF4444) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: !isPresent ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
-                        width: 2,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.cancel,
-                          size: 16,
-                          color: !isPresent ? Colors.white : const Color(0xFF64748B),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Absent',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: !isPresent ? Colors.white : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildStatusBtn(student['id'], 'absent', Icons.cancel, Colors.red, status == 'absent'),
               ],
             ),
           ],
@@ -582,51 +334,54 @@ class _ModernAttendanceScreenState extends State<ModernAttendanceScreen> {
     );
   }
 
-  void _markAllPresent() {
-    setState(() {
-      for (var student in _students) {
-        _attendanceStatus[student['id']] = true;
-      }
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tous les étudiants marqués présents'),
-        backgroundColor: Color(0xFF10B981),
+  Widget _buildStatusBtn(String studentId, String targetStatus, IconData icon, Color color, bool isActive) {
+    return GestureDetector(
+      onTap: () => setState(() => _attendanceStatus[studentId] = targetStatus),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isActive ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isActive ? color : Colors.grey.shade300),
+        ),
+        child: Icon(icon, color: isActive ? Colors.white : Colors.grey, size: 20),
       ),
     );
   }
 
-  void _markAllAbsent() {
+  void _markAll(bool present) {
+    if (_selectedCourseId == null) return;
+    final students = ref.read(studentsForCourseProvider(_selectedCourseId!)).value ?? [];
     setState(() {
-      for (var student in _students) {
-        _attendanceStatus[student['id']] = false;
+      for (var s in students) {
+        _attendanceStatus[s['id']] = present ? 'present' : 'absent';
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tous les étudiants marqués absents'),
-        backgroundColor: Color(0xFFEF4444),
-      ),
-    );
   }
 
-  void _saveAttendance() {
-    // Sauvegarder la présence
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Présence enregistrée avec succès'),
-        backgroundColor: Color(0xFF2563EB),
-      ),
-    );
+  Future<void> _saveAttendance() async {
+    if (_selectedCourseId == null) return;
+    if (_attendanceStatus.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aucune donnée à enregistrer')));
+      return;
+    }
+
+    try {
+      await ref.read(attendanceControllerProvider.notifier).saveAttendance(
+            course: _selectedCourseId!,
+            statuses: _attendanceStatus,
+            date: _selectedDate,
+            ref: ref,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Présences enregistrées!'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+    }
   }
 
   void _shareAttendance() {
-    // Partager la présence
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Partage de la liste de présence...'),
-        backgroundColor: Color(0xFF2563EB),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Partage de la liste...')));
   }
 }

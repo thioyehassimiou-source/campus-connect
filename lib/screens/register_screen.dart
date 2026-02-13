@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:campusconnect/core/themes/app_theme.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/core/services/auth_service.dart';
 import 'package:campusconnect/shared/widgets/custom_text_field.dart';
 import 'package:campusconnect/shared/widgets/custom_button.dart';

@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/core/services/resource_service.dart';
+import 'package:campusconnect/controllers/resource_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class ModernResourcesScreen extends StatefulWidget {
-  const ModernResourcesScreen({super.key});
+class ModernResourcesScreen extends ConsumerStatefulWidget {
+  final bool isTeacher;
+  const ModernResourcesScreen({super.key, this.isTeacher = false});
 
   @override
-  State<ModernResourcesScreen> createState() => _ModernResourcesScreenState();
+  ConsumerState<ModernResourcesScreen> createState() => _ModernResourcesScreenState();
 }
 
-class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
+class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
   String _selectedCategory = 'Toutes';
   String _selectedType = 'Tous';
-  List<Map<String, dynamic>> _resources = [];
+  late Future<List<Resource>> _resourcesFuture;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadResources();
+    // Géré par Riverpod
+  }
+
+  void _refreshResources() {
+    ref.invalidate(allResourcesProvider);
   }
 
   @override
@@ -25,107 +34,15 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
     super.dispose();
   }
 
-  void _loadResources() {
-    setState(() {
-      _resources = [
-        {
-          'id': '1',
-          'title': 'Cours d\'Analyse Numérique',
-          'description': 'Support de cours complet avec exemples et exercices',
-          'type': 'PDF',
-          'category': 'Cours',
-          'size': '15.2 MB',
-          'uploadDate': '15/12/2024',
-          'downloads': 234,
-          'author': 'Prof. Bernard',
-          'course': 'MAT201',
-          'level': 'L2',
-          'tags': ['analyse', 'numérique', 'mathématiques'],
-          'rating': 4.8,
-          'isFavorite': false,
-          'color': const Color(0xFF2563EB),
-        },
-        {
-          'id': '2',
-          'title': 'Exercices Corrigés - Algèbre',
-          'description': 'Série d\'exercices avec corrections détaillées',
-          'type': 'PDF',
-          'category': 'Exercices',
-          'size': '8.5 MB',
-          'uploadDate': '10/12/2024',
-          'downloads': 156,
-          'author': 'Prof. Martin',
-          'course': 'MAT101',
-          'level': 'L1',
-          'tags': ['algèbre', 'exercices', 'corrigés'],
-          'rating': 4.6,
-          'isFavorite': true,
-          'color': const Color(0xFF10B981),
-        },
-        {
-          'id': '3',
-          'title': 'Vidéo - Introduction au Machine Learning',
-          'description': 'Tutoriel vidéo sur les concepts fondamentaux du ML',
-          'type': 'Vidéo',
-          'category': 'Tutoriel',
-          'size': '125.8 MB',
-          'uploadDate': '08/12/2024',
-          'downloads': 89,
-          'author': 'Prof. Leroy',
-          'course': 'INF301',
-          'level': 'L3',
-          'tags': ['machine learning', 'IA', 'vidéo'],
-          'rating': 4.9,
-          'isFavorite': false,
-          'color': const Color(0xFF8B5CF6),
-        },
-        {
-          'id': '4',
-          'title': 'Scripts Python pour Data Science',
-          'description': 'Collection de scripts Python pour l\'analyse de données',
-          'type': 'Code',
-          'category': 'Code',
-          'size': '2.3 MB',
-          'uploadDate': '05/12/2024',
-          'downloads': 178,
-          'author': 'Prof. Dubois',
-          'course': 'PHY301',
-          'level': 'M1',
-          'tags': ['python', 'data science', 'scripts'],
-          'rating': 4.7,
-          'isFavorite': true,
-          'color': const Color(0xFFF59E0B),
-        },
-        {
-          'id': '5',
-          'title': 'Formulaire de Physique Quantique',
-          'description': 'Résumé des formules et concepts clés de physique quantique',
-          'type': 'PDF',
-          'category': 'Résumé',
-          'size': '1.2 MB',
-          'uploadDate': '01/12/2024',
-          'downloads': 267,
-          'author': 'Prof. Petit',
-          'course': 'PHY201',
-          'level': 'L2',
-          'tags': ['physique', 'quantique', 'formules'],
-          'rating': 4.5,
-          'isFavorite': false,
-          'color': const Color(0xFFEF4444),
-        },
-      ];
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -136,26 +53,31 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            Text(
-              '${_resources.length} ressources disponibles',
+            const Text(
+              'Accès aux supports de cours',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Color(0xFF94A3B8),
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
         actions: [
+          if (widget.isTeacher)
+            IconButton(
+              icon: Icon(Icons.upload, color: Theme.of(context).primaryColor),
+              onPressed: _showUploadDialog,
+            ),
           IconButton(
-            icon: Icon(Icons.upload, color: Color(0xFF2563EB)),
-            onPressed: _showUploadDialog,
+            icon: Icon(Icons.refresh, color: Theme.of(context).iconTheme.color),
+            onPressed: _refreshResources,
           ),
           IconButton(
-            icon: Icon(Icons.filter_list, color: Color(0xFF64748B)),
+            icon: Icon(Icons.filter_list, color: Theme.of(context).textTheme.bodyMedium?.color),
             onPressed: _showFilterDialog,
           ),
         ],
@@ -167,11 +89,11 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -179,34 +101,35 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
             ),
             child: TextField(
               controller: _searchController,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               decoration: InputDecoration(
                 hintText: 'Rechercher une ressource...',
                 hintStyle: TextStyle(
-                  color: Color(0xFF9CA3AF),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                   fontSize: 14,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: Color(0xFF6B7280),
+                  color: Theme.of(context).iconTheme.color,
                   size: 20,
                 ),
                 filled: true,
-                fillColor: const Color(0xFFF9FAFB),
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 16,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE5E7EB),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE5E7EB),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
@@ -226,15 +149,15 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                         items: ['Toutes', 'Cours', 'Exercices', 'Tutoriel', 'Code', 'Résumé']
                             .map((category) => DropdownMenuItem(
                                   value: category,
@@ -243,7 +166,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF0F172A),
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
                                     ),
                                   ),
                                 ))
@@ -262,16 +185,16 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedType,
                         isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-                        items: ['Tous', 'PDF', 'Vidéo', 'Code', 'Audio']
+                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                        items: ['Tous', 'PDF', 'VIDEO', 'LINK']
                             .map((type) => DropdownMenuItem(
                                   value: type,
                                   child: Text(
@@ -279,7 +202,7 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF0F172A),
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
                                     ),
                                   ),
                                 ))
@@ -297,142 +220,72 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
             ),
           ),
           
-          // Statistiques
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Total',
-                    '${_resources.length}',
-                    Icons.folder,
-                    const Color(0xFF2563EB),
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatCard(
-                    'Favoris',
-                    '${_resources.where((r) => r['isFavorite']).length}',
-                    Icons.favorite,
-                    const Color(0xFFEF4444),
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatCard(
-                    'Téléchargements',
-                    '${_resources.fold<int>(0, (sum, r) => sum + (r['downloads'] as int))}',
-                    Icons.download,
-                    const Color(0xFF10B981),
-                  ),
-                ),
-              ],
-            ),
-          ),
           
           // Liste des ressources
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredResources.length,
-              itemBuilder: (context, index) {
-                final resource = _filteredResources[index];
-                return _buildResourceCard(resource);
+            child: Consumer(
+              builder: (context, ref, child) {
+                final resourcesAsync = ref.watch(allResourcesProvider);
+                
+                return resourcesAsync.when(
+                  data: (data) {
+                    var resources = List<Resource>.from(data);
+                    
+                    // Filtrage local
+                    if (_searchController.text.isNotEmpty) {
+                      final query = _searchController.text.toLowerCase();
+                      resources = resources.where((r) => 
+                        r.title.toLowerCase().contains(query) || 
+                        r.description.toLowerCase().contains(query)).toList();
+                    }
+                    if (_selectedType != 'Tous') {
+                      resources = resources.where((r) => r.type == _selectedType).toList();
+                    }
+
+                    if (resources.isEmpty) {
+                      return const Center(child: Text('Aucune ressource trouvée.'));
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: resources.length,
+                      itemBuilder: (context, index) {
+                        return _buildResourceCard(resources[index]);
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, st) => Center(child: Text('Erreur: $e')),
+                );
               },
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: widget.isTeacher ? FloatingActionButton.extended(
         onPressed: _showUploadDialog,
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
-        icon: Icon(Icons.upload),
-        label: Text('Ajouter'),
-      ),
+        icon: const Icon(Icons.upload),
+        label: const Text('Ajouter'),
+      ) : null,
     );
   }
 
-  List<Map<String, dynamic>> get _filteredResources {
-    var filtered = _resources;
-    
-    // Filtrer par recherche
-    if (_searchController.text.isNotEmpty) {
-      final searchLower = _searchController.text.toLowerCase();
-      filtered = filtered.where((r) =>
-          r['title'].toString().toLowerCase().contains(searchLower) ||
-          r['description'].toString().toLowerCase().contains(searchLower) ||
-          r['tags'].any((tag) => tag.toString().toLowerCase().contains(searchLower))
-      ).toList();
-    }
-    
-    // Filtrer par catégorie
-    if (_selectedCategory != 'Toutes') {
-      filtered = filtered.where((r) => r['category'] == _selectedCategory).toList();
-    }
-    
-    // Filtrer par type
-    if (_selectedType != 'Tous') {
-      filtered = filtered.where((r) => r['type'] == _selectedType).toList();
-    }
-    
-    return filtered;
-  }
+  Widget _buildResourceCard(Resource resource) {
+    Color color = const Color(0xFF2563EB); // Default blue
+    if (resource.type == 'PDF') color = const Color(0xFFEF4444); // Red
+    if (resource.type == 'VIDEO') color = const Color(0xFF8B5CF6); // Purple
+    if (resource.type == 'LINK') color = const Color(0xFF10B981); // Green
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResourceCard(Map<String, dynamic> resource) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -449,12 +302,12 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: resource['color'].withOpacity(0.1),
+                    color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    _getFileIcon(resource['type']),
-                    color: resource['color'],
+                    _getFileIcon(resource.type),
+                    color: color,
                     size: 24,
                   ),
                 ),
@@ -463,38 +316,20 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              resource['title'],
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              resource['isFavorite'] ? Icons.favorite : Icons.favorite_border,
-                              color: resource['isFavorite'] ? const Color(0xFFEF4444) : const Color(0xFF64748B),
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                resource['isFavorite'] = !resource['isFavorite'];
-                              });
-                            },
-                          ),
-                        ],
+                      Text(
+                        resource.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        resource['description'],
+                        resource.description,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w400,
                         ),
                         maxLines: 2,
@@ -514,15 +349,15 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: resource['color'].withOpacity(0.1),
+                    color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    resource['type'],
+                    resource.type,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: resource['color'],
+                      color: color,
                     ),
                   ),
                 ),
@@ -530,53 +365,28 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    resource['category'],
+                    resource.subject,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  resource['size'],
+                  '${resource.uploadDate.day}/${resource.uploadDate.month}/${resource.uploadDate.year}',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
-            ),
-            
-            const SizedBox(height: 8),
-            
-            // Tags
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: (resource['tags'] as List<String>).take(3).map((tag) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '#$tag',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                );
-              }).toList(),
             ),
             
             const SizedBox(height: 12),
@@ -588,62 +398,16 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      resource['author'],
+                      resource.authorName,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      '${resource['course']} • ${resource['level']}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ],
                 ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Icon(Icons.star, size: 14, color: const Color(0xFFF59E0B)),
-                    const SizedBox(width: 2),
-                    Text(
-                      resource['rating'].toString(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                Row(
-                  children: [
-                    Icon(Icons.download, size: 14, color: const Color(0xFF64748B)),
-                    const SizedBox(width: 2),
-                    Text(
-                      resource['downloads'].toString(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  resource['uploadDate'],
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                
               ],
             ),
             
@@ -654,41 +418,20 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _previewResource(resource),
+                    onPressed: () => _openUrl(resource.url),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: resource['color']),
+                      side: BorderSide(color: color),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     child: Text(
-                      'Aperçu',
+                      'Ouvrir',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: resource['color'],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _downloadResource(resource),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: resource['color'],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'Télécharger',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        color: color,
                       ),
                     ),
                   ),
@@ -705,51 +448,114 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
     switch (type) {
       case 'PDF':
         return Icons.picture_as_pdf;
-      case 'Vidéo':
+      case 'VIDEO':
         return Icons.videocam;
-      case 'Code':
-        return Icons.code;
-      case 'Audio':
-        return Icons.audiotrack;
+      case 'LINK':
+        return Icons.link;
       default:
         return Icons.insert_drive_file;
     }
   }
 
+  Future<void> _openUrl(String url) async {
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur : L\'URL de ce document est vide.')),
+      );
+      return;
+    }
+    
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Impossible d\'ouvrir $url')));
+        }
+      }
+    } catch (e) {
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur lors de l\'ouverture : $e')));
+      }
+    }
+  }
+
   void _showUploadDialog() {
+    String title = '';
+    String description = '';
+    String url = '';
+    String type = 'PDF';
+    String subject = 'General';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Ajouter une ressource'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: InputDecoration(labelText: 'Titre'),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-          ],
+        title: const Text('Ajouter une ressource'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: 'Titre'),
+                onChanged: (v) => title = v,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+                onChanged: (v) => description = v,
+              ),
+               const SizedBox(height: 16),
+              TextField(
+                decoration: const InputDecoration(labelText: 'URL (Lien vers fichier/vidéo)'),
+                onChanged: (v) => url = v,
+              ),
+              const SizedBox(height: 16),
+               TextField(
+                decoration: const InputDecoration(labelText: 'Matière'),
+                onChanged: (v) => subject = v,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: type,
+                items: ['PDF', 'VIDEO', 'LINK'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                onChanged: (v) => type = v!,
+                decoration: const InputDecoration(labelText: 'Type'),
+              )
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
+            child: const Text('Annuler'),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Ressource ajoutée avec succès!'),
-                  backgroundColor: Color(0xFF10B981),
-                ),
-              );
+          ElevatedButton(
+            onPressed: () async {
+              if (title.isNotEmpty && url.isNotEmpty) {
+                 try {
+                  await ref.read(resourceControllerProvider.notifier).addResource(
+                    title: title,
+                    description: description,
+                    url: url,
+                    type: type,
+                    subject: subject,
+                    ref: ref,
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Ressource ajoutée avec succès!'),
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                  );
+                } catch (e) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                }
+              }
             },
-            child: Text('Ajouter'),
+            child: const Text('Ajouter'),
           ),
         ],
       ),
@@ -760,22 +566,12 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Filtres avancés'),
+        title: const Text('Filtres avancés'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CheckboxListTile(
-              title: Text('Favoris uniquement'),
-              value: false,
-              onChanged: (value) {},
-            ),
-            CheckboxListTile(
-              title: Text('Mes ressources'),
-              value: false,
-              onChanged: (value) {},
-            ),
-            CheckboxListTile(
-              title: Text('Récemment ajoutées'),
+              title: const Text('Favoris uniquement'),
               value: false,
               onChanged: (value) {},
             ),
@@ -784,31 +580,13 @@ class _ModernResourcesScreenState extends State<ModernResourcesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
+            child: const Text('Annuler'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Appliquer'),
+            child: const Text('Appliquer'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _previewResource(Map<String, dynamic> resource) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Aperçu de ${resource['title']}...'),
-        backgroundColor: const Color(0xFF2563EB),
-      ),
-    );
-  }
-
-  void _downloadResource(Map<String, dynamic> resource) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Téléchargement de ${resource['title']}...'),
-        backgroundColor: const Color(0xFF10B981),
       ),
     );
   }

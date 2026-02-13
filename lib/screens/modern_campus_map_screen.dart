@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/campus_service.dart';
 
 class ModernCampusMapScreen extends StatefulWidget {
   const ModernCampusMapScreen({super.key});
@@ -9,44 +10,43 @@ class ModernCampusMapScreen extends StatefulWidget {
 
 class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
 
-  final List<Map<String, dynamic>> blocs = const [
-    {
-      'id': 'A',
-      'name': 'Bloc A',
-      'description': 'Administration & Rectorat',
-      'icon': Icons.account_balance,
-      'color': Color(0xFF2563EB),
-      'services': ['Scolarité', 'Examens', 'Rectorat', 'Direction'],
-      'position': Offset(0.2, 0.2),
-    },
-    {
-      'id': 'B',
-      'name': 'Bloc B',
-      'description': 'Faculté des Sciences',
-      'icon': Icons.science,
-      'color': Color(0xFF10B981),
-      'services': ['Informatique', 'Mathématiques', 'Physique', 'Chimie'],
-      'position': Offset(0.7, 0.2),
-    },
-    {
-      'id': 'C',
-      'name': 'Bloc C',
-      'description': 'Faculté des Lettres & Langues',
-      'icon': Icons.menu_book,
-      'color': Color(0xFFF59E0B),
-      'services': ['Lettres', 'Langues', 'Histoire', 'Philosophie'],
-      'position': Offset(0.2, 0.7),
-    },
-    {
-      'id': 'D',
-      'name': 'Bloc D',
-      'description': 'Bibliothèque & Services',
-      'icon': Icons.local_library,
-      'color': Color(0xFFEF4444),
-      'services': ['Bibliothèque', 'Cafétéria', 'Sport', 'Santé'],
-      'position': Offset(0.7, 0.7),
-    },
-  ];
+  List<Map<String, dynamic>> _blocs = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCampusData();
+  }
+
+  Future<void> _loadCampusData() async {
+    final data = await CampusService.getCampusBlocs();
+    if (mounted) {
+      setState(() {
+        _blocs = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  IconData _getIcon(String? iconName) {
+    switch (iconName) {
+      case 'account_balance': return Icons.account_balance;
+      case 'science': return Icons.science;
+      case 'menu_book': return Icons.menu_book;
+      case 'local_library': return Icons.local_library;
+      default: return Icons.location_on;
+    }
+  }
+
+  Color _getColor(String? colorHex) {
+    if (colorHex == null) return const Color(0xFF2563EB);
+    try {
+      return Color(int.parse(colorHex));
+    } catch (e) {
+      return const Color(0xFF2563EB);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +89,9 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           // Carte simplifiée du campus
           Expanded(
@@ -110,7 +112,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                   _buildMainRoads(),
                   
                   // Blocs
-                  ...blocs.map((bloc) => _buildBlocCard(context, bloc)),
+                  ..._blocs.map((bloc) => _buildBlocCard(context, bloc)),
                   
                   // Entrée principale
                   _buildMainEntrance(),
@@ -156,9 +158,9 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      itemCount: blocs.length,
+                      itemCount: _blocs.length,
                       itemBuilder: (context, index) {
-                        final bloc = blocs[index];
+                        final bloc = _blocs[index];
                         return _buildLegendItem(context, bloc);
                       },
                     ),
@@ -239,9 +241,15 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
     final containerWidth = screenWidth - 40; // Margin de 20 de chaque côté
     final cardSize = containerWidth * 0.2; // 20% de la largeur
     
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final position = Offset(bloc['position_x'], bloc['position_y']);
+    // Extract ID (e.g. "A" from "Bloc A")
+    final id = bloc['name'].toString().split(' ').last;
+
     return Positioned(
-      left: bloc['position'].dx * containerWidth - cardSize / 2,
-      top: bloc['position'].dy * containerWidth - cardSize / 2,
+      left: position.dx * containerWidth - cardSize / 2,
+      top: position.dy * containerWidth - cardSize / 2,
       child: GestureDetector(
         onTap: () {
           _showBlocDetails(context, bloc);
@@ -253,7 +261,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: bloc['color'],
+              color: color,
               width: 3,
             ),
             boxShadow: [
@@ -268,17 +276,17 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                bloc['icon'],
-                color: bloc['color'],
+                icon,
+                color: color,
                 size: cardSize * 0.25,
               ),
               const SizedBox(height: 4),
               Text(
-                bloc['id'],
+                id,
                 style: TextStyle(
                   fontSize: cardSize * 0.15,
                   fontWeight: FontWeight.w800,
-                  color: bloc['color'],
+                  color: color,
                 ),
               ),
             ],
@@ -344,6 +352,11 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
   }
 
   Widget _buildLegendItem(BuildContext context, Map<String, dynamic> bloc) {
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final id = bloc['name'].toString().split(' ').last;
+    final services = (bloc['services'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -362,10 +375,10 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: bloc['color'].withOpacity(0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: bloc['color'],
+                color: color,
                 width: 2,
               ),
             ),
@@ -373,16 +386,16 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  bloc['icon'],
-                  color: bloc['color'],
+                  icon,
+                  color: color,
                   size: 20,
                 ),
                 Text(
-                  bloc['id'],
+                  id,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: bloc['color'],
+                    color: color,
                   ),
                 ),
               ],
@@ -416,11 +429,11 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                 Wrap(
                   spacing: 4,
                   runSpacing: 2,
-                  children: (bloc['services'] as List<String>).take(3).map((service) {
+                  children: services.take(3).map((service) {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: bloc['color'].withOpacity(0.1),
+                        color: color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -428,7 +441,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
-                          color: bloc['color'],
+                          color: color,
                         ),
                       ),
                     );
@@ -450,15 +463,22 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
   }
 
   void _showBlocDetails(BuildContext context, Map<String, dynamic> bloc) {
+    if (!mounted) return;
+    
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final id = bloc['name'].toString().split(' ').last;
+    final services = (bloc['services'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(bloc['icon'], color: bloc['color']),
+              Icon(icon, color: color),
               const SizedBox(width: 8),
-              Text('${bloc['name']} - ${bloc['id']}'),
+              Text('${bloc['name']} - $id'),
             ],
           ),
           content: Column(
@@ -466,14 +486,14 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                bloc['description'],
-                style: TextStyle(
+                bloc['description'] ?? '',
+                style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Services disponibles :',
                 style: TextStyle(
                   fontSize: 14,
@@ -482,24 +502,27 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              ...(bloc['services'] as List<String>).map((service) {
-                return Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 4),
-                  child: Text(
-                    '• $service',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
+              if (services.isEmpty)
+                const Text('Aucun service listé.', style: TextStyle(color: Colors.grey))
+              else
+                ...services.map((service) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8, top: 4),
+                    child: Text(
+                      '• $service',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
@@ -512,7 +535,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Comment utiliser la carte'),
+          title: const Text('Comment utiliser la carte'),
           content: const Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +559,7 @@ class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Compris'),
+              child: const Text('Compris'),
             ),
           ],
         );

@@ -1,219 +1,108 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../controllers/chat_providers.dart';
+import '../shared/models/message_model.dart';
 
-class ModernMessagingScreen extends StatefulWidget {
+class ModernMessagingScreen extends ConsumerStatefulWidget {
   const ModernMessagingScreen({super.key});
 
   @override
-  State<ModernMessagingScreen> createState() => _ModernMessagingScreenState();
+  ConsumerState<ModernMessagingScreen> createState() => _ModernMessagingScreenState();
 }
 
-class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
+class _ModernMessagingScreenState extends ConsumerState<ModernMessagingScreen> {
   final TextEditingController _messageController = TextEditingController();
-  List<Map<String, dynamic>> _conversations = [];
-  List<Map<String, dynamic>> _messages = [];
-  Map<String, dynamic>? _selectedConversation;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadConversations();
-  }
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _messagesScrollController = ScrollController();
 
   @override
   void dispose() {
     _messageController.dispose();
+    _searchController.dispose();
+    _messagesScrollController.dispose();
     super.dispose();
   }
 
-  void _loadConversations() {
-    // Simulation de chargement des conversations
-    setState(() {
-      _conversations = [
-        {
-          'id': '1',
-          'name': 'Alice Martin',
-          'avatar': null,
-          'lastMessage': 'Merci pour les explications !',
-          'time': '14:30',
-          'unread': 2,
-          'isOnline': true,
-          'role': 'Étudiant',
-        },
-        {
-          'id': '2',
-          'name': 'Prof. Bernard',
-          'avatar': null,
-          'lastMessage': 'La réunion est confirmée pour demain',
-          'time': '12:15',
-          'unread': 0,
-          'isOnline': false,
-          'role': 'Enseignant',
-        },
-        {
-          'id': '3',
-          'name': 'Groupe Mathématiques',
-          'avatar': null,
-          'lastMessage': 'Bob: Quelqu\'un a les notes ?',
-          'time': 'Hier',
-          'unread': 5,
-          'isOnline': true,
-          'role': 'Groupe',
-        },
-        {
-          'id': '4',
-          'name': 'Administration',
-          'avatar': null,
-          'lastMessage': 'Veuillez soumettre vos rapports',
-          'time': 'Hier',
-          'unread': 1,
-          'isOnline': false,
-          'role': 'Service',
-        },
-      ];
-      
-      _selectedConversation = _conversations.first;
-      _loadMessages(_selectedConversation!['id']);
-    });
-  }
+  void _sendMessage() {
+    final selectedConv = ref.read(selectedConversationProvider);
+    if (selectedConv == null || _messageController.text.trim().isEmpty) return;
 
-  void _loadMessages(String conversationId) {
-    // Simulation de chargement des messages
-    setState(() {
-      _messages = [
-        {
-          'id': '1',
-          'sender': 'Alice Martin',
-          'content': 'Bonjour Professeur, j\'ai une question sur le dernier cours',
-          'time': '14:00',
-          'isMe': false,
-          'avatar': null,
-        },
-        {
-          'id': '2',
-          'sender': 'Moi',
-          'content': 'Bonjour Alice ! Bien sûr, quelle est votre question ?',
-          'time': '14:05',
-          'isMe': true,
-          'avatar': null,
-        },
-        {
-          'id': '3',
-          'sender': 'Alice Martin',
-          'content': 'Je n\'ai pas bien compris la partie sur les dérivées partielles',
-          'time': '14:10',
-          'isMe': false,
-          'avatar': null,
-        },
-        {
-          'id': '4',
-          'sender': 'Moi',
-          'content': 'Pas de problème. Les dérivées partielles permettent de calculer comment une fonction change quand on ne fait varier qu\'une seule variable à la fois.',
-          'time': '14:15',
-          'isMe': true,
-          'avatar': null,
-        },
-        {
-          'id': '5',
-          'sender': 'Alice Martin',
-          'content': 'Merci pour les explications !',
-          'time': '14:30',
-          'isMe': false,
-          'avatar': null,
-        },
-      ];
+    ref.read(chatControllerProvider.notifier).sendMessage(
+      conversationId: selectedConv.id,
+      content: _messageController.text.trim(),
+    );
+
+    _messageController.clear();
+    
+    // Scroll vers le bas après envoi
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_messagesScrollController.hasClients) {
+        _messagesScrollController.animateTo(
+          _messagesScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final conversationsAsync = ref.watch(conversationsStreamProvider);
+    final selectedConv = ref.watch(selectedConversationProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Messagerie',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            Text(
-              '${_conversations.where((c) => c['unread'] > 0).length} non lus',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        title: Text(
+          'Messagerie',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Color(0xFF64748B)),
-            onPressed: _showSearchDialog,
-          ),
-          IconButton(
-            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
-            onPressed: _showNewMessageDialog,
+            icon: Icon(Icons.add_comment_outlined, color: Theme.of(context).iconTheme.color),
+            onPressed: () {
+              // TODO: Dialog pour créer une nouvelle conversation
+              _showNewConversationDialog();
+            },
           ),
         ],
       ),
       body: Row(
         children: [
-          // Liste des conversations
+          // Panneau latéral des conversations
           Container(
             width: 350,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
               border: Border(
-                right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               ),
             ),
             child: Column(
               children: [
                 // Barre de recherche
-                Container(
+                Padding(
                   padding: const EdgeInsets.all(16),
                   child: TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Rechercher une conversation...',
-                      hintStyle: TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Color(0xFF6B7280),
-                        size: 20,
-                      ),
+                      hintText: 'Rechercher...',
+                      prefixIcon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
                       filled: true,
-                      fillColor: const Color(0xFFF9FAFB),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
+                      fillColor: Theme.of(context).scaffoldBackgroundColor,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB),
-                          width: 1,
-                        ),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
@@ -221,13 +110,27 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 
                 // Liste des conversations
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _conversations.length,
-                    itemBuilder: (context, index) {
-                      final conversation = _conversations[index];
-                      final isSelected = _selectedConversation?['id'] == conversation['id'];
-                      return _buildConversationCard(conversation, isSelected);
+                  child: conversationsAsync.when(
+                    data: (conversations) {
+                      if (conversations.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Aucune conversation',
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: conversations.length,
+                        itemBuilder: (context, index) {
+                          final conversation = conversations[index];
+                          final isSelected = selectedConv?.id == conversation.id;
+                          return _buildConversationCard(conversation, isSelected);
+                        },
+                      );
                     },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, st) => Center(child: Text('Erreur: $e')),
                   ),
                 ),
               ],
@@ -236,8 +139,8 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
           
           // Zone de conversation
           Expanded(
-            child: _selectedConversation != null
-                ? _buildConversationArea()
+            child: selectedConv != null
+                ? _buildConversationArea(selectedConv)
                 : _buildEmptyState(),
           ),
         ],
@@ -245,137 +148,77 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
     );
   }
 
-  Widget _buildConversationCard(Map<String, dynamic> conversation, bool isSelected) {
+  Widget _buildConversationCard(ConversationModel conversation, bool isSelected) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedConversation = conversation;
-          _loadMessages(conversation['id']);
-        });
+        ref.read(selectedConversationProvider.notifier).state = conversation;
+        ref.read(chatControllerProvider.notifier).markAsRead(conversation.id);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF1F5F9) : Colors.transparent,
+          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
           border: Border(
-            bottom: BorderSide(
-              color: const Color(0xFFE2E8F0),
-              width: isSelected ? 0 : 1,
-            ),
+            bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
             left: isSelected
-                ? const BorderSide(color: Color(0xFF2563EB), width: 3)
+                ? BorderSide(color: Theme.of(context).primaryColor, width: 3)
                 : BorderSide.none,
           ),
         ),
         child: Row(
           children: [
             // Avatar
-            Stack(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getRoleColor(conversation['role']).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: conversation['avatar'] != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Image.network(
-                            conversation['avatar'],
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Icon(
-                          _getRoleIcon(conversation['role']),
-                          color: _getRoleColor(conversation['role']),
-                          size: 24,
-                        ),
-                ),
-                if (conversation['isOnline'])
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Icon(
+                conversation.isGroup ? Icons.group : Icons.person,
+                color: Theme.of(context).primaryColor,
+                size: 24,
+              ),
             ),
-            
             const SizedBox(width: 12),
             
-            // Informations
+            // Infos conversation
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          conversation['name'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected
-                                ? const Color(0xFF2563EB)
-                                : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        conversation['time'],
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    conversation.displayName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          conversation['lastMessage'],
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (conversation['unread'] > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            conversation['unread'].toString(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                    ],
+                  Text(
+                    conversation.displayLastMessage ?? 'Pas de message',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            
+            // Heure
+            Text(
+              _formatTime(conversation.lastMessageTime),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
             ),
           ],
@@ -384,16 +227,18 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
     );
   }
 
-  Widget _buildConversationArea() {
+  Widget _buildConversationArea(ConversationModel conversation) {
+    final messagesAsync = ref.watch(messagesStreamProvider(conversation.id));
+
     return Column(
       children: [
-        // Header de la conversation
+        // En-tête de conversation
         Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             border: Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
           ),
           child: Row(
@@ -402,12 +247,12 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _getRoleColor(_selectedConversation!['role']).withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
-                  _getRoleIcon(_selectedConversation!['role']),
-                  color: _getRoleColor(_selectedConversation!['role']),
+                  conversation.isGroup ? Icons.group : Icons.person,
+                  color: Theme.of(context).primaryColor,
                   size: 20,
                 ),
               ),
@@ -417,95 +262,91 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _selectedConversation!['name'],
+                      conversation.displayName,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      _selectedConversation!['role'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ],
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.more_vert, color: Color(0xFF64748B)),
-                onPressed: _showConversationOptions,
-              ),
             ],
           ),
         ),
-        
+
         // Messages
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              final message = _messages[index];
-              return _buildMessageBubble(message);
+          child: messagesAsync.when(
+            data: (messages) {
+              if (messages.isEmpty) {
+                return Center(
+                  child: Text(
+                    'Aucun message',
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                  ),
+                );
+              }
+              
+              // Scroll automatique au dernier message
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_messagesScrollController.hasClients) {
+                  _messagesScrollController.jumpTo(_messagesScrollController.position.maxScrollExtent);
+                }
+              });
+
+              return ListView.builder(
+                controller: _messagesScrollController,
+                padding: const EdgeInsets.all(20),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  final message = messages[index];
+                  return _buildMessageBubble(message, conversation);
+                },
+              );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Center(child: Text('Erreur: $e')),
           ),
         ),
-        
+
         // Zone de saisie
         Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             border: Border(
-              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.attach_file, color: Color(0xFF64748B)),
-                onPressed: _attachFile,
-              ),
               Expanded(
                 child: TextField(
                   controller: _messageController,
                   decoration: InputDecoration(
-                    hintText: 'Écrire un message...',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF9CA3AF),
-                      fontSize: 14,
-                    ),
+                    hintText: 'Écrivez votre message...',
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
-                    ),
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide.none,
                     ),
                   ),
+                  maxLines: null,
+                  onSubmitted: (_) => _sendMessage(),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               IconButton(
-                icon: Icon(Icons.send, color: Color(0xFF2563EB)),
                 onPressed: _sendMessage,
+                icon: Icon(Icons.send, color: Theme.of(context).primaryColor),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  padding: const EdgeInsets.all(12),
+                ),
               ),
             ],
           ),
@@ -514,92 +355,56 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message) {
-    final isMe = message['isMe'];
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          if (!isMe) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+  Widget _buildMessageBubble(MessageModel message, ConversationModel conversation) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final isMe = message.senderId == currentUserId;
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isMe 
+              ? Theme.of(context).primaryColor
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.6,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMe)
+              Text(
+                message.senderName ?? 'Inconnu',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
               ),
-              child: Icon(
-                Icons.person,
-                color: Color(0xFF2563EB),
-                size: 16,
+            if (!isMe) const SizedBox(height: 4),
+            Text(
+              message.content,
+              style: TextStyle(
+                fontSize: 14,
+                color: isMe ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                if (!isMe)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      message['sender'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isMe
-                        ? const Color(0xFF2563EB)
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    message['content'],
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isMe ? Colors.white : const Color(0xFF0F172A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message['time'],
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isMe) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.person,
-                color: Color(0xFF10B981),
-                size: 16,
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('HH:mm').format(message.timestamp),
+              style: TextStyle(
+                fontSize: 10,
+                color: isMe 
+                    ? Colors.white.withOpacity(0.7)
+                    : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -609,35 +414,17 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Icon(
-              Icons.chat_bubble_outline,
-              color: Color(0xFF2563EB),
-              size: 40,
-            ),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'Sélectionnez une conversation',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Choisissez une conversation pour commencer à discuter',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -645,153 +432,35 @@ class _ModernMessagingScreenState extends State<ModernMessagingScreen> {
     );
   }
 
-  Color _getRoleColor(String role) {
-    switch (role) {
-      case 'Étudiant':
-        return const Color(0xFF2563EB);
-      case 'Enseignant':
-        return const Color(0xFF10B981);
-      case 'Groupe':
-        return const Color(0xFFF59E0B);
-      case 'Service':
-        return const Color(0xFFEF4444);
-      default:
-        return const Color(0xFF64748B);
-    }
-  }
-
-  IconData _getRoleIcon(String role) {
-    switch (role) {
-      case 'Étudiant':
-        return Icons.school;
-      case 'Enseignant':
-        return Icons.person;
-      case 'Groupe':
-        return Icons.groups;
-      case 'Service':
-        return Icons.business;
-      default:
-        return Icons.person;
-    }
-  }
-
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
-    
-    setState(() {
-      _messages.add({
-        'id': (_messages.length + 1).toString(),
-        'sender': 'Moi',
-        'content': _messageController.text,
-        'time': DateTime.now().toString().substring(11, 16),
-        'isMe': true,
-        'avatar': null,
-      });
-      _messageController.clear();
-    });
-  }
-
-  void _attachFile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonctionnalité de pièce jointe à implémenter'),
-        backgroundColor: Color(0xFF2563EB),
+  void _showNewConversationDialog() {
+    // TODO: Implémenter le dialog pour créer une nouvelle conversation
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nouvelle conversation'),
+        content: const Text('Fonctionnalité en cours de développement'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
 
-  void _showSearchDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Rechercher'),
-          content: TextField(
-            decoration: InputDecoration(
-              hintText: 'Rechercher des messages ou conversations...',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Rechercher'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
 
-  void _showNewMessageDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Nouveau message'),
-          content: TextField(
-            decoration: InputDecoration(
-              hintText: 'Destinataire...',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Envoyer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showConversationOptions() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(_selectedConversation!['name']),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text('Voir le profil'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.notifications_off),
-                title: Text('Désactiver les notifications'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
-                title: Text('Supprimer la conversation', style: TextStyle(color: Color(0xFFEF4444))),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
+    if (diff.inDays == 0) {
+      return DateFormat('HH:mm').format(time);
+    } else if (diff.inDays == 1) {
+      return 'Hier';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays}j';
+    } else {
+      return DateFormat('dd/MM').format(time);
+    }
   }
 }

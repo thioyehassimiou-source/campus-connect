@@ -22,28 +22,50 @@ class ProfileService {
             .from('profiles')
             .select('*, faculties(nom), departments(nom), services(nom)')
             .eq('id', userId)
-            .maybeSingle(); // ✅ Ne crash pas si vide
+            .maybeSingle();
 
         if (response != null) {
-          print('[ProfileService] Profile loaded (attempt ${attempt + 1})');
+          print('[ProfileService] Profile found in DB (attempt ${attempt + 1})');
           return response;
         }
 
-        print('[ProfileService] Profile not found, retry ${attempt + 1}/$retryCount');
+        print('[ProfileService] Profile not found in DB, retry ${attempt + 1}/$retryCount');
         
-        // Attendre avant retry (backoff exponentiel)
         if (attempt < retryCount - 1) {
           await Future.delayed(Duration(milliseconds: delayMs * (attempt + 1)));
         }
       } catch (e) {
-        print('[ProfileService] Error attempt ${attempt + 1}: $e');
-        
-        if (attempt == retryCount - 1) {
-          return null;
-        }
-        
+        print('[ProfileService] Error fetching profile: $e');
+        if (attempt == retryCount - 1) break;
         await Future.delayed(Duration(milliseconds: delayMs));
       }
+    }
+
+    // 🚀 Fallback : Utiliser les métadonnées de l'utilisateur si la DB est vide ou en erreur
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      print('[ProfileService] Falling back to user metadata for ${user.id}');
+      final metadata = user.userMetadata ?? {};
+      return {
+        'id': user.id,
+        'nom': metadata['nom'] ?? metadata['full_name'] ?? 'Utilisateur',
+        'email': user.email,
+        'role': metadata['role'] ?? 'Étudiant',
+        'faculty_id': metadata['faculty_id'],
+        'department_id': metadata['department_id'],
+        'service_id': metadata['service_id'],
+        'niveau': metadata['niveau'] ?? 'Licence 1',
+        'moyenne': metadata['moyenne'],
+        'credits_valides': metadata['credits_valides'],
+        'classement': metadata['classement'],
+        'linkedin': metadata['linkedin'],
+        'github': metadata['github'],
+        'twitter': metadata['twitter'],
+        'bio': metadata['bio'],
+        'office': metadata['office'],
+        'specialization': metadata['specialization'],
+        'is_fallback': true, // Marqueur pour debug
+      };
     }
 
     return null;
@@ -74,6 +96,9 @@ class ProfileService {
           'telephone': metadata['telephone'] ?? '',
           'niveau': role == 'Étudiant' ? (metadata['niveau'] ?? 'Licence 1') : 'Non renseigné',
           'filiere_id': metadata['filiere_id'], // ✅ null si non renseignée
+          'office': metadata['office'],
+          'specialization': metadata['specialization'],
+          'bio': metadata['bio'],
         });
         
         print('[ProfileService] Profile created successfully');

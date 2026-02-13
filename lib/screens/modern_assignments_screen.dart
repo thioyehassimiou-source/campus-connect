@@ -1,118 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/shared/models/assignment_model.dart';
+import 'package:campusconnect/controllers/assignment_providers.dart';
+import 'package:campusconnect/controllers/assignment_submission_providers.dart';
+import 'package:campusconnect/core/services/assignment_service.dart';
+import 'package:campusconnect/core/services/supabase_storage_service.dart';
+import 'package:campusconnect/core/services/assignment_submission_service.dart';
+import 'package:campusconnect/core/services/download_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
 
-class ModernAssignmentsScreen extends StatefulWidget {
-  const ModernAssignmentsScreen({super.key});
+class ModernAssignmentsScreen extends ConsumerStatefulWidget {
+  final bool isTeacher;
+  const ModernAssignmentsScreen({super.key, this.isTeacher = false});
 
   @override
-  State<ModernAssignmentsScreen> createState() => _ModernAssignmentsScreenState();
+  ConsumerState<ModernAssignmentsScreen> createState() => _ModernAssignmentsScreenState();
 }
 
-class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
+class _ModernAssignmentsScreenState extends ConsumerState<ModernAssignmentsScreen> {
   String _selectedFilter = 'Tous';
-  List<Map<String, dynamic>> _assignments = [];
+  // List<Map<String, dynamic>> _assignments = [] is removed, using Riverpod
 
   @override
   void initState() {
     super.initState();
-    _loadAssignments();
+    // Géré par Riverpod
   }
 
-  void _loadAssignments() {
-    // Simulation de chargement des devoirs
-    setState(() {
-      _assignments = [
-        {
-          'id': '1',
-          'title': 'Projet d\'Algorithmique',
-          'course': 'Algorithmique',
-          'teacher': 'Prof. Martin',
-          'description': 'Implémenter un algorithme de tri avancé avec analyse de complexité',
-          'type': 'Projet',
-          'dueDate': '15/01/2025',
-          'dueTime': '23:59',
-          'status': 'pending',
-          'priority': 'high',
-          'submitted': false,
-          'grade': null,
-          'maxGrade': 20,
-          'attachments': ['sujet.pdf', 'exemples.zip'],
-          'submissionCount': 12,
-          'maxSubmissions': 45,
-        },
-        {
-          'id': '2',
-          'title': 'TP Base de Données',
-          'course': 'Base de Données',
-          'teacher': 'Prof. Petit',
-          'description': 'Créer une base de données relationnelle pour une bibliothèque',
-          'type': 'TP',
-          'dueDate': '10/01/2025',
-          'dueTime': '18:00',
-          'status': 'submitted',
-          'priority': 'medium',
-          'submitted': true,
-          'grade': 16.5,
-          'maxGrade': 20,
-          'attachments': ['tp_sujet.pdf'],
-          'submissionCount': 38,
-          'maxSubmissions': 45,
-        },
-        {
-          'id': '3',
-          'title': 'Rapport de Physique',
-          'course': 'Physique',
-          'teacher': 'Prof. Dubois',
-          'description': 'Rapport sur les expériences de mécanique quantique',
-          'type': 'Rapport',
-          'dueDate': '20/01/2025',
-          'dueTime': '14:00',
-          'status': 'pending',
-          'priority': 'medium',
-          'submitted': false,
-          'grade': null,
-          'maxGrade': 20,
-          'attachments': ['guide_rapport.pdf'],
-          'submissionCount': 8,
-          'maxSubmissions': 45,
-        },
-        {
-          'id': '4',
-          'title': 'Exercices Mathématiques',
-          'course': 'Mathématiques',
-          'teacher': 'Prof. Bernard',
-          'description': 'Exercices 1 à 15 du chapitre 3 sur les intégrales',
-          'type': 'Exercices',
-          'dueDate': '08/01/2025',
-          'dueTime': '10:00',
-          'status': 'graded',
-          'priority': 'low',
-          'submitted': true,
-          'grade': 18.0,
-          'maxGrade': 20,
-          'attachments': ['exercices.pdf'],
-          'submissionCount': 42,
-          'maxSubmissions': 45,
-        },
-        {
-          'id': '5',
-          'title': 'Présentation Informatique',
-          'course': 'Informatique',
-          'teacher': 'Prof. Leroy',
-          'description': 'Présentation sur les technologies web modernes (10 min)',
-          'type': 'Présentation',
-          'dueDate': '25/01/2025',
-          'dueTime': '12:00',
-          'status': 'pending',
-          'priority': 'high',
-          'submitted': false,
-          'grade': null,
-          'maxGrade': 20,
-          'attachments': ['consignes.pdf', 'evaluation.pdf'],
-          'submissionCount': 5,
-          'maxSubmissions': 45,
-        },
-      ];
-    });
+  void _refreshAssignments() {
+    ref.invalidate(widget.isTeacher ? teacherAssignmentsProvider : studentAssignmentsProvider);
   }
 
   @override
@@ -137,8 +56,8 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                 color: Color(0xFF0F172A),
               ),
             ),
-            Text(
-              '${_assignments.where((a) => a['status'] == 'pending').length} en attente',
+            const Text(
+              'Suivi des travaux',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -148,6 +67,15 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: Theme.of(context).primaryColor),
+            onPressed: _refreshAssignments,
+          ),
+          if (widget.isTeacher)
+            IconButton(
+              icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
+              onPressed: _showCreateAssignmentDialog,
+            ),
           IconButton(
             icon: Icon(Icons.filter_list, color: Color(0xFF64748B)),
             onPressed: _showFilterDialog,
@@ -216,59 +144,31 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
             ),
           ),
           
-          // Statistiques
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'En attente',
-                    '${_assignments.where((a) => a['status'] == 'pending').length}',
-                    Icons.pending_actions,
-                    const Color(0xFFF59E0B),
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatCard(
-                    'Soumis',
-                    '${_assignments.where((a) => a['submitted']).length}',
-                    Icons.upload_file,
-                    const Color(0xFF2563EB),
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatCard(
-                    'Notés',
-                    '${_assignments.where((a) => a['grade'] != null).length}',
-                    Icons.grade,
-                    const Color(0xFF10B981),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
           // Liste des devoirs
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredAssignments.length,
-              itemBuilder: (context, index) {
-                final assignment = _filteredAssignments[index];
-                return _buildAssignmentCard(assignment);
+            child: Consumer(
+              builder: (context, ref, child) {
+                final assignmentsAsync = ref.watch(widget.isTeacher ? teacherAssignmentsProvider : studentAssignmentsProvider);
+                
+                return assignmentsAsync.when(
+                  data: (data) {
+                    var assignments = _filterAssignments(data);
+                    
+                    if (assignments.isEmpty) {
+                      return const Center(child: Text('Aucun devoir trouvé.'));
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: assignments.length,
+                      itemBuilder: (context, index) {
+                        return _buildAssignmentCard(assignments[index]);
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, st) => Center(child: Text('Erreur: $e')),
+                );
               },
             ),
           ),
@@ -277,16 +177,16 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
     );
   }
 
-  List<Map<String, dynamic>> get _filteredAssignments {
+  List<Assignment> _filterAssignments(List<Assignment> assignments) {
     switch (_selectedFilter) {
       case 'En attente':
-        return _assignments.where((a) => a['status'] == 'pending').toList();
+        return assignments.where((a) => a.status == 'pending').toList();
       case 'Soumis':
-        return _assignments.where((a) => a['submitted']).toList();
+        return assignments.where((a) => a.submitted).toList();
       case 'Notés':
-        return _assignments.where((a) => a['grade'] != null).toList();
+        return assignments.where((a) => a.grade != null).toList();
       default:
-        return _assignments;
+        return assignments;
     }
   }
 
@@ -323,10 +223,10 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
     );
   }
 
-  Widget _buildAssignmentCard(Map<String, dynamic> assignment) {
-    final status = assignment['status'];
-    final priority = assignment['priority'];
-    final isOverdue = _isOverdue(assignment['dueDate'], assignment['dueTime']);
+  Widget _buildAssignmentCard(Assignment assignment) {
+    final status = assignment.status;
+    final priority = assignment.priority;
+    final isOverdue = assignment.dueDate.isBefore(DateTime.now()) && !assignment.submitted;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -354,12 +254,15 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            assignment['title'],
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
+                          Expanded(
+                            child: Text(
+                              assignment.title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -382,8 +285,8 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${assignment['course']} • ${assignment['teacher']}',
-                        style: TextStyle(
+                        '${assignment.course} • ${assignment.teacher}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -391,8 +294,8 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        assignment['description'],
-                        style: TextStyle(
+                        assignment.description,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w400,
@@ -403,6 +306,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
                 Container(
                   width: 60,
                   height: 60,
@@ -447,8 +351,8 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    assignment['type'],
-                    style: TextStyle(
+                    assignment.type,
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -463,7 +367,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '${assignment['dueDate']} à ${assignment['dueTime']}',
+                    DateFormat('dd/MM à HH:mm').format(assignment.dueDate),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -472,7 +376,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                   ),
                 ),
                 const Spacer(),
-                if (assignment['attachments'].isNotEmpty)
+                if (assignment.attachments.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -480,8 +384,8 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '${assignment['attachments'].length} pièce(s)',
-                      style: TextStyle(
+                      '${assignment.attachments.length} pièce(s)',
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF8B5CF6),
@@ -491,10 +395,10 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            if (assignment['grade'] != null)
+            if (assignment.grade != null)
               Row(
                 children: [
-                  Text(
+                  const Text(
                     'Note obtenue : ',
                     style: TextStyle(
                       fontSize: 12,
@@ -503,11 +407,11 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                     ),
                   ),
                   Text(
-                    '${assignment['grade']}/${assignment['maxGrade']}',
+                    '${assignment.grade}/${assignment.maxGrade}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: _getGradeColor(assignment['grade']),
+                      color: _getGradeColor(assignment.grade!),
                     ),
                   ),
                 ],
@@ -526,7 +430,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Voir détails',
                       style: TextStyle(
                         fontSize: 12,
@@ -536,7 +440,20 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (status == 'pending')
+                // For teachers: View submissions
+                if (widget.isTeacher)
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: () => _showSubmissionsDialog(assignment),
+                      icon: const Icon(Icons.people_outline, size: 16),
+                      label: const Text('Voir soumissions', style: TextStyle(fontSize: 12)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF2563EB),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                  )
+                else if (status == 'pending') // Only show submit button if pending
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _submitAssignment(assignment),
@@ -548,7 +465,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Soumettre',
                         style: TextStyle(
                           fontSize: 12,
@@ -556,8 +473,28 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                         ),
                       ),
                     ),
-                  ),
-                if (status == 'graded')
+                  )
+                else if (status == 'submitted') // Show 'Soumis' text if already submitted
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Soumis',
+                          style: TextStyle(
+                            color: Color(0xFF10B981),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (status == 'graded')
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _viewFeedback(assignment),
@@ -569,7 +506,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Voir feedback',
                         style: TextStyle(
                           fontSize: 12,
@@ -582,6 +519,164 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showSubmissionsDialog(Assignment assignment) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Soumissions - ${assignment.title}'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final submissionsAsync = ref.watch(assignmentSubmissionsProvider(assignment.id));
+              
+              return submissionsAsync.when(
+                data: (submissions) {
+                  if (submissions.isEmpty) {
+                    return const Center(child: Text('Aucune soumission pour le moment.'));
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: submissions.length,
+                    itemBuilder: (context, index) {
+                      final sub = submissions[index];
+                      return ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFE2E8F0),
+                          child: Icon(Icons.person, color: Color(0xFF64748B)),
+                        ),
+                        title: Text(sub.studentName ?? 'Étudiant ${sub.studentId.substring(0, 8)}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Fichier: ${sub.fileName}'),
+                            Text(
+                              'Statut: ${sub.status == "graded" ? "Noté" : "À corriger"}',
+                              style: TextStyle(
+                                color: sub.status == "graded" ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.download, color: Color(0xFF2563EB)),
+                              onPressed: () {
+                                // Utiliser le DownloadService pour télécharger
+                                DownloadService.downloadFile(
+                                  sub.fileUrl,
+                                  sub.fileName,
+                                  context,
+                                );
+                              },
+                            ),
+                            ElevatedButton(
+                              onPressed: () => _gradeSubmission(sub, assignment),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: sub.status == "graded" ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                              child: Text(sub.status == "graded" ? '${sub.score}/${assignment.maxGrade}' : 'Noter'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => Center(child: Text('Erreur: $e')),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _gradeSubmission(AssignmentSubmission submission, Assignment assignment) {
+    double score = submission.score ?? 0;
+    String feedback = submission.feedback ?? '';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Noter le travail'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Étudiant: ${submission.studentId.substring(0, 8)}'),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Note / ${assignment.maxGrade}',
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (v) => score = double.tryParse(v) ?? 0,
+              controller: TextEditingController(text: score.toString()),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Feedback / Commentaire',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              onChanged: (v) => feedback = v,
+              controller: TextEditingController(text: feedback),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await ref.read(submissionControllerProvider.notifier).gradeSubmission(
+                  submissionId: submission.id,
+                  assignmentId: assignment.id,
+                  score: score,
+                  feedback: feedback,
+                  ref: ref,
+                );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Note enregistrée !'),
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
       ),
     );
   }
@@ -659,10 +754,7 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
     return const Color(0xFFEF4444);
   }
 
-  bool _isOverdue(String dueDate, String dueTime) {
-    // Simple check - in real app, parse dates properly
-    return false;
-  }
+  // Removed _isOverdue as it's replaced by DateTime logic
 
   void _showFilterDialog() {
     showDialog(
@@ -707,34 +799,34 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
     );
   }
 
-  void _viewAssignmentDetails(Map<String, dynamic> assignment) {
+  void _viewAssignmentDetails(Assignment assignment) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(assignment['title']),
+          title: Text(assignment.title),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Cours: ${assignment['course']}'),
-                Text('Professeur: ${assignment['teacher']}'),
-                Text('Type: ${assignment['type']}'),
-                Text('Date limite: ${assignment['dueDate']} à ${assignment['dueTime']}'),
+                Text('Cours: ${assignment.course}'),
+                Text('Professeur: ${assignment.teacher}'),
+                Text('Type: ${assignment.type}'),
+                Text('Date limite: ${DateFormat('dd/MM à HH:mm').format(assignment.dueDate)}'),
                 const SizedBox(height: 8),
-                Text('Description:'),
-                Text(assignment['description']),
+                const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(assignment.description),
                 const SizedBox(height: 8),
-                Text('Pièces jointes:'),
-                ...(assignment['attachments'] as List<String>).map((file) => Text('• $file')),
+                Text('Pièces jointes: ${assignment.attachments.isEmpty ? "Aucune" : ""}'),
+                ...assignment.attachments.map((file) => Text('• $file')),
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
@@ -742,73 +834,259 @@ class _ModernAssignmentsScreenState extends State<ModernAssignmentsScreen> {
     );
   }
 
-  void _submitAssignment(Map<String, dynamic> assignment) {
+  void _submitAssignment(Assignment assignment) async {
+    File? selectedFile;
+    String fileName = '';
+    bool isUploading = false;
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Soumettre le devoir'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Fonctionnalité de soumission à implémenter'),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Message optionnel...',
-                  border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Soumettre le devoir'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  assignment.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                maxLines: 3,
+                const SizedBox(height: 16),
+                const Text(
+                  'Sélectionnez votre fichier (PDF, Word, etc.) :',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: isUploading ? null : () async {
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'],
+                    );
+
+                    if (result != null) {
+                      setStateDialog(() {
+                        selectedFile = File(result.files.single.path!);
+                        fileName = result.files.single.name;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFF8FAFC),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedFile != null ? Icons.insert_drive_file : Icons.cloud_upload_outlined,
+                          color: const Color(0xFF2563EB),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            selectedFile != null ? fileName : 'Cliquez pour choisir un fichier',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: selectedFile != null ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (isUploading) ...[
+                  const SizedBox(height: 16),
+                  const LinearProgressIndicator(),
+                  const SizedBox(height: 8),
+                  const Center(
+                    child: Text(
+                      'Chargement en cours...',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isUploading ? null : () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: (selectedFile == null || isUploading) ? null : () async {
+                  setStateDialog(() => isUploading = true);
+                  try {
+                    final userId = Supabase.instance.client.auth.currentUser?.id;
+                    if (userId == null) throw Exception('Non connecté');
+
+                    // 1. Upload vers Storage
+                    final path = '$userId/${assignment.id}_${DateTime.now().millisecondsSinceEpoch}_$fileName';
+                    final publicUrl = await SupabaseStorageService.uploadFile(
+                      file: selectedFile!,
+                      path: path,
+                    );
+
+                    // 2. Enregistrer la soumission
+                    await ref.read(submissionControllerProvider.notifier).submitAssignment(
+                      assignmentId: assignment.id,
+                      fileUrl: publicUrl,
+                      fileName: fileName,
+                      ref: ref,
+                    );
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Devoir soumis avec succès !'),
+                          backgroundColor: Color(0xFF10B981),
+                        ),
+                      );
+                      // Rafraîchir les devoirs
+                      ref.invalidate(studentAssignmentsProvider);
+                    }
+                  } catch (e) {
+                    setStateDialog(() => isUploading = false);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur: $e')),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Soumettre'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Devoir soumis avec succès!'),
-                    backgroundColor: Color(0xFF10B981),
-                  ),
-                );
-              },
-              child: Text('Soumettre'),
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  void _viewFeedback(Map<String, dynamic> assignment) {
+  void _viewFeedback(Assignment assignment) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Feedback du professeur'),
+          title: const Text('Feedback du professeur'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Note: ${assignment['grade']}/${assignment['maxGrade']}'),
+              Text('Note: ${assignment.grade}/${assignment.maxGrade}'),
               const SizedBox(height: 16),
-              Text('Commentaires:'),
-              Text('Excellent travail! L\'analyse est pertinente et la présentation est claire. Quelques petites améliorations possibles sur la conclusion.'),
+              const Text('Commentaires:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Excellent travail! L\'analyse est pertinente et la présentation est claire.'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _showCreateAssignmentDialog() {
+    String title = '';
+    String description = '';
+    String course = '';
+    DateTime dueDate = DateTime.now().add(const Duration(days: 7));
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Créer un devoir'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: 'Titre'),
+                onChanged: (v) => title = v,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Matière'),
+                onChanged: (v) => course = v,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+                onChanged: (v) => description = v,
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                title: const Text('Date limite'),
+                subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(dueDate)),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: dueDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(dueDate),
+                    );
+                    if (time != null) {
+                      setState(() {
+                         dueDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                      });
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (title.isNotEmpty && course.isNotEmpty) {
+                try {
+                  await ref.read(assignmentControllerProvider.notifier).createAssignment(
+                    title: title,
+                    description: description,
+                    dueDate: dueDate,
+                    course: course,
+                    ref: ref,
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Devoir créé avec succès!')),
+                  );
+                } catch (e) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                }
+              }
+            },
+            child: const Text('Créer'),
+          ),
+        ],
+      ),
     );
   }
 }

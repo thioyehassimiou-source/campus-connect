@@ -1,111 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/controllers/grade_providers.dart';
+import 'package:campusconnect/core/services/grade_service.dart';
+import 'package:intl/intl.dart';
 
-class ModernStudentGradesScreen extends StatefulWidget {
+class ModernStudentGradesScreen extends ConsumerStatefulWidget {
   const ModernStudentGradesScreen({super.key});
 
   @override
-  State<ModernStudentGradesScreen> createState() => _ModernStudentGradesScreenState();
+  ConsumerState<ModernStudentGradesScreen> createState() => _ModernStudentGradesScreenState();
 }
 
-class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
+class _ModernStudentGradesScreenState extends ConsumerState<ModernStudentGradesScreen> {
   String _selectedSemester = 'Semestre 1';
-  List<Map<String, dynamic>> _grades = [];
-  Map<String, dynamic>? _studentInfo;
+  // Removed local data
 
   @override
   void initState() {
     super.initState();
-    _loadGrades();
   }
 
-  void _loadGrades() {
-    // Simulation de chargement des notes de l'étudiant
-    setState(() {
-      _studentInfo = {
-        'name': 'Alice Martin',
-        'id': 'ET2024001',
-        'program': 'Licence Informatique',
-        'level': 'L2',
-        'average': 15.2,
-        'credits': 45,
-        'rank': 12,
-        'totalStudents': 120,
-      };
-      
-      _grades = [
-        {
-          'course': 'Mathématiques',
-          'evaluation': 'Examen Final',
-          'grade': 16.5,
-          'coefficient': 3,
-          'credits': 6,
-          'date': '15/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Bernard',
-        },
-        {
-          'course': 'Mathématiques',
-          'evaluation': 'TP Noté',
-          'grade': 18.0,
-          'coefficient': 1,
-          'credits': 2,
-          'date': '10/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Bernard',
-        },
-        {
-          'course': 'Physique',
-          'evaluation': 'Examen Final',
-          'grade': 14.0,
-          'coefficient': 3,
-          'credits': 6,
-          'date': '18/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Dubois',
-        },
-        {
-          'course': 'Informatique',
-          'evaluation': 'Projet',
-          'grade': 17.5,
-          'coefficient': 2,
-          'credits': 4,
-          'date': '20/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Leroy',
-        },
-        {
-          'course': 'Algorithmique',
-          'evaluation': 'Contrôle Continu',
-          'grade': 15.0,
-          'coefficient': 2,
-          'credits': 4,
-          'date': '05/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Martin',
-        },
-        {
-          'course': 'Base de Données',
-          'evaluation': 'Examen Final',
-          'grade': 13.5,
-          'coefficient': 2,
-          'credits': 4,
-          'date': '22/12/2024',
-          'status': 'published',
-          'teacher': 'Prof. Petit',
-        },
-      ];
-    });
+  void _refreshData() {
+    ref.invalidate(studentGradesProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -116,11 +43,11 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            Text(
-              '${_grades.length} évaluations',
+            const Text(
+              'Suivi académique',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -131,197 +58,203 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.refresh, color: Theme.of(context).primaryColor),
+            onPressed: _refreshData,
+          ),
+          IconButton(
+            icon: Icon(Icons.download, color: Theme.of(context).iconTheme.color),
             onPressed: _exportGrades,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Carte d'information étudiant
-          if (_studentInfo != null)
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [const Color(0xFF2563EB), const Color(0xFF1D4ED8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Icon(
-                          Icons.school,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _studentInfo!['name'],
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              '${_studentInfo!['program']} • ${_studentInfo!['level']}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'ID: ${_studentInfo!['id']}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Moyenne',
-                          '${_studentInfo!['average'].toStringAsFixed(1)}/20',
-                          Icons.grade,
-                          Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Crédits',
-                          '${_studentInfo!['credits']}/60',
-                          Icons.workspace_premium,
-                          Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Classement',
-                          '${_studentInfo!['rank']}/${_studentInfo!['totalStudents']}',
-                          Icons.leaderboard,
-                          Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+      body: Consumer(
+        builder: (context, ref, child) {
+          final gradesAsync = ref.watch(studentGradesProvider);
           
-          // Filtre par semestre
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  color: Color(0xFF2563EB),
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Semestre',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedSemester,
-                      icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-                      items: ['Semestre 1', 'Semestre 2']
-                          .map((semester) => DropdownMenuItem(
-                                value: semester,
-                                child: Text(
-                                  semester,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedSemester = value!;
-                        });
+          return gradesAsync.when(
+            data: (grades) {
+              if (grades.isEmpty) {
+                return const Center(child: Text('Aucune note enregistrée.'));
+              }
+              
+              // Filtrage par semestre
+              final semesterKey = _selectedSemester == 'Semestre 1' ? 'S1' : 'S2';
+              final filteredGrades = grades.where((g) => g.semester == semesterKey).toList();
+              
+              // Calcul des stats
+              double totalValue = 0;
+              double totalCoeff = 0;
+              for (var g in filteredGrades) {
+                totalValue += g.value * g.coefficient;
+                totalCoeff += g.coefficient;
+              }
+              final average = totalCoeff > 0 ? totalValue / totalCoeff : 0.0;
+              
+              return Column(
+                children: [
+                  // Carte d'information étudiant (Stats dynamiques)
+                  _buildStudentInfoCard(average, filteredGrades.length),
+                  
+                  // Filtre par semestre
+                  _buildSemesterFilter(),
+                  
+                  // Liste des notes
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredGrades.length,
+                      itemBuilder: (context, index) {
+                        return _buildGradeCard(filteredGrades[index]);
                       },
                     ),
                   ),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Center(child: Text('Erreur: $e')),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStudentInfoCard(double average, int totalGrades) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-              ],
+                child: const Icon(Icons.school, color: Colors.white, size: 30),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mon Profil Académique',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+                    ),
+                    Text(
+                      'Suivi des résultats',
+                      style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Moyenne',
+                  '${average.toStringAsFixed(2)}/20',
+                  Icons.grade,
+                  Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'Évaluations',
+                  '$totalGrades',
+                  Icons.assignment,
+                  Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSemesterFilter() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_today, color: Color(0xFF2563EB), size: 20),
+          const SizedBox(width: 12),
+          Text(
+            'Semestre',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
-          
-          // Liste des notes
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _grades.length,
-              itemBuilder: (context, index) {
-                final grade = _grades[index];
-                return _buildGradeCard(grade);
-              },
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedSemester,
+                icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).iconTheme.color),
+                items: ['Semestre 1', 'Semestre 2']
+                    .map((semester) => DropdownMenuItem(
+                          value: semester,
+                          child: Text(
+                            semester,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSemester = value!;
+                  });
+                },
+              ),
             ),
           ),
         ],
@@ -362,11 +295,11 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
     );
   }
 
-  Widget _buildGradeCard(Map<String, dynamic> grade) {
+  Widget _buildGradeCard(Grade grade) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -388,28 +321,19 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        grade['course'],
+                        grade.subject,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        grade['evaluation'],
+                        grade.type,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Prof. ${grade['teacher']}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF9CA3AF),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -420,10 +344,10 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: _getGradeColor(grade['grade']).withOpacity(0.1),
+                    color: _getGradeColor(grade.value).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: _getGradeColor(grade['grade']),
+                      color: _getGradeColor(grade.value),
                       width: 2,
                     ),
                   ),
@@ -431,11 +355,11 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        grade['grade'].toString(),
+                        grade.value.toStringAsFixed(1),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: _getGradeColor(grade['grade']),
+                          color: _getGradeColor(grade.value),
                         ),
                       ),
                       Text(
@@ -443,7 +367,7 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: _getGradeColor(grade['grade']),
+                          color: _getGradeColor(grade.value),
                         ),
                       ),
                     ],
@@ -461,34 +385,18 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    'Coeff. ${grade['coefficient']}',
+                    'Coeff. ${grade.coefficient}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${grade['credits']} crédits',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  grade['date'],
-                  style: TextStyle(
+                  DateFormat('dd/MM/yyyy').format(grade.date),
+                  style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
@@ -506,10 +414,10 @@ class _ModernStudentGradesScreenState extends State<ModernStudentGradesScreen> {
               ),
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
-                widthFactor: grade['grade'] / 20,
+                widthFactor: grade.value / 20 > 1.0 ? 1.0 : grade.value / 20,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: _getGradeColor(grade['grade']),
+                    color: _getGradeColor(grade.value),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

@@ -12,9 +12,8 @@ import 'package:campusconnect/features/auth/domain/user_model.dart';
 
 import 'package:campusconnect/features/academic/presentation/schedule_screen.dart';
 import 'package:campusconnect/features/academic/presentation/documents_screen.dart';
-import 'package:campusconnect/features/messages/presentation/screens/messages_screen.dart';
-import 'package:campusconnect/features/messages/presentation/screens/chat_screen.dart';
 import 'package:campusconnect/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:campusconnect/messaging/screens/messaging_list_screen.dart';
 import 'package:campusconnect/features/documents/presentation/screens/documents_screen.dart' as new_docs;
 import 'package:campusconnect/features/documents/presentation/screens/upload_document_screen.dart';
 import 'package:campusconnect/features/communication/presentation/announcements_screen.dart';
@@ -119,7 +118,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Messages
       GoRoute(
         path: '/messages',
-        builder: (context, state) => const MessagesScreen(),
+        builder: (context, state) => const MessagingListScreen(),
       ),
       // Notifications
       GoRoute(

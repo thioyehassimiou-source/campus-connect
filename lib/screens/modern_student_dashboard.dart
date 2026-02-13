@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/controllers/schedule_providers.dart';
+import 'package:campusconnect/core/services/schedule_service.dart';
+import 'package:intl/intl.dart';
 import 'package:campusconnect/screens/modern_enhanced_announcements_screen.dart';
 import 'package:campusconnect/screens/modern_enhanced_schedule_screen.dart';
 import 'package:campusconnect/screens/modern_student_profile_screen.dart';
 import 'package:campusconnect/screens/modern_services_screen.dart';
 import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:campusconnect/core/services/theme_service.dart';
+import 'package:campusconnect/core/services/announcement_service.dart';
+import 'package:campusconnect/controllers/announcement_providers.dart';
+import 'package:campusconnect/controllers/grade_providers.dart';
+import 'package:campusconnect/controllers/attendance_providers.dart';
+import 'package:campusconnect/controllers/notification_providers.dart';
 import 'package:campusconnect/widgets/theme_toggle_button.dart';
 
 class ModernStudentDashboard extends StatefulWidget {
@@ -29,9 +39,16 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],
+      floatingActionButton: _currentIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () => Navigator.pushNamed(context, '/ai-assistant'),
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.psychology, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, // ✅ Correction: Couleur dynamique
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -44,19 +61,19 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent, // Garder transparent pour voir le container
+          backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor, // ✅ Correction
-          unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor, // ✅ Correction
-          selectedLabelStyle: TextStyle(
+          selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+          unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
+          selectedLabelStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
-          unselectedLabelStyle: TextStyle(
+          unselectedLabelStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          items: [
+          items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
@@ -89,20 +106,26 @@ class _ModernStudentDashboardState extends State<ModernStudentDashboard> {
   }
 }
 
-class DashboardHome extends StatefulWidget {
+class DashboardHome extends ConsumerStatefulWidget {
   const DashboardHome({super.key});
 
   @override
-  State<DashboardHome> createState() => _DashboardHomeState();
+  ConsumerState<DashboardHome> createState() => _DashboardHomeState();
 }
 
-class _DashboardHomeState extends State<DashboardHome> {
+class _DashboardHomeState extends ConsumerState<DashboardHome> {
   String _fullName = 'Étudiant';
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    // 🚀 Chargement immédiat depuis les métadonnées (pas de flash "Étudiant")
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final metadata = user.userMetadata ?? {};
+      _fullName = metadata['nom'] ?? metadata['full_name'] ?? 'Étudiant';
+    }
     _loadUserProfile();
   }
 
@@ -111,7 +134,7 @@ class _DashboardHomeState extends State<DashboardHome> {
       final profile = await ProfileService.getCurrentUserProfile();
       if (profile != null && mounted) {
         setState(() {
-          _fullName = profile['nom'] ?? 'Étudiant';
+          _fullName = profile['nom'] ?? _fullName;
           _isLoading = false;
         });
       }
@@ -126,6 +149,7 @@ class _DashboardHomeState extends State<DashboardHome> {
     final now = DateTime.now();
     final greeting = _getGreeting(now);
     final dayName = _getDayName(now.weekday);
+    final scheduleAsync = ref.watch(validatedScheduleProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -138,13 +162,17 @@ class _DashboardHomeState extends State<DashboardHome> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Color(0xFF2563EB),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.school_rounded,
-              color: Colors.white,
-              size: 20,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Transform.scale(
+                scale: 1.35,
+                child: Image.asset(
+                  'assets/logo/app_logo.png',
+                  fit: BoxFit.fill,
+                ),
+              ),
             ),
           ),
         ),
@@ -172,27 +200,51 @@ class _DashboardHomeState extends State<DashboardHome> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
-            child: Stack(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const ThemeToggleButton(),
-                IconButton(
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    color: Theme.of(context).iconTheme.color,
-                  ),
-                  onPressed: () {},
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final unreadCount = ref.watch(unreadNotificationsCountProvider);
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications_outlined,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
+                          onPressed: () => Navigator.pushNamed(context, '/notifications'),
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -205,12 +257,23 @@ class _DashboardHomeState extends State<DashboardHome> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Carte Emploi du temps du jour
-            _buildTodayScheduleCard(context, dayName),
+            scheduleAsync.when(
+              data: (items) {
+                final todayItems = items.where((item) => 
+                  item.startTime.day == now.day && 
+                  item.startTime.month == now.month && 
+                  item.startTime.year == now.year
+                ).toList();
+                return _buildTodayScheduleCard(context, dayName, todayItems);
+              },
+              loading: () => const Center(child: LinearProgressIndicator()),
+              error: (e, st) => _buildTodayScheduleCard(context, dayName, []),
+            ),
             
             const SizedBox(height: 24),
             
             // Carte Dernières annonces
-            _buildLatestAnnouncementsCard(context),
+            _buildLatestAnnouncementsCard(context, ref),
             
             const SizedBox(height: 24),
             
@@ -219,37 +282,76 @@ class _DashboardHomeState extends State<DashboardHome> {
             
             const SizedBox(height: 24),
             
-            // Cartes additionnelles
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoCard(
-                    'Notes',
-                    '12.5/20',
-                    'Moyenne générale',
-                    Color(0xFF10B981),
-                    Icons.trending_up,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInfoCard(
-                    'Présence',
-                    '95%',
-                    'Ce semestre',
-                    Color(0xFFF59E0B),
-                    Icons.check_circle,
-                  ),
-                ),
-              ],
-            ),
+            // Cartes additionnelles - Dynamiques
+            _buildStatsCards(context, ref),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTodayScheduleCard(BuildContext context, String dayName) {
+  Widget _buildStatsCards(BuildContext context, WidgetRef ref) {
+    final averageAsync = ref.watch(studentAverageProvider);
+    final attendanceAsync = ref.watch(studentAttendanceRateProvider);
+
+    return Row(
+      children: [
+        Expanded(
+          child: averageAsync.when(
+            data: (avg) => _buildInfoCard(
+              'Notes',
+              '${avg.toStringAsFixed(1)}/20',
+              'Moyenne générale',
+              const Color(0xFF10B981),
+              Icons.trending_up,
+            ),
+            loading: () => _buildInfoCard(
+              'Notes',
+              '...',
+              'Moyenne générale',
+              const Color(0xFF10B981),
+              Icons.trending_up,
+            ),
+            error: (_, __) => _buildInfoCard(
+              'Notes',
+              '--',
+              'Moyenne générale',
+              const Color(0xFF10B981),
+              Icons.trending_up,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: attendanceAsync.when(
+            data: (rate) => _buildInfoCard(
+              'Présence',
+              '${rate.toStringAsFixed(0)}%',
+              'Ce semestre',
+              const Color(0xFFF59E0B),
+              Icons.check_circle,
+            ),
+            loading: () => _buildInfoCard(
+              'Présence',
+              '...',
+              'Ce semestre',
+              const Color(0xFFF59E0B),
+              Icons.check_circle,
+            ),
+            error: (_, __) => _buildInfoCard(
+              'Présence',
+              '--',
+              'Ce semestre',
+              const Color(0xFFF59E0B),
+              Icons.check_circle,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTodayScheduleCard(BuildContext context, String dayName, List<ScheduleItem> items) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -257,7 +359,7 @@ class _DashboardHomeState extends State<DashboardHome> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -272,12 +374,12 @@ class _DashboardHomeState extends State<DashboardHome> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Color(0xFF2563EB).withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.calendar_today,
-                  color: Color(0xFF2563EB),
+                  color: Theme.of(context).primaryColor,
                   size: 24,
                 ),
               ),
@@ -312,17 +414,27 @@ class _DashboardHomeState extends State<DashboardHome> {
                   color: Theme.of(context).iconTheme.color,
                 ),
                 onPressed: () {
+                  // Accéder à l'onglet Emploi du temps (index 2 dans le dashboard)
+                  // Ce n'est pas idéal ici car on change le state du parent
+                  // Mais Navigator.pushNamed('/schedule') marche si défini
                   Navigator.pushNamed(context, '/schedule');
                 },
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildScheduleItem('Mathématiques', '09:00 - 10:30', 'Salle A101', 'CM'),
-          const SizedBox(height: 12),
-          _buildScheduleItem('Physique', '11:00 - 12:30', 'Labo B205', 'TP'),
-          const SizedBox(height: 12),
-          _buildScheduleItem('Anglais', '14:00 - 15:30', 'Salle C302', 'TD'),
+          if (items.isEmpty)
+            const Text('Aucun cours aujourd\'hui', style: TextStyle(fontStyle: FontStyle.italic))
+          else
+            ...items.take(3).map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildScheduleItem(
+                item.subject, 
+                '${DateFormat('HH:mm').format(item.startTime)} - ${DateFormat('HH:mm').format(item.endTime)}', 
+                item.room, 
+                item.type
+              ),
+            )),
         ],
       ),
     );
@@ -332,7 +444,7 @@ class _DashboardHomeState extends State<DashboardHome> {
     Color typeColor;
     switch (type) {
       case 'CM':
-        typeColor = Color(0xFF2563EB);
+        typeColor = Theme.of(context).primaryColor;
         break;
       case 'TD':
         typeColor = Color(0xFF10B981);
@@ -404,17 +516,19 @@ class _DashboardHomeState extends State<DashboardHome> {
     );
   }
 
-  Widget _buildLatestAnnouncementsCard(BuildContext context) {
+  Widget _buildLatestAnnouncementsCard(BuildContext context, WidgetRef ref) {
+    final announcementsAsync = ref.watch(allAnnouncementsProvider);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -427,12 +541,12 @@ class _DashboardHomeState extends State<DashboardHome> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Color(0xFFEF4444).withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.campaign_outlined,
-                  color: Color(0xFFEF4444),
+                  color: Theme.of(context).colorScheme.error,
                   size: 24,
                 ),
               ),
@@ -473,24 +587,51 @@ class _DashboardHomeState extends State<DashboardHome> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildAnnouncementItem(
-            'Inscription aux examens',
-            'La période d\'inscription aux examens du semestre est ouverte jusqu\'au 15 mars.',
-            'Urgent',
-            Color(0xFFEF4444),
-            'Il y a 2 heures',
-          ),
-          const SizedBox(height: 12),
-          _buildAnnouncementItem(
-            'Nouveaux services en ligne',
-            'Consultez vos notes et emploi du temps directement depuis l\'application.',
-            'Information',
-            Color(0xFF2563EB),
-            'Hier',
+          announcementsAsync.when(
+            data: (announcements) {
+              if (announcements.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'Aucune annonce pour le moment',
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                    ),
+                  ),
+                );
+              }
+              // Affichage des 2 dernières annonces
+              final latest = announcements.take(2).toList();
+              return Column(
+                children: latest.map((a) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildAnnouncementItem(
+                      a.title,
+                      a.content,
+                      a.category,
+                      _getCategoryColor(context, a.category),
+                      a.timeAgo,
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Text('Erreur: $e'),
           ),
         ],
       ),
     );
+  }
+
+  Color _getCategoryColor(BuildContext context, String category) {
+    switch (category) {
+      case 'Urgent': return Theme.of(context).colorScheme.error;
+      case 'Examens': return const Color(0xFFF59E0B);
+      case 'Cours': return Theme.of(context).primaryColor;
+      default: return Theme.of(context).primaryColor;
+    }
   }
 
   Widget _buildAnnouncementItem(String title, String description, String priority, Color priorityColor, String time) {
@@ -560,7 +701,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                   time,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Theme.of(context).iconTheme.color,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -615,18 +756,42 @@ class _DashboardHomeState extends State<DashboardHome> {
                 context,
                 'Notes',
                 Icons.grain_outlined,
-                Color(0xFFF59E0B),
-                '/grades',
+                const Color(0xFFF59E0B),
+                '/student-grades',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildQuickAccessCard(
                 context,
-                'Services',
-                Icons.apps_outlined,
-                Color(0xFF8B5CF6),
-                '/services',
+                'Devoirs',
+                Icons.assignment_outlined,
+                const Color(0xFF6366F1),
+                '/assignments',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickAccessCard(
+                context,
+                'Présence',
+                Icons.check_circle_outline,
+                const Color(0xFF10B981),
+                '/student-attendance',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickAccessCard(
+                context,
+                'Messagerie',
+                Icons.forum,
+                const Color(0xFF25D366),
+                '/messages',
               ),
             ),
           ],
@@ -645,7 +810,7 @@ class _DashboardHomeState extends State<DashboardHome> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -686,7 +851,7 @@ class _DashboardHomeState extends State<DashboardHome> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -761,9 +926,9 @@ class ScheduleTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         title: Text(
           'Annonces',
@@ -774,11 +939,11 @@ class ScheduleTab extends StatelessWidget {
           ),
         ),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
           'Annonces - En cours de développement',
           style: TextStyle(
-            color: Color(0xFF64748B),
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontSize: 16,
           ),
         ),
@@ -793,9 +958,9 @@ class NewsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         title: Text(
           'Services',
@@ -806,11 +971,11 @@ class NewsTab extends StatelessWidget {
           ),
         ),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
           'Services - En cours de développement',
           style: TextStyle(
-            color: Color(0xFF64748B),
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontSize: 16,
           ),
         ),
@@ -825,9 +990,9 @@ class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         title: Text(
           'Profil',
@@ -838,11 +1003,11 @@ class ProfileTab extends StatelessWidget {
           ),
         ),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
           'Profil - En cours de développement',
           style: TextStyle(
-            color: Color(0xFF64748B),
+            color: Theme.of(context).textTheme.bodyMedium?.color,
             fontSize: 16,
           ),
         ),

@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/core/services/resource_service.dart';
+import 'package:campusconnect/core/services/download_service.dart';
+import 'package:file_picker/file_picker.dart' as file_picker;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/controllers/resource_providers.dart';
+import 'package:intl/intl.dart';
 
-class ModernDocumentsScreen extends StatefulWidget {
+class ModernDocumentsScreen extends ConsumerStatefulWidget {
   const ModernDocumentsScreen({super.key});
 
   @override
-  State<ModernDocumentsScreen> createState() => _ModernDocumentsScreenState();
+  ConsumerState<ModernDocumentsScreen> createState() => _ModernDocumentsScreenState();
 }
 
-class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
+class _ModernDocumentsScreenState extends ConsumerState<ModernDocumentsScreen> {
   String selectedMatiere = 'Toutes';
   String selectedFiliere = 'Toutes';
   String searchQuery = '';
+  // Removed local data
   
+  // List used for upload dialog
   final List<String> matieres = [
     'Toutes', 'Mathématiques', 'Physique', 'Informatique', 'Chimie', 
     'Anglais', 'Économie', 'Sport', 'Projet'
@@ -22,125 +31,27 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
     'L1 Maths', 'L2 Maths', 'L3 Maths'
   ];
 
-  final List<Map<String, dynamic>> documents = [
-    {
-      'id': 1,
-      'title': 'Cours de Mathématiques - Analyse',
-      'description': 'Support de cours complet pour le semestre 1',
-      'matiere': 'Mathématiques',
-      'filiere': 'L1 Info',
-      'type': 'PDF',
-      'size': '2.5 MB',
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'downloads': 145,
-      'author': 'Dr. Martin',
-    },
-    {
-      'id': 2,
-      'title': 'TP de Physique Quantique',
-      'description': 'Énoncés des travaux pratiques et corrigés',
-      'matiere': 'Physique',
-      'filiere': 'L2 Info',
-      'type': 'PDF',
-      'size': '1.8 MB',
-      'date': DateTime.now().subtract(const Duration(days: 5)),
-      'downloads': 89,
-      'author': 'Prof. Dubois',
-    },
-    {
-      'id': 3,
-      'title': 'Exercices d\'Algorithmique',
-      'description': 'Série d\'exercices avec solutions détaillées',
-      'matiere': 'Informatique',
-      'filiere': 'L1 Info',
-      'type': 'DOC',
-      'size': '3.2 MB',
-      'date': DateTime.now().subtract(const Duration(days: 1)),
-      'downloads': 234,
-      'author': 'Dr. Robert',
-    },
-    {
-      'id': 4,
-      'title': 'Présentation - Machine Learning',
-      'description': 'Support de présentation pour le cours de ML',
-      'matiere': 'Informatique',
-      'filiere': 'M1 Info',
-      'type': 'PPT',
-      'size': '5.7 MB',
-      'date': DateTime.now().subtract(const Duration(hours: 6)),
-      'downloads': 67,
-      'author': 'M. Bernard',
-    },
-    {
-      'id': 5,
-      'title': 'Formulaire de Chimie Organique',
-      'description': 'Résumé des formules et réactions importantes',
-      'matiere': 'Chimie',
-      'filiere': 'L2 Maths',
-      'type': 'PDF',
-      'size': '0.8 MB',
-      'date': DateTime.now().subtract(const Duration(days: 3)),
-      'downloads': 156,
-      'author': 'Prof. Laurent',
-    },
-    {
-      'id': 6,
-      'title': 'Business Plan Template',
-      'description': 'Modèle de plan d\'affaires pour projets étudiants',
-      'matiere': 'Économie',
-      'filiere': 'L3 Info',
-      'type': 'XLS',
-      'size': '1.2 MB',
-      'date': DateTime.now().subtract(const Duration(days: 7)),
-      'downloads': 98,
-      'author': 'Dr. Petit',
-    },
-    {
-      'id': 7,
-      'title': 'Vocabulary List - Advanced English',
-      'description': 'Liste de vocabulaire avancé avec traductions',
-      'matiere': 'Anglais',
-      'filiere': 'Toutes',
-      'type': 'PDF',
-      'size': '0.5 MB',
-      'date': DateTime.now().subtract(const Duration(days: 4)),
-      'downloads': 312,
-      'author': 'Mme. Smith',
-    },
-    {
-      'id': 8,
-      'title': 'Guide de survie - Examens',
-      'description': 'Conseils et techniques pour réussir vos examens',
-      'matiere': 'Projet',
-      'filiere': 'Toutes',
-      'type': 'PDF',
-      'size': '1.1 MB',
-      'date': DateTime.now().subtract(const Duration(hours: 12)),
-      'downloads': 445,
-      'author': 'Administration',
-    },
-  ];
+  // Hardcoded documents removed
 
-  List<Map<String, dynamic>> get filteredDocuments {
-    return documents.where((doc) {
-      final matchesMatiere = selectedMatiere == 'Toutes' || doc['matiere'] == selectedMatiere;
-      final matchesFiliere = selectedFiliere == 'Toutes' || doc['filiere'] == selectedFiliere;
-      final matchesSearch = searchQuery.isEmpty || 
-                           doc['title'].toString().toLowerCase().contains(searchQuery.toLowerCase()) ||
-                           doc['description'].toString().toLowerCase().contains(searchQuery.toLowerCase());
-      return matchesMatiere && matchesFiliere && matchesSearch;
-    }).toList();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _refreshData() {
+    ref.invalidate(allResourcesProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -151,11 +62,11 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            Text(
-              '${filteredDocuments.length} documents',
+            const Text(
+              'Bibliothèque numérique',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -166,32 +77,197 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Color(0xFF64748B)),
-            onPressed: () {
-              _showSearchDialog();
-            },
+            icon: Icon(Icons.refresh, color: Theme.of(context).primaryColor),
+            onPressed: _refreshData,
+          ),
+          IconButton(
+            icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+            onPressed: () => _showSearchDialog(),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Filtres
-          _buildFilters(),
+      body: Consumer(
+        builder: (context, ref, child) {
+          final resourcesAsync = ref.watch(allResourcesProvider);
           
-          // Liste des documents
-          Expanded(
-            child: filteredDocuments.isEmpty
-                ? _buildEmptyState()
-                : _buildDocumentsList(),
+          return resourcesAsync.when(
+            data: (data) {
+              // Extraire les matières uniques des données
+              final uniqueSubjects = data.map((r) => r.subject).toSet().toList()..sort();
+              final availableMatieres = ['Toutes', ...uniqueSubjects];
+
+              var docs = List<Resource>.from(data);
+              
+              // Filtrage local
+              if (selectedMatiere != 'Toutes') {
+                docs = docs.where((d) => d.subject == selectedMatiere).toList();
+              }
+              if (searchQuery.isNotEmpty) {
+                final query = searchQuery.toLowerCase();
+                docs = docs.where((d) => 
+                  d.title.toLowerCase().contains(query) || 
+                  d.description.toLowerCase().contains(query)
+                ).toList();
+              }
+
+              return Column(
+                children: [
+                  // Filtres dynamiques
+                  Container(
+                    color: Theme.of(context).cardColor,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFilterSection('Matière', availableMatieres, selectedMatiere, (value) {
+                          setState(() {
+                            selectedMatiere = value;
+                          });
+                        }),
+                        const SizedBox(height: 16),
+                         // Note: Filières est toujours statique car non présent dans Resource, 
+                         // mais on pourrait l'ajouter si dispo dans le futur.
+                         // Pour l'instant on garde la liste statique ou on la retire si inutile.
+                        _buildFilterSection('Filière', filieres, selectedFiliere, (value) {
+                          setState(() {
+                            selectedFiliere = value;
+                          });
+                        }),
+                      ],
+                    ),
+                  ),
+                  
+                  // Liste des documents
+                  Expanded(
+                    child: docs.isEmpty 
+                      ? _buildEmptyState() 
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            return _buildDocumentCard(docs[index]);
+                          },
+                        ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Center(child: Text('Erreur: $e')),
+          );
+        },
+      ),
+      floatingActionButton: _buildAddButton(),
+    );
+  }
+
+  Widget? _buildAddButton() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return null;
+    
+    final metadata = user.userMetadata ?? {};
+    final role = metadata['role'] ?? 'Étudiant';
+    
+    if (role != 'Enseignant' && role != 'Admin' && role != 'Directeur') return null;
+
+    return FloatingActionButton(
+      onPressed: _showUploadDialog,
+      backgroundColor: const Color(0xFF2563EB),
+      child: const Icon(Icons.add, color: Colors.white),
+    );
+  }
+
+  Future<void> _showUploadDialog() async {
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    String? tempSelectedMatiere = matieres[1];
+    String? fileName;
+    List<int>? fileBytes;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Publier un document'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Titre du document'),
+                ),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Description (Optionnel)'),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: tempSelectedMatiere,
+                  items: matieres.where((m) => m != 'Toutes').map((m) => 
+                    DropdownMenuItem(value: m, child: Text(m))
+                  ).toList(),
+                  onChanged: (val) => setDialogState(() => tempSelectedMatiere = val),
+                  decoration: const InputDecoration(labelText: 'Matière'),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await file_picker.FilePicker.platform.pickFiles();
+                    if (result != null) {
+                      setDialogState(() {
+                        fileName = result.files.first.name;
+                        fileBytes = result.files.first.bytes;
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file),
+                  label: Text(fileName ?? 'Choisir un fichier'),
+                ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+            ElevatedButton(
+              onPressed: (fileName == null || titleController.text.isEmpty) ? null : () async {
+                final nav = Navigator.of(context);
+                final scaffold = ScaffoldMessenger.of(context);
+                
+                try {
+                  nav.pop(); // Fermer le dialogue
+                  scaffold.showSnackBar(const SnackBar(content: Text('Publication en cours...')));
+                  
+                  // 1. Upload vers le stockage
+                  final url = await ResourceService.uploadResourceFile(fileName!, fileBytes!);
+                  
+                  // 2. Enregistrement en base de données
+                  await ResourceService.addResource(
+                    title: titleController.text,
+                    description: descController.text,
+                    url: url,
+                    type: fileName!.split('.').last.toUpperCase(),
+                    subject: tempSelectedMatiere!,
+                  );
+
+                  _refreshData();
+                  scaffold.showSnackBar(const SnackBar(content: Text('Document publié avec succès !')));
+                } catch (e) {
+                  scaffold.showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                }
+              },
+              child: const Text('Publier'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFilters() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +301,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 8),
@@ -247,7 +323,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
+                      color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).dividerColor.withOpacity(0.1),
                       width: 1,
                     ),
                   ),
@@ -256,7 +332,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ),
@@ -268,27 +344,15 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
     );
   }
 
-  Widget _buildDocumentsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: filteredDocuments.length,
-      itemBuilder: (context, index) {
-        final document = filteredDocuments[index];
-        return _buildDocumentCard(document);
-      },
-    );
-  }
 
-  Widget _buildDocumentCard(Map<String, dynamic> document) {
-    final type = document['type'] as String;
-    final size = document['size'] as String;
-    final downloads = document['downloads'] as int;
-    final date = document['date'] as DateTime;
+  Widget _buildDocumentCard(Resource document) {
+    final type = document.type;
+    final date = document.date;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -329,20 +393,20 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        document['title'],
+                        document.title,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           height: 1.3,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        document['description'],
+                        document.description,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           height: 1.3,
                         ),
                         maxLines: 2,
@@ -361,7 +425,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                // Type et taille
+                // Type
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -369,7 +433,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    '$type • $size',
+                    type,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -378,20 +442,20 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
                   ),
                 ),
                 
-                // Matière et filière
+                // Matière
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
                   ),
                   child: Text(
-                    '${document['matiere']} • ${document['filiere']}',
+                    document.subject,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ),
@@ -401,84 +465,64 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             const SizedBox(height: 12),
             
             // Pied du document
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 16,
-              runSpacing: 12,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Auteur et date
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 14,
-                      color: Color(0xFF94A3B8),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      document['author'],
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              document.authorName,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                
-                // Téléchargements
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.download_outlined,
-                      size: 14,
-                      color: Color(0xFF94A3B8),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$downloads téléchargements',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                
-                // Date et Bouton
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatDate(date),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _downloadDocument(document);
-                      },
-                      icon: Icon(Icons.download, size: 16),
-                      label: Text('Télécharger'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatDate(date),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
                         ),
-                        elevation: 0,
                       ),
+                    ],
+                  ),
+                ),
+                
+                // Bouton
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _downloadDocument(document);
+                  },
+                  icon: const Icon(Icons.download, size: 16),
+                  label: const Text('Télécharger'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
+                    elevation: 0,
+                  ),
                 ),
               ],
             ),
@@ -497,13 +541,13 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               Icons.folder_open,
               size: 40,
-              color: Color(0xFF94A3B8),
+              color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -512,7 +556,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -520,7 +564,7 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
             'Essayez de modifier vos filtres ou votre recherche',
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -573,15 +617,45 @@ class _ModernDocumentsScreenState extends State<ModernDocumentsScreen> {
     }
   }
 
-  void _downloadDocument(Map<String, dynamic> document) {
-    // Simuler le téléchargement
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Téléchargement de "${document['title']}" en cours...'),
-        backgroundColor: const Color(0xFF10B981),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  void _downloadDocument(Resource document) async {
+    if (document.url == null || document.url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucun fichier disponible pour ce document')),
+      );
+      return;
+    }
+
+    try {
+      await DownloadService.downloadFile(
+        document.url,
+        '${document.title}.${_getFileExtension(document.type)}',
+        context,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de téléchargement: $e')),
+        );
+      }
+    }
+  }
+
+  String _getFileExtension(String type) {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return 'pdf';
+      case 'word':
+      case 'doc':
+        return 'docx';
+      case 'excel':
+      case 'xls':
+        return 'xlsx';
+      case 'powerpoint':
+      case 'ppt':
+        return 'pptx';
+      default:
+        return 'pdf';
+    }
   }
 
   void _showSearchDialog() {

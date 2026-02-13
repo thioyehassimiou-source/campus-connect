@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:campusconnect/core/themes/app_theme.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/shared/models/grade_model.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
 import 'package:campusconnect/core/services/firebase_service.dart';

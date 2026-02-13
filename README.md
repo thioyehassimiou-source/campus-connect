@@ -1,142 +1,177 @@
-# CampusConnect
+# Supabase CLI
 
-Application mobile universitaire pour centraliser les informations académiques et faciliter la communication au sein du campus.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## 🎯 Objectifs
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-- Centraliser les informations du campus en une seule plateforme
-- Faciliter la communication entre étudiants, enseignants et administration
-- Améliorer l'accès aux emplois du temps, annonces et documents
-- Réduire les déplacements et pertes de temps liés aux démarches administratives
+This repository contains all the functionality for Supabase CLI.
 
-## 🚀 Fonctionnalités Implémentées
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### ✅ Authentification et Profils
-- Inscription et connexion sécurisées avec Firebase
-- Gestion des profils utilisateurs (étudiant, enseignant, admin)
-- Modification des informations personnelles
-- Photo de profil
+## Getting started
 
-### ✅ Emploi du Temps
-- Consultation des emplois du temps avec calendrier interactif
-- Filtrage par date et par cours
-- Support des différents types de cours (CM, TD, TP, Examens)
-- Informations sur les salles et enseignants
+### Install the CLI
 
-### ✅ Notes et Résultats
-- Affichage des notes par matière
-- Calcul automatique de la moyenne générale
-- Support des coefficients
-- Commentaires des enseignants
-- Filtrage par cours
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-### ✅ Annonces Officielles
-- Système d'annonces avec priorités (basse, moyenne, haute, urgente)
-- Ciblage des annonces (tous, étudiants, enseignants)
-- Support des pièces jointes
-- Date d'expiration des annonces
-- Création d'annonces pour les administrateurs
-
-### ✅ Interface Utilisateur
-- Design moderne et intuitif avec Material Design
-- Navigation par onglets
-- Thème cohérent
-- Interface responsive
-
-## 🛠 Technologies Utilisées
-
-- **Frontend**: Flutter
-- **Backend**: Firebase (Authentication, Firestore, Storage)
-- **Base de données**: Cloud Firestore
-- **Navigation**: Go Router
-- **State Management**: BLoC Pattern
-- **UI Components**: Material Design 3
-
-## 📁 Structure du Projet
-
-```
-lib/
-├── core/
-│   ├── constants/       # Constantes de l'application
-│   ├── services/        # Services Firebase
-│   ├── themes/          # Thèmes et styles
-│   └── utils/           # Utilitaires
-├── features/
-│   ├── auth/            # Authentification
-│   ├── profile/         # Gestion des profils
-│   ├── schedule/        # Emploi du temps
-│   ├── grades/          # Notes et résultats
-│   ├── documents/       # Documents
-│   ├── announcements/   # Annonces
-│   └── messages/        # Messagerie
-├── shared/
-│   ├── models/          # Modèles de données
-│   ├── widgets/         # Widgets réutilisables
-│   └── utils/           # Utilitaires partagés
-└── screens/             # Écrans principaux
+```bash
+npm i supabase --save-dev
 ```
 
-## 🚦 Installation
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-1. **Cloner le projet**
-   ```bash
-   git clone <repository-url>
-   cd campusconnect
-   ```
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
 
-2. **Installer les dépendances**
-   ```bash
-   flutter pub get
-   ```
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-3. **Configurer Firebase**
-   - Créer un projet Firebase
-   - Ajouter le fichier `google-services.json` dans `android/app/`
-   - Configurer Authentication, Firestore et Storage
+<details>
+  <summary><b>macOS</b></summary>
 
-4. **Lancer l'application**
-   ```bash
-   flutter run
-   ```
+  Available via [Homebrew](https://brew.sh). To install:
 
-## 📱 Utilisateurs Cibles
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-- **Étudiants**: Consultation des emplois du temps, notes, annonces
-- **Enseignants**: Gestion des cours, notes, annonces
-- **Administration**: Gestion complète de la plateforme
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-## 🔐 Sécurité
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-- Authentification sécurisée avec Firebase
-- Rôles et permissions appropriés
-- Validation des données côté client et serveur
+<details>
+  <summary><b>Windows</b></summary>
 
-## 🌟 Fonctionnalités Futures
+  Available via [Scoop](https://scoop.sh). To install:
 
-- Gestion des documents (cours, TD, examens)
-- Messagerie interne
-- Notifications push en temps réel
-- Paiement des frais universitaires
-- Système de signalement et feedback
-- Forum étudiant
-- Version web
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-## 🤝 Contribution
+  To upgrade:
 
-1. Fork le projet
-2. Créer une branche (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-## 📄 Licence
+<details>
+  <summary><b>Linux</b></summary>
 
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
-## 📞 Contact
+  #### via Homebrew
 
-Pour toute question ou suggestion, veuillez contacter l'équipe de développement.
+  To install:
 
----
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-**CampusConnect** - Connecter votre campus, simplifier votre vie universitaire 🎓
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```

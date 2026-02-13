@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/core/services/supabase_service.dart';
 
 import 'package:campusconnect/screens/test_supabase_screen.dart';
 import 'package:campusconnect/screens/splash_screen.dart';
@@ -23,27 +26,39 @@ import 'package:campusconnect/screens/modern_course_management_screen.dart';
 import 'package:campusconnect/screens/modern_resources_screen.dart';
 import 'package:campusconnect/screens/modern_academic_calendar_screen.dart';
 import 'package:campusconnect/screens/modern_admin_dashboard.dart';
-import 'package:campusconnect/screens/create_profile_screen.dart';
 import 'package:campusconnect/screens/test_profile_screen.dart';
 import 'package:campusconnect/screens/modern_teacher_dashboard.dart';
+import 'package:campusconnect/screens/ai_assistant_screen.dart';
+import 'package:campusconnect/screens/messages_screen.dart';
+import 'package:campusconnect/screens/modern_rooms_screen.dart';
+import 'package:campusconnect/screens/modern_assignments_screen.dart';
+import 'package:campusconnect/screens/modern_notifications_screen.dart';
+import 'package:campusconnect/messaging/screens/messaging_list_screen.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
 
 import 'package:campusconnect/core/services/theme_service.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
+
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialisation Supabase
-  await Supabase.initialize(
-    url: 'https://oecmtlkkklpbzhlajysz.supabase.co',
-    anonKey: 'sb_publishable_vlC5kvt8eBqQLuCDhM_1FQ_c9BvqTX6',
-    debug: true,
-  );
+  // Initialisation Supabase via le service centralisé
+  await SupabaseService.initialize();
+
+  // Initialisation du formatage de date pour le français
+  await initializeDateFormatting('fr_FR', null);
 
   // Initialisation du service de thème
   final themeService = ThemeService();
   await themeService.init();
   
-  runApp(const CampusConnectApp());
+  runApp(
+    const ProviderScope(
+      child: CampusConnectApp(),
+    ),
+  );
 }
 
 class CampusConnectApp extends StatelessWidget {
@@ -58,70 +73,17 @@ class CampusConnectApp extends StatelessWidget {
           title: 'CampusConnect',
           debugShowCheckedModeBanner: false,
           themeMode: themeMode,
-          // Thème Clair (Design Actuel)
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            primaryColor: const Color(0xFF2563EB),
-            scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-            cardColor: Colors.white,
-            fontFamily: 'Lexend',
-            useMaterial3: true,
-            iconTheme: const IconThemeData(
-              color: Color(0xFF64748B),
-            ),
-            textTheme: const TextTheme(
-              bodyLarge: TextStyle(color: Color(0xFF0F172A)), // Primary Text
-              bodyMedium: TextStyle(color: Color(0xFF64748B)), // Secondary Text
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Color(0xFF64748B)),
-              titleTextStyle: TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Lexend',
-              ),
-            ),
-            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-              backgroundColor: Colors.transparent,
-              selectedItemColor: Color(0xFF2563EB),
-              unselectedItemColor: Color(0xFF64748B),
-            ),
-          ),
-          // Thème Sombre (Nouveau Design Premium)
-          darkTheme: ThemeData(
-            primarySwatch: Colors.blue,
-            primaryColor: const Color(0xFF3B82F6), // Bleu plus clair pour le contraste
-            scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
-            cardColor: const Color(0xFF1E293B), // Slate 800
-            fontFamily: 'Lexend',
-            useMaterial3: true,
-            iconTheme: const IconThemeData(
-              color: Color(0xFF94A3B8), // Slate 400
-            ),
-            textTheme: const TextTheme(
-              bodyLarge: TextStyle(color: Color(0xFFF8FAFC)), // Slate 50
-              bodyMedium: TextStyle(color: Color(0xFF94A3B8)), // Slate 400
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Color(0xFF94A3B8)),
-              titleTextStyle: TextStyle(
-                color: Color(0xFFF8FAFC),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Lexend',
-              ),
-            ),
-            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-              backgroundColor: Colors.transparent,
-              selectedItemColor: Color(0xFF3B82F6), // Bleu plus vif
-              unselectedItemColor: Color(0xFF64748B),
-            ),
-          ),
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('fr', 'FR'),
+          ],
+          locale: const Locale('fr', 'FR'),
           initialRoute: '/splash',
           routes: {
             '/test': (context) => const TestSupabaseScreen(),
@@ -130,7 +92,7 @@ class CampusConnectApp extends StatelessWidget {
             '/student-dashboard': (context) => const ModernStudentDashboard(),
             '/schedule': (context) => const ModernScheduleScreen(),
             '/documents': (context) => const ModernDocumentsScreen(),
-            '/news': (context) => const ModernAnnouncementsScreen(),
+            '/news': (context) => const ModernEnhancedAnnouncementsScreen(),
             '/profile': (context) => const ModernProfileScreen(),
             '/services': (context) => const ModernServicesScreen(),
             '/campus-map': (context) => const ModernCampusMapScreen(),
@@ -139,6 +101,7 @@ class CampusConnectApp extends StatelessWidget {
             '/student-grades': (context) => const ModernStudentGradesScreen(),
             '/student-attendance': (context) => const ModernStudentAttendanceScreen(),
             '/student-messaging': (context) => const ModernStudentMessagingScreen(),
+            '/messages': (context) => const MessagingListScreen(),
             '/enhanced-announcements': (context) => const ModernEnhancedAnnouncementsScreen(),
             '/enhanced-schedule': (context) => const ModernEnhancedScheduleScreen(),
             '/student-profile-enhanced': (context) => const ModernStudentProfileScreen(),
@@ -148,7 +111,15 @@ class CampusConnectApp extends StatelessWidget {
             '/admin-dashboard': (context) => const ModernAdminDashboard(),
             '/teacher-dashboard': (context) => const ModernTeacherDashboard(),
             '/test-profile': (context) => const TestProfileScreen(),
-            '/create-profile': (context) => const CreateProfileScreen(),
+            '/ai-assistant': (context) => const AIAssistantScreen(),
+            '/admin-rooms': (context) => const ModernRoomsScreen(),
+            '/assignments': (context) {
+              final currentUser = Supabase.instance.client.auth.currentUser;
+              final metadata = currentUser?.userMetadata ?? {};
+              final isTeacher = metadata['role'] == 'Enseignant';
+              return ModernAssignmentsScreen(isTeacher: isTeacher);
+            },
+            '/notifications': (context) => const ModernNotificationsScreen(),
           },
         );
       },

@@ -3,6 +3,8 @@ import 'package:campusconnect/screens/modern_student_dashboard.dart';
 import 'package:campusconnect/screens/modern_teacher_dashboard.dart';
 import 'package:campusconnect/screens/modern_admin_dashboard.dart';
 import 'package:campusconnect/screens/modern_register_screen.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/widgets/theme_toggle_button.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -100,7 +102,15 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          const ThemeToggleButton(),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -115,13 +125,17 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Icon(
-                        Icons.school_rounded,
-                        color: Colors.white,
-                        size: 40,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Transform.scale(
+                          scale: 1.35,
+                          child: Image.asset(
+                            'assets/logo/app_logo.png',
+                            fit: BoxFit.fill,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -130,7 +144,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -138,7 +152,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                       'Connexion à votre espace universitaire',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -151,7 +165,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -173,7 +187,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF374151),
+                              color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -187,31 +201,31 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             decoration: InputDecoration(
                               hintText: 'nom@univ-campus.fr, prof@univ-campus.fr ou MAT2024001',
                               hintStyle: TextStyle(
-                                color: Color(0xFF9CA3AF),
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                                 fontSize: 15,
                               ),
                               prefixIcon: Icon(
                                 Icons.person_outline_rounded,
-                                color: Color(0xFF6B7280),
+                                color: Theme.of(context).iconTheme.color,
                                 size: 20,
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF9FAFB),
+                              fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 16,
                                 horizontal: 16,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),
@@ -238,7 +252,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF374151),
+                              color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -255,12 +269,12 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             decoration: InputDecoration(
                               hintText: '••••••••',
                               hintStyle: TextStyle(
-                                color: Color(0xFF9CA3AF),
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                                 fontSize: 15,
                               ),
                               prefixIcon: Icon(
                                 Icons.lock_outline_rounded,
-                                color: Color(0xFF6B7280),
+                                color: Theme.of(context).iconTheme.color,
                                 size: 20,
                               ),
                               suffixIcon: IconButton(
@@ -268,7 +282,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                                   _obscurePassword
                                       ? Icons.visibility_off_outlined
                                       : Icons.visibility_outlined,
-                                  color: const Color(0xFF6B7280),
+                                  color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
                                   size: 20,
                                 ),
                                 onPressed: () {
@@ -278,22 +292,22 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                                 },
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF9FAFB),
+                              fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 16,
                                 horizontal: 16,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE5E7EB),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),
@@ -316,10 +330,10 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEE2E2),
+                            color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: const Color(0xFFFECACA),
+                              color: Theme.of(context).colorScheme.error.withOpacity(0.2),
                               width: 1,
                             ),
                           ),
@@ -327,7 +341,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             children: [
                               Icon(
                                 Icons.error_outline,
-                                color: Color(0xFFDC2626),
+                                color: Theme.of(context).colorScheme.error,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
@@ -335,7 +349,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                                 child: Text(
                                   _errorMessage!,
                                   style: TextStyle(
-                                    color: Color(0xFFDC2626),
+                                    color: Theme.of(context).colorScheme.error,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -354,13 +368,13 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
+                            backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
-                            disabledBackgroundColor: const Color(0xFF93C5FD),
+                            disabledBackgroundColor: Theme.of(context).primaryColor.withOpacity(0.5),
                           ),
                           child: _isLoading
                               ? const SizedBox(
@@ -400,7 +414,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                             text: TextSpan(
                               text: 'Pas encore de compte ? ',
                               style: TextStyle(
-                                color: Color(0xFF6B7280),
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -408,7 +422,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                                 TextSpan(
                                   text: 'Créer un compte',
                                   style: TextStyle(
-                                    color: Color(0xFF2563EB),
+                                    color: Theme.of(context).primaryColor,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -428,7 +442,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen> {
                   '© 2024 CampusConnect - Application universitaire officielle',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF9CA3AF),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),

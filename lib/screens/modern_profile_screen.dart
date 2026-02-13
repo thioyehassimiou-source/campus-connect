@@ -87,7 +87,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!, style: TextStyle(color: Colors.red)),
+                      Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchProfile,
@@ -147,10 +147,10 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
+                  color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(40),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.person,
                   size: 40,
                   color: Colors.white,
@@ -438,7 +438,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                 ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -467,9 +467,9 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
               ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFEF4444),
-              side: const BorderSide(
-                color: Color(0xFFEF4444),
+              foregroundColor: Theme.of(context).colorScheme.error,
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.error,
                 width: 1.5,
               ),
               shape: RoundedRectangleBorder(
@@ -509,24 +509,72 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
   }
 
   void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: userData?['nom'] ?? '');
+    final phoneController = TextEditingController(text: userData?['telephone'] == 'Non renseigné' ? '' : userData?['telephone']);
+    bool isSaving = false;
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Modifier le profil'),
-          content: Text('Fonctionnalité de modification du profil en cours de développement.'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Modifier le profil'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Nom complet'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'Téléphone'),
+                keyboardType: TextInputType.phone,
+              ),
+              if (isSaving) ...[
+                 const SizedBox(height: 16),
+                 const LinearProgressIndicator(),
+              ],
+            ],
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
+              onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Enregistrer'),
+              onPressed: isSaving ? null : () async {
+                setStateDialog(() => isSaving = true);
+                try {
+                  final userId = Supabase.instance.client.auth.currentUser?.id;
+                  if (userId != null) {
+                    await Supabase.instance.client.from('profiles').update({
+                      if (nameController.text.isNotEmpty) 'full_name': nameController.text,
+                      if (phoneController.text.isNotEmpty) 'phone': phoneController.text,
+                    }).eq('id', userId);
+                    
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                      _fetchProfile(); // Refresh profile
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profil mis à jour avec succès')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  setStateDialog(() => isSaving = false);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Enregistrer'),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -552,7 +600,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
+                backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Colors.white,
               ),
               child: Text('Se déconnecter'),

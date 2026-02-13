@@ -68,15 +68,38 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
     }
   }
 
+  List<String> _getSkills() {
+    if (_userData?['competences'] != null) {
+      return List<String>.from(_userData!['competences']);
+    }
+    return [
+      'Analyse Numérique', 'Statistiques', 'Machine Learning', 'Python',
+      'MATLAB', 'Recherche Opérationnelle', 'Optimisation', 'Data Science'
+    ]; // Default / Fallback
+  }
+
+  Map<String, String> _getOfficeHours() {
+    if (_userData?['office_hours'] != null && _userData?['office_hours'] is Map) {
+      return Map<String, String>.from(_userData!['office_hours']);
+    }
+    return {
+      'Lundi': '08:00 - 18:00',
+      'Mardi': '08:00 - 18:00',
+      'Mercredi': '08:00 - 16:00',
+      'Jeudi': '08:00 - 18:00',
+      'Vendredi': '08:00 - 16:00',
+    }; // Default / Fallback
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyLarge?.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -84,7 +107,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         actions: [
@@ -179,7 +202,9 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Professeur de Mathématiques',
+                        _specializationController.text.isNotEmpty 
+                            ? _specializationController.text 
+                            : 'Professeur',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -276,7 +301,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                       _bioController.text,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         height: 1.4,
                       ),
                     ),
@@ -305,10 +330,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [
-                    'Analyse Numérique', 'Statistiques', 'Machine Learning', 'Python',
-                    'MATLAB', 'Recherche Opérationnelle', 'Optimisation', 'Data Science'
-                  ].map((skill) {
+                  children: _getSkills().map((skill) {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -337,10 +359,20 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               'Cours Enseignés',
               Icons.school,
               [
-                _buildCourseItem('MAT101', 'Mathématiques Fondamentales', 'L1', 45),
-                _buildCourseItem('MAT201', 'Analyse Numérique', 'L2', 40),
-                _buildCourseItem('MAT301', 'Statistiques Avancées', 'L3', 35),
-                _buildCourseItem('MAT401', 'Machine Learning', 'M1', 25),
+                if (_userData?['courses'] != null && (_userData!['courses'] as List).isNotEmpty)
+                  ...(_userData!['courses'] as List).map((course) => 
+                    _buildCourseItem(
+                      course['code'] ?? 'CODE', 
+                      course['name'] ?? 'Nom du cours', 
+                      course['level'] ?? 'N/A', 
+                      course['students'] ?? 0
+                    )
+                  ).toList()
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Aucun cours assigné pour le moment.', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  ),
               ],
             ),
             
@@ -351,21 +383,19 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               'Publications',
               Icons.menu_book,
               [
-                _buildPublicationItem(
-                  '2024',
-                  'Numerical Methods for Large-Scale Data Analysis',
-                  'Journal of Computational Mathematics',
-                ),
-                _buildPublicationItem(
-                  '2023',
-                  'Optimization Algorithms in Machine Learning',
-                  'International Conference on AI',
-                ),
-                _buildPublicationItem(
-                  '2022',
-                  'Statistical Methods for Big Data',
-                  'Springer Publishing',
-                ),
+                if (_userData?['publications'] != null && (_userData!['publications'] as List).isNotEmpty)
+                  ...(_userData!['publications'] as List).map((pub) => 
+                    _buildPublicationItem(
+                      pub['year'] ?? '-', 
+                      pub['title'] ?? 'Sans titre', 
+                      pub['journal'] ?? 'Inconnu'
+                    )
+                  ).toList()
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Aucune publication renseignée.', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  ),
               ],
             ),
             
@@ -376,11 +406,15 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               'Disponibilité',
               Icons.schedule,
               [
-                _buildAvailabilityRow('Lundi', '08:00 - 18:00'),
-                _buildAvailabilityRow('Mardi', '08:00 - 18:00'),
-                _buildAvailabilityRow('Mercredi', '08:00 - 16:00'),
-                _buildAvailabilityRow('Jeudi', '08:00 - 18:00'),
-                _buildAvailabilityRow('Vendredi', '08:00 - 16:00'),
+                if (_getOfficeHours().isNotEmpty)
+                  ..._getOfficeHours().entries.map((entry) => 
+                    _buildAvailabilityRow(entry.key, entry.value)
+                  ).toList()
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Horaires non renseignés.', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  ),
               ],
             ),
             
@@ -519,7 +553,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
   Widget _buildSectionCard(String title, IconData icon, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -543,7 +577,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
@@ -573,7 +607,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -597,7 +631,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                           controller.text,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF0F172A),
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -642,14 +676,14 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
                   level,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -707,14 +741,14 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           Text(
             journal,
             style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -735,7 +769,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -744,7 +778,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               hours,
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -766,7 +800,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           const SizedBox(width: 8),
@@ -775,7 +809,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               value,
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -798,7 +832,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
@@ -806,7 +840,7 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
             value,
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -831,25 +865,52 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
     }
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulation de sauvegarde
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-        _isEditing = false;
+    try {
+      final success = await ProfileService.updateProfile({
+        'nom': '${_firstNameController.text} ${_lastNameController.text}',
+        'email': _emailController.text,
+        'telephone': _phoneController.text,
+        'office': _officeController.text,
+        'bio': _bioController.text,
+        'specialization': _specializationController.text,
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil mis à jour avec succès!'),
-          backgroundColor: Color(0xFF10B981),
-        ),
-      );
-    });
+
+      if (success) {
+        if (mounted) {
+          setState(() {
+            _isEditing = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profil mis à jour avec succès!'),
+              backgroundColor: Color(0xFF10B981),
+            ),
+          );
+        }
+      } else {
+        throw Exception('Échec de la mise à jour');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _exportProfile() {
@@ -913,9 +974,12 @@ class _ModernTeacherProfileScreenState extends State<ModernTeacherProfileScreen>
               child: Text('Annuler'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                Navigator.pushReplacementNamed(context, '/login');
+                await Supabase.instance.client.auth.signOut();
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                }
               },
               child: Text('Se déconnecter'),
             ),

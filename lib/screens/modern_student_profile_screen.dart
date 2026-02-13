@@ -62,23 +62,15 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
           _addressController.text = data['address'] ?? 'Non renseignée';
           _bioController.text = data['bio'] ?? 'Étudiant sur CampusConnect';
 
+          // ✅ Gestion intelligente des métadonnées comme fallback pour les IDs
           _studentData = {
             ...data,
             'role': data['role'] ?? 'Étudiant',
-            'niveau': data['niveau'] ?? data['level'] ?? 'Non renseigné',
-            // ✅ filiere_id peut être null
-            'filiere_id': data['filiere_id'] != null 
-                ? data['filiere_id'].toString() 
-                : 'Non renseignée',
-            'faculty_name': data['faculties'] != null 
-                ? (data['faculties']['nom'] ?? data['faculties']['name']) 
-                : 'Non renseignée',
-            'department_name': data['departments'] != null 
-                ? (data['departments']['nom'] ?? data['departments']['name']) 
-                : null,
-            'service_name': data['services'] != null 
-                ? (data['services']['nom'] ?? data['services']['name']) 
-                : null,
+            'niveau': data['niveau'] ?? 'Licence 1',
+            'filiere_id': data['filiere_id']?.toString() ?? 'Non renseignée',
+            'faculty_name': data['faculties']?['nom'] ?? 'Non renseignée',
+            'department_name': data['departments']?['nom'],
+            'service_name': data['services']?['nom'],
           };
         } else {
           // ✅ Données par défaut + montrer le dialogue seulement si vraiment un problème
@@ -212,7 +204,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         child: Icon(
                           Icons.person,
                           color: Colors.white,
-                          size: 50,
+                          size: 80,
                         ),
                       ),
                       if (_isEditing)
@@ -314,9 +306,9 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildProfileStat('15.2', 'Moyenne', Icons.grade),
-                      _buildProfileStat('45', 'Crédits', Icons.workspace_premium),
-                      _buildProfileStat('12/120', 'Classement', Icons.leaderboard),
+                      _buildProfileStat(_studentData?['moyenne']?.toString() ?? '--', 'Moyenne', Icons.grade),
+                      _buildProfileStat(_studentData?['credits_valides']?.toString() ?? '--', 'Crédits', Icons.workspace_premium),
+                      _buildProfileStat(_studentData?['classement'] ?? '--', 'Classement', Icons.leaderboard),
                     ],
                   ),
                 ],
@@ -338,7 +330,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 // ✅ Service: uniquement pour Administratif
                 if (_studentData?['role'] == 'Administratif' && _studentData?['service_name'] != null)
                   _buildInfoRow('Service', _studentData?['service_name']),
-                if (_studentData?['role'] == 'Étudiant') ...[ _buildInfoRow('Programme', _studentData?['filiere_id'] ?? 'Non renseigné'),
+                if (_studentData?['role'] == 'Étudiant') ...[
                   _buildInfoRow('Niveau', _studentData?['niveau'] ?? 'Non renseigné'),
                 ],
                 _buildInfoRow('Date d\'inscription', _formatDate(_studentData?['created_at']) ?? '2024'),
@@ -395,6 +387,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             const SizedBox(height: 16),
             
             // Compétences
+            if (_studentData?['competences'] != null && (_studentData!['competences'] as List).isNotEmpty)
             _buildSectionCard(
               'Compétences',
               Icons.psychology,
@@ -402,10 +395,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [
-                    'Python', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git',
-                    'Machine Learning', 'Data Analysis'
-                  ].map((skill) {
+                  children: (_studentData!['competences'] as List).map((skill) {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -414,7 +404,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.3)),
                       ),
                       child: Text(
-                        skill,
+                        skill.toString(),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -430,6 +420,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             const SizedBox(height: 16),
             
             // Centres d'intérêt
+            if (_studentData?['interets'] != null && (_studentData!['interets'] as List).isNotEmpty)
             _buildSectionCard(
               'Centres d\'Intérêt',
               Icons.favorite,
@@ -437,9 +428,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [
-                    'IA', 'Web Development', 'Photographie', 'Musique', 'Voyages'
-                  ].map((interest) {
+                  children: (_studentData!['interets'] as List).map((interest) {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -448,7 +437,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
                       ),
                       child: Text(
-                        interest,
+                        interest.toString(),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -464,13 +453,17 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             const SizedBox(height: 16),
             
             // Réseaux sociaux
+            if (_studentData?['linkedin'] != null || _studentData?['github'] != null)
             _buildSectionCard(
               'Réseaux Sociaux',
               Icons.share,
               [
-                _buildSocialRow('LinkedIn', 'linkedin.com/in/alice-martin', Icons.link),
-                _buildSocialRow('GitHub', 'github.com/alice-martin', Icons.code),
-                _buildSocialRow('Twitter', '@alice_martin', Icons.alternate_email),
+                if (_studentData?['linkedin'] != null)
+                  _buildSocialRow('LinkedIn', _studentData!['linkedin'], Icons.link),
+                if (_studentData?['github'] != null)
+                  _buildSocialRow('GitHub', _studentData!['github'], Icons.code),
+                if (_studentData?['twitter'] != null)
+                  _buildSocialRow('Twitter', _studentData!['twitter'], Icons.alternate_email),
               ],
             ),
             
@@ -498,7 +491,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                     child: OutlinedButton(
                       onPressed: _exportProfile,
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF2563EB)),
+                        side: BorderSide(color: Theme.of(context).primaryColor),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -509,16 +502,12 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2563EB),
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 16),
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/create-profile'),
-                child: Text('Créer Profil'),
-              ),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _showPrivacySettings,
@@ -534,7 +523,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                         ),
                       ),
                     ),
@@ -547,7 +536,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
                 child: ElevatedButton(
                   onPressed: _logout,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEF4444),
+                    backgroundColor: Theme.of(context).colorScheme.error,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -617,7 +606,7 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(icon, color: const Color(0xFF2563EB), size: 20),
+                Icon(icon, color: Theme.of(context).primaryColor, size: 20),
                 const SizedBox(width: 12),
                 Text(
                   title,

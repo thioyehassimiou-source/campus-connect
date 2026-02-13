@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:campusconnect/core/themes/app_theme.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
 import 'package:campusconnect/shared/models/user.dart';
 import 'package:campusconnect/screens/emploi_du_temps_screen.dart';
 import 'package:campusconnect/screens/notes_screen.dart';

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
 import 'package:campusconnect/core/services/supabase_auth_service.dart';
+import 'package:campusconnect/core/theme/app_theme.dart';
+import 'package:campusconnect/widgets/theme_toggle_button.dart';
 
 class ModernRegisterScreen extends StatefulWidget {
   const ModernRegisterScreen({super.key});
@@ -218,7 +220,15 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          const ThemeToggleButton(),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -255,7 +265,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -263,7 +273,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                       'Rejoignez la communauté universitaire',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -276,7 +286,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -357,16 +367,16 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151),
+                                color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
                               ),
                             ),
                             const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF9FAFB),
+                                color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFE5E7EB),
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                                   width: 1,
                                 ),
                               ),
@@ -724,7 +734,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                   '© 2024 CampusConnect - Application universitaire officielle',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF9CA3AF),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -736,7 +746,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
         },
       ),
     ),
-  );
+    );
   }
 
   Widget _buildTextField({
@@ -756,7 +766,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
           ),
         ),
         const SizedBox(height: 8),
@@ -772,12 +782,12 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: Color(0xFF9CA3AF),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
               fontSize: 15,
             ),
             prefixIcon: Icon(
               icon,
-              color: const Color(0xFF6B7280),
+              color: Theme.of(context).iconTheme.color,
               size: 20,
             ),
             suffixIcon: isPassword
@@ -797,22 +807,22 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFFF9FAFB),
+            fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 16,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFE5E7EB),
+              borderSide: BorderSide(
+                color: Theme.of(context).dividerColor.withOpacity(0.1),
                 width: 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFE5E7EB),
+              borderSide: BorderSide(
+                color: Theme.of(context).dividerColor.withOpacity(0.1),
                 width: 1,
               ),
             ),
@@ -876,7 +886,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
           ),
         ),
         const SizedBox(height: 8),
@@ -887,14 +897,14 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
           onChanged: onChanged,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF9FAFB),
+            fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
           ),
           hint: Text(

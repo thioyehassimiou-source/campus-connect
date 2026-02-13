@@ -1,155 +1,49 @@
 import 'package:campusconnect/shared/models/course_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ScheduleService {
-  static final List<CourseModel> _mockCourses = [
-    // Monday
-    CourseModel(
-      id: 'course_001',
-      subject: 'Mathématiques Appliquées',
-      teacher: 'Dr. Ahmed Sow',
-      room: 'Salle A101',
-      startTime: DateTime(2026, 1, 28, 8, 0),
-      endTime: DateTime(2026, 1, 28, 9, 30),
-      day: DayOfWeek.monday,
-      color: '#1F77D2',
-    ),
-    CourseModel(
-      id: 'course_002',
-      subject: 'Programmation Dart',
-      teacher: 'Prof. Fatou Ndiaye',
-      room: 'Labo B205',
-      startTime: DateTime(2026, 1, 28, 10, 0),
-      endTime: DateTime(2026, 1, 28, 12, 0),
-      day: DayOfWeek.monday,
-      color: '#FF6B35',
-    ),
-    CourseModel(
-      id: 'course_003',
-      subject: 'Anglais Technique',
-      teacher: 'Mme. Laura Smith',
-      room: 'Salle C301',
-      startTime: DateTime(2026, 1, 28, 13, 0),
-      endTime: DateTime(2026, 1, 28, 14, 0),
-      day: DayOfWeek.monday,
-      color: '#2ECC71',
-    ),
+  static final SupabaseClient _supabase = Supabase.instance.client;
 
-    // Tuesday
-    CourseModel(
-      id: 'course_004',
-      subject: 'Bases de Données',
-      teacher: 'Dr. Jean Dupont',
-      room: 'Salle A205',
-      startTime: DateTime(2026, 1, 29, 9, 0),
-      endTime: DateTime(2026, 1, 29, 10, 30),
-      day: DayOfWeek.tuesday,
-      color: '#9B59B6',
-    ),
-    CourseModel(
-      id: 'course_005',
-      subject: 'Algorithmes',
-      teacher: 'Prof. Mamadou Ba',
-      room: 'Labo B305',
-      startTime: DateTime(2026, 1, 29, 11, 0),
-      endTime: DateTime(2026, 1, 29, 12, 30),
-      day: DayOfWeek.tuesday,
-      color: '#FF6B35',
-    ),
-    CourseModel(
-      id: 'course_006',
-      subject: 'Gestion de Projet',
-      teacher: 'Dr. Sophie Martin',
-      room: 'Amphi D001',
-      startTime: DateTime(2026, 1, 29, 14, 0),
-      endTime: DateTime(2026, 1, 29, 15, 30),
-      day: DayOfWeek.tuesday,
-      color: '#3498DB',
-    ),
-
-    // Wednesday
-    CourseModel(
-      id: 'course_007',
-      subject: 'Architecture Logicielle',
-      teacher: 'Prof. Sall Ousmane',
-      room: 'Salle A102',
-      startTime: DateTime(2026, 1, 30, 8, 30),
-      endTime: DateTime(2026, 1, 30, 10, 0),
-      day: DayOfWeek.wednesday,
-      color: '#E74C3C',
-    ),
-    CourseModel(
-      id: 'course_008',
-      subject: 'Web Development',
-      teacher: 'Prof. Aissatou Diallo',
-      room: 'Labo B206',
-      startTime: DateTime(2026, 1, 30, 10, 30),
-      endTime: DateTime(2026, 1, 30, 12, 30),
-      day: DayOfWeek.wednesday,
-      color: '#3498DB',
-    ),
-
-    // Thursday
-    CourseModel(
-      id: 'course_009',
-      subject: 'Séminaire Sécurité',
-      teacher: 'Dr. Moussa Kone',
-      room: 'Amphi D002',
-      startTime: DateTime(2026, 1, 31, 9, 0),
-      endTime: DateTime(2026, 1, 31, 11, 0),
-      day: DayOfWeek.thursday,
-      color: '#E74C3C',
-    ),
-    CourseModel(
-      id: 'course_010',
-      subject: 'Programmation Mobile',
-      teacher: 'Prof. Fatou Ndiaye',
-      room: 'Labo B207',
-      startTime: DateTime(2026, 1, 31, 13, 0),
-      endTime: DateTime(2026, 1, 31, 15, 0),
-      day: DayOfWeek.thursday,
-      color: '#FF6B35',
-    ),
-
-    // Friday
-    CourseModel(
-      id: 'course_011',
-      subject: 'Systèmes d\'exploitation',
-      teacher: 'Dr. Ahmed Sow',
-      room: 'Salle A303',
-      startTime: DateTime(2026, 2, 1, 8, 0),
-      endTime: DateTime(2026, 2, 1, 9, 30),
-      day: DayOfWeek.friday,
-      color: '#9B59B6',
-    ),
-    CourseModel(
-      id: 'course_012',
-      subject: 'TP Réseaux',
-      teacher: 'Prof. Aliou Sene',
-      room: 'Labo C101',
-      startTime: DateTime(2026, 2, 1, 10, 0),
-      endTime: DateTime(2026, 2, 1, 12, 0),
-      day: DayOfWeek.friday,
-      color: '#1ABC9C',
-      notes: 'Apporter cable réseau',
-    ),
-
-    // Saturday
-    CourseModel(
-      id: 'course_013',
-      subject: 'Séminaire Recherche',
-      teacher: 'Dr. Jean Dupont',
-      room: 'Amphi D003',
-      startTime: DateTime(2026, 2, 2, 9, 0),
-      endTime: DateTime(2026, 2, 2, 11, 0),
-      day: DayOfWeek.saturday,
-      color: '#3498DB',
-    ),
-  ];
-
-  /// Get full week schedule
+  /// Get full week schedule from Supabase
   static Future<List<CourseModel>> getWeekSchedule() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    return _mockCourses;
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      // Récupérer le profil pour voir si c'est student ou teacher (pour filtrer la validation)
+      // Optimisation: On pourrait stocker le role en local storage/state pour éviter ce call à chaque fois
+      final profileResponse = await _supabase.from('profiles').select('role').eq('id', user.id).single();
+      final isStudent = profileResponse['role'] == 'Student';
+
+      // Start with select() which returns PostgrestFilterBuilder
+      var query = _supabase.from('schedules').select();
+
+      // Apply filters FIRST
+      if (isStudent) {
+        query = query.eq('status', 0); // 0 = Scheduled
+      }
+
+      // Apply ordering LAST
+      final response = await query.order('start_time', ascending: true);
+      final List<dynamic> data = response as List<dynamic>;
+      
+      return data.map((json) => CourseModel.fromJson({
+        'id': json['id'],
+        'subject': json['subject'],
+        'teacher': json['teacher'],
+        'room': json['room'],
+        'startTime': json['start_time'], 
+        'endTime': json['end_time'],
+        'day': json['day'],
+        'color': json['color'] ?? '#1F77D2',
+        'status': json['status'].toString(), // Convertit l'entier en string pour le modèle
+        'notes': json['notes'],
+      })).toList();
+
+    } catch (e) {
+      print('❌ Erreur récupération emploi du temps: $e');
+      return []; 
+    }
   }
 
   /// Get courses for a specific day, sorted by start time
@@ -223,6 +117,59 @@ class ScheduleService {
       DayOfWeek.saturday: 'Sam',
     };
     return names[day] ?? '';
+  }
+
+  /// Add a new course (Teacher only)
+  static Future<void> addCourse(CourseModel course) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      await _supabase.from('schedules').insert({
+        'subject': course.subject,
+        'teacher': course.teacher,
+        'room': course.room,
+        'start_time': course.startTime.toIso8601String(),
+        'end_time': course.endTime.toIso8601String(),
+        'day': course.day.index,
+        'color': course.color,
+        'status': 0, // Scheduled par défaut
+        'notes': course.notes,
+      });
+    } catch (e) {
+      print('❌ Erreur ajout cours: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a course (Teacher only)
+  static Future<void> deleteCourse(String courseId) async {
+    try {
+      await _supabase.from('schedules').delete().eq('id', courseId);
+    } catch (e) {
+      print('❌ Erreur suppression cours: $e');
+      rethrow;
+    }
+  }
+
+  /// Validate a course (DP/Admin only)
+  static Future<void> validateCourse(String courseId) async {
+    try {
+      await _supabase.from('schedules').update({'status': 'validated'}).eq('id', courseId);
+    } catch (e) {
+      print('❌ Erreur validation cours: $e');
+      rethrow;
+    }
+  }
+
+  /// Reject a course (DP/Admin only)
+  static Future<void> rejectCourse(String courseId) async {
+    try {
+      await _supabase.from('schedules').update({'status': 'rejected'}).eq('id', courseId);
+    } catch (e) {
+      print('❌ Erreur rejet cours: $e');
+      rethrow;
+    }
   }
 
   /// Helper: Convert DateTime to DayOfWeek

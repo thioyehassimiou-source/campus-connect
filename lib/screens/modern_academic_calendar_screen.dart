@@ -1,160 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:campusconnect/core/services/academic_calendar_service.dart';
+import 'package:campusconnect/controllers/calendar_providers.dart';
+import 'package:intl/intl.dart';
 
-class ModernAcademicCalendarScreen extends StatefulWidget {
+class ModernAcademicCalendarScreen extends ConsumerStatefulWidget {
   const ModernAcademicCalendarScreen({super.key});
 
   @override
-  State<ModernAcademicCalendarScreen> createState() => _ModernAcademicCalendarScreenState();
+  ConsumerState<ModernAcademicCalendarScreen> createState() => _ModernAcademicCalendarScreenState();
 }
 
-class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScreen> {
+class _ModernAcademicCalendarScreenState extends ConsumerState<ModernAcademicCalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Map<String, dynamic>>> _events = {};
-  List<Map<String, dynamic>> _academicEvents = [];
+  List<AcademicEvent> _academicEvents = [];
   String _selectedFilter = 'Tous';
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    _loadAcademicEvents();
+    // Données chargées via Riverpod dams build
   }
 
-  void _loadAcademicEvents() {
-    // Simulation de chargement des événements académiques
-    setState(() {
-      _academicEvents = [
-        {
-          'id': '1',
-          'title': 'Début des cours',
-          'description': 'Reprise des cours pour le semestre 1',
-          'date': DateTime(2025, 1, 6),
-          'type': 'Académique',
-          'priority': 'Élevée',
-          'color': const Color(0xFF2563EB),
-          'isRecurring': false,
-        },
-        {
-          'id': '2',
-          'title': 'Journée d\'intégration',
-          'description': 'Accueil des nouveaux étudiants',
-          'date': DateTime(2025, 1, 10),
-          'type': 'Événement',
-          'priority': 'Moyenne',
-          'color': const Color(0xFF10B981),
-          'isRecurring': false,
-        },
-        {
-          'id': '3',
-          'title': 'Premier partiel',
-          'description': 'Examen partiel de mi-semestre',
-          'date': DateTime(2025, 2, 15),
-          'type': 'Examen',
-          'priority': 'Élevée',
-          'color': const Color(0xFFEF4444),
-          'isRecurring': false,
-        },
-        {
-          'id': '4',
-          'title': 'Vacances de printemps',
-          'description': 'Congés de printemps',
-          'date': DateTime(2025, 2, 20),
-          'endDate': DateTime(2025, 3, 3),
-          'type': 'Vacances',
-          'priority': 'Moyenne',
-          'color': const Color(0xFFF59E0B),
-          'isRecurring': false,
-        },
-        {
-          'id': '5',
-          'title': 'Soutenance de projets',
-          'description': 'Présentation des projets de fin de semestre',
-          'date': DateTime(2025, 3, 20),
-          'type': 'Soutenance',
-          'priority': 'Élevée',
-          'color': const Color(0xFF8B5CF6),
-          'isRecurring': false,
-        },
-        {
-          'id': '6',
-          'title': 'Examen final',
-          'description': 'Examen de fin de semestre',
-          'date': DateTime(2025, 4, 10),
-          'type': 'Examen',
-          'priority': 'Élevée',
-          'color': const Color(0xFFEF4444),
-          'isRecurring': false,
-        },
-        {
-          'id': '7',
-          'title': 'Conseil de classe',
-          'description': 'Réunion du conseil de classe',
-          'date': DateTime(2025, 4, 20),
-          'type': 'Réunion',
-          'priority': 'Moyenne',
-          'color': const Color(0xFF06B6D4),
-          'isRecurring': false,
-        },
-        {
-          'id': '8',
-          'title': 'Publication des résultats',
-          'description': 'Résultats du semestre 1',
-          'date': DateTime(2025, 4, 25),
-          'type': 'Académique',
-          'priority': 'Élevée',
-          'color': const Color(0xFF2563EB),
-          'isRecurring': false,
-        },
-      ];
+  void _loadAcademicEventsFromList(List<AcademicEvent> events) {
+    _academicEvents = events;
+    _events = <DateTime, List<Map<String, dynamic>>>{};
+    
+    for (var event in events) {
+      final dateKey = DateTime(event.dateDebut.year, event.dateDebut.month, event.dateDebut.day);
+      
+      _addEventToMap(dateKey, event);
 
-      // Créer les événements pour le calendrier
-      _events = <DateTime, List<Map<String, dynamic>>>{};
-      for (var event in _academicEvents) {
-        final dateKey = DateTime(event['date'].year, event['date'].month, event['date'].day);
+      if (event.dateFin != null) {
+        var currentDate = event.dateDebut.add(const Duration(days: 1));
+        final endDate = event.dateFin!;
         
-        if (_events[dateKey] == null) {
-          _events[dateKey] = [];
-        }
-        _events[dateKey]!.add({
-          'title': event['title'],
-          'color': event['color'],
-          'type': event['type'],
-        });
-
-        // Ajouter les événements sur plusieurs jours
-        if (event['endDate'] != null) {
-          var currentDate = event['date'];
-          final endDate = event['endDate'];
-          
-          while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
-            final multiDateKey = DateTime(currentDate.year, currentDate.month, currentDate.day);
-            if (_events[multiDateKey] == null) {
-              _events[multiDateKey] = [];
-            }
-            _events[multiDateKey]!.add({
-              'title': event['title'],
-              'color': event['color'],
-              'type': event['type'],
-            });
-            currentDate = currentDate.add(const Duration(days: 1));
-          }
+        while (currentDate.isBefore(endDate) || isSameDay(currentDate, endDate)) {
+          final multiDateKey = DateTime(currentDate.year, currentDate.month, currentDate.day);
+          _addEventToMap(multiDateKey, event);
+          currentDate = currentDate.add(const Duration(days: 1));
         }
       }
+    }
+  }
+
+  void _addEventToMap(DateTime dateKey, AcademicEvent event) {
+    if (_events[dateKey] == null) {
+      _events[dateKey] = [];
+    }
+    _events[dateKey]!.add({
+      'id': event.id,
+      'title': event.title,
+      'color': event.color,
+      'type': event.type,
+      'description': event.description,
+      'priority': event.priority,
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(academicEventsProvider);
+
+    return eventsAsync.when(
+      data: (events) {
+        _loadAcademicEventsFromList(events);
+        return _buildMainContent(context);
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(
+        appBar: AppBar(title: const Text('Erreur')),
+        body: Center(child: Text('Erreur: $e')),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -165,14 +98,14 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Text(
               'Semestre 1 - 2024/2025',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -180,11 +113,11 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: Color(0xFF2563EB)),
+            icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
             onPressed: _showAddEventDialog,
           ),
           IconButton(
-            icon: Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Theme.of(context).textTheme.bodyMedium?.color),
             onPressed: _exportCalendar,
           ),
         ],
@@ -196,11 +129,11 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -210,7 +143,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               children: [
                 Icon(
                   Icons.filter_list,
-                  color: Color(0xFF2563EB),
+                  color: Theme.of(context).primaryColor,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -230,7 +163,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                             margin: const EdgeInsets.only(right: 8),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
+                              color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -238,7 +171,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
                               ),
                             ),
                           ),
@@ -255,11 +188,11 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -287,42 +220,43 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               },
               calendarStyle: CalendarStyle(
                 outsideDaysVisible: false,
-                weekendTextStyle: TextStyle(color: Color(0xFF64748B)),
-                holidayTextStyle: TextStyle(color: Color(0xFFEF4444)),
+                defaultTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                weekendTextStyle: TextStyle(color: Theme.of(context).colorScheme.error),
+                holidayTextStyle: TextStyle(color: Theme.of(context).colorScheme.error),
                 selectedDecoration: BoxDecoration(
-                  color: Color(0xFF2563EB),
+                  color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                 ),
                 todayDecoration: BoxDecoration(
-                  color: Color(0xFF2563EB).withOpacity(0.3),
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 markerDecoration: BoxDecoration(
-                  color: Color(0xFF10B981),
+                  color: const Color(0xFF10B981),
                   shape: BoxShape.circle,
                 ),
               ),
-              headerStyle: const HeaderStyle(
+              headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
                 titleTextStyle: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Color(0xFF64748B)),
-                rightChevronIcon: Icon(Icons.chevron_right, color: Color(0xFF64748B)),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).textTheme.bodyMedium?.color),
+                rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
-              daysOfWeekStyle: const DaysOfWeekStyle(
+              daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
                 weekendStyle: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ),
@@ -342,7 +276,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -365,7 +299,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddEventDialog,
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         icon: Icon(Icons.add),
         label: Text('Événement'),
@@ -391,11 +325,11 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -424,7 +358,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -447,7 +381,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
               ),
             ),
             IconButton(
-              icon: Icon(Icons.more_vert, color: Color(0xFF64748B)),
+              icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color),
               onPressed: () => _showEventOptions(event),
             ),
           ],
@@ -470,7 +404,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             ),
             child: Icon(
               Icons.event_available,
-              color: Color(0xFF2563EB),
+              color: Theme.of(context).primaryColor,
               size: 40,
             ),
           ),
@@ -480,7 +414,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -488,7 +422,7 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
             'Sélectionnez un autre jour ou ajoutez un événement',
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF64748B),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -508,39 +442,60 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
   }
 
   void _showAddEventDialog() {
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    String type = 'Académique';
+    DateTime selectedDate = _selectedDay ?? DateTime.now();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Ajouter un événement'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: InputDecoration(labelText: 'Titre'),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-          ],
+        title: const Text('Ajouter un événement'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Titre'),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: type,
+                items: ['Académique', 'Examen', 'Vacances', 'Événement', 'Soutenance', 'Réunion']
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (v) => type = v!,
+                decoration: const InputDecoration(labelText: 'Type'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+              ),
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Événement ajouté avec succès!'),
-                  backgroundColor: Color(0xFF10B981),
-                ),
-              );
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.isNotEmpty) {
+                try {
+                  await ref.read(calendarControllerProvider.notifier).addEvent({
+                    'title': titleController.text,
+                    'description': descController.text,
+                    'date_debut': selectedDate.toIso8601String(),
+                    'type': type,
+                  }, ref);
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                }
+              }
             },
-            child: Text('Ajouter'),
+            child: const Text('Ajouter'),
           ),
         ],
       ),
@@ -555,46 +510,27 @@ class _ModernAcademicCalendarScreenState extends State<ModernAcademicCalendarScr
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (event['description'] != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(event['description'], style: const TextStyle(fontSize: 14)),
+              ),
             ListTile(
-              leading: Icon(Icons.edit),
-              title: Text('Modifier'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Modification...')),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.share),
-              title: Text('Partager'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Partage...')),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.delete, color: Color(0xFFEF4444)),
-              title: Text('Supprimer', style: TextStyle(color: Color(0xFFEF4444))),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Événement supprimé'),
-                    backgroundColor: Color(0xFFEF4444),
-                  ),
-                );
+              leading: const Icon(Icons.delete, color: Color(0xFFEF4444)),
+              title: const Text('Supprimer', style: TextStyle(color: Color(0xFFEF4444))),
+              onTap: () async {
+                try {
+                  await ref.read(calendarControllerProvider.notifier).deleteEvent(event['id'], ref);
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                }
               },
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Fermer'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer')),
         ],
       ),
     );

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:campusconnect/controllers/schedule_providers.dart';
+import 'package:campusconnect/core/services/schedule_service.dart';
+import 'package:intl/intl.dart';
 
-class ModernEnhancedScheduleScreen extends StatefulWidget {
+class ModernEnhancedScheduleScreen extends ConsumerStatefulWidget {
   final bool isTeacher;
   final bool isAdmin;
   
@@ -12,10 +16,10 @@ class ModernEnhancedScheduleScreen extends StatefulWidget {
   });
 
   @override
-  State<ModernEnhancedScheduleScreen> createState() => _ModernEnhancedScheduleScreenState();
+  ConsumerState<ModernEnhancedScheduleScreen> createState() => _ModernEnhancedScheduleScreenState();
 }
 
-class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScreen> {
+class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedScheduleScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -28,7 +32,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    _loadScheduleData();
+    // Les données seront chargées via ref.watch dans build
   }
 
   @override
@@ -37,154 +41,74 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
     super.dispose();
   }
 
-  void _loadScheduleData() {
-    // Simulation de chargement des données selon le rôle
-    setState(() {
-      _courses = [
-        {
-          'id': '1',
-          'title': 'Mathématiques',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Bernard',
-          'room': 'A101',
-          'startTime': '08:00',
-          'endTime': '10:00',
-          'day': 'Lundi',
-          'color': const Color(0xFF2563EB),
-          'type': 'Cours magistral',
-          'students': widget.isTeacher ? 45 : null,
-          'module': 'MAT101',
-          'description': 'Calcul différentiel et intégral',
-          'materials': ['Calculatrice', 'Manuel chapitre 3-4'],
-        },
-        {
-          'id': '2',
-          'title': 'Physique',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Dubois',
-          'room': 'B205',
-          'startTime': '10:15',
-          'endTime': '12:15',
-          'day': 'Lundi',
-          'color': const Color(0xFF10B981),
-          'type': 'TP',
-          'students': widget.isTeacher ? 30 : null,
-          'module': 'PHY201',
-          'description': 'TP de mécanique quantique',
-          'materials': ['Blouse de lab', 'Cahier de TP'],
-        },
-        {
-          'id': '3',
-          'title': 'Informatique',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Leroy',
-          'room': 'C301',
-          'startTime': '14:00',
-          'endTime': '16:00',
-          'day': 'Lundi',
-          'color': const Color(0xFF8B5CF6),
-          'type': 'Projet',
-          'students': widget.isTeacher ? 25 : null,
-          'module': 'INF301',
-          'description': 'Avancement projet web',
-          'materials': ['Ordinateur portable'],
-        },
-        {
-          'id': '4',
-          'title': 'Algorithmique',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Martin',
-          'room': 'D201',
-          'startTime': '08:00',
-          'endTime': '10:00',
-          'day': 'Mardi',
-          'color': const Color(0xFFF59E0B),
-          'type': 'Cours magistral',
-          'students': widget.isTeacher ? 40 : null,
-          'module': 'ALG201',
-          'description': 'Structures de données avancées',
-          'materials': ['Ordinateur portable', 'Manuel'],
-        },
-        {
-          'id': '5',
-          'title': 'Base de Données',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Petit',
-          'room': 'E102',
-          'startTime': '10:15',
-          'endTime': '12:15',
-          'day': 'Mardi',
-          'color': const Color(0xFFEF4444),
-          'type': 'TD',
-          'students': widget.isTeacher ? 35 : null,
-          'module': 'BDD201',
-          'description': 'SQL et conception de bases de données',
-          'materials': ['Ordinateur portable'],
-        },
-        {
-          'id': '6',
-          'title': 'Mathématiques',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Bernard',
-          'room': 'A101',
-          'startTime': '14:00',
-          'endTime': '16:00',
-          'day': 'Mercredi',
-          'color': const Color(0xFF2563EB),
-          'type': 'TD',
-          'students': widget.isTeacher ? 20 : null,
-          'module': 'MAT101',
-          'description': 'Exercices d\'application',
-          'materials': ['Calculatrice', 'Feuilles d\'exercices'],
-        },
-        {
-          'id': '7',
-          'title': 'Anglais',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Smith',
-          'room': 'F301',
-          'startTime': '10:15',
-          'endTime': '12:15',
-          'day': 'Jeudi',
-          'color': const Color(0xFF06B6D4),
-          'type': 'Cours magistral',
-          'students': widget.isTeacher ? 30 : null,
-          'module': 'ANG101',
-          'description': 'Business English',
-          'materials': ['Manuel d\'anglais'],
-        },
-        {
-          'id': '8',
-          'title': 'Sport',
-          'teacher': widget.isTeacher ? 'Moi' : 'Prof. Durand',
-          'room': 'Gymnase',
-          'startTime': '16:00',
-          'endTime': '18:00',
-          'day': 'Jeudi',
-          'color': const Color(0xFF10B981),
-          'type': 'Activité physique',
-          'students': widget.isTeacher ? 50 : null,
-          'module': 'SPO101',
-          'description': 'Basket-ball',
-          'materials': ['Tenue de sport'],
-        },
-      ];
-
-      // Créer les événements pour le calendrier
-      _events = <DateTime, List<Map<String, dynamic>>>{};
-      for (var course in _courses) {
-        final dayIndex = _getDayIndex(course['day']);
-        if (dayIndex != -1) {
-          final now = DateTime.now();
-          final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
-          final eventDate = currentWeekStart.add(Duration(days: dayIndex - 1));
-          final dateKey = DateTime(eventDate.year, eventDate.month, eventDate.day);
-          
-          if (_events[dateKey] == null) {
-            _events[dateKey] = [];
-          }
-          _events[dateKey]!.add({
-            'title': course['title'],
-            'time': '${course['startTime']} - ${course['endTime']}',
-            'room': course['room'],
-            'color': course['color'],
-          });
-        }
+  void _loadScheduleFromItems(List<ScheduleItem> items) {
+    _courses = items.map((item) {
+      final startTimeStr = DateFormat('HH:mm').format(item.startTime);
+      final endTimeStr = DateFormat('HH:mm').format(item.endTime);
+      
+      Color color;
+      try {
+        color = Color(int.parse(item.color.replaceFirst('#', '0xFF')));
+      } catch (_) {
+        color = const Color(0xFF2563EB);
       }
-    });
+      
+      return {
+        'id': item.id,
+        'title': item.subject,
+        'teacher': item.teacher,
+        'room': item.room,
+        'startTime': startTimeStr,
+        'endTime': endTimeStr,
+        'day': _getDayName(item.startTime.weekday),
+        'color': color,
+        'status': _mapStatusName(item.status),
+        'niveau': item.niveau,
+      };
+    }).toList();
+
+    _events = <DateTime, List<Map<String, dynamic>>>{};
+    for (var course in _courses) {
+      final itemsForThisDay = items.where((it) => it.id == course['id']).toList();
+      if (itemsForThisDay.isNotEmpty) {
+        final item = itemsForThisDay.first;
+        final dateKey = DateTime(item.startTime.year, item.startTime.month, item.startTime.day);
+        
+        if (_events[dateKey] == null) {
+          _events[dateKey] = [];
+        }
+        _events[dateKey]!.add({
+          'title': course['title'],
+          'time': '${course['startTime']} - ${course['endTime']}',
+          'room': course['room'],
+          'color': course['color'],
+        });
+      }
+    }
+  }
+
+  String _mapStatusName(int status) {
+    switch (status) {
+      case 0: return 'Normal';
+      case 1: return 'Annulé';
+      case 2: return 'Déplacé';
+      case 3: return 'En attente';
+      case 4: return 'Rejeté';
+      default: return 'Normal';
+    }
+  }
+
+  String _getDayName(int weekday) {
+    switch (weekday) {
+      case 1: return 'Lundi';
+      case 2: return 'Mardi';
+      case 3: return 'Mercredi';
+      case 4: return 'Jeudi';
+      case 5: return 'Vendredi';
+      case 6: return 'Samedi';
+      case 7: return 'Dimanche';
+      default: return '';
+    }
   }
 
   int _getDayIndex(String day) {
@@ -200,30 +124,64 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
     }
   }
 
-  List<Map<String, dynamic>> get _coursesForSelectedDay {
-    if (_selectedDay == null) return [];
-    
-    final dayIndex = _selectedDay!.weekday;
-    String dayName = '';
-    switch (dayIndex) {
-      case 1: dayName = 'Lundi'; break;
-      case 2: dayName = 'Mardi'; break;
-      case 3: dayName = 'Mercredi'; break;
-      case 4: dayName = 'Jeudi'; break;
-      case 5: dayName = 'Vendredi'; break;
-      case 6: dayName = 'Samedi'; break;
-      case 7: dayName = 'Dimanche'; break;
+  List<Map<String, dynamic>> get _filteredCourses {
+    var filtered = _courses;
+    if (_selectedDay != null) {
+      final dayName = _getDayName(_selectedDay!.weekday);
+      filtered = filtered.where((c) => c['day'] == dayName).toList();
     }
-    
-    return _courses.where((course) => course['day'] == dayName).toList();
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      filtered = filtered.where((c) => 
+        c['title'].toString().toLowerCase().contains(query) ||
+        c['teacher'].toString().toLowerCase().contains(query)
+      ).toList();
+    }
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Sélection du provider selon le rôle
+    AsyncValue<List<ScheduleItem>> scheduleAsync;
+    if (widget.isAdmin) {
+      scheduleAsync = ref.watch(pendingSchedulesProvider);
+    } else if (widget.isTeacher) {
+      scheduleAsync = ref.watch(teacherProposalsProvider);
+    } else {
+      scheduleAsync = ref.watch(validatedScheduleProvider);
+    }
+
+    return scheduleAsync.when(
+      data: (items) {
+        // Only reload if items have changed to avoid unnecessary re-renders
+        _loadScheduleFromItems(items);
+        return _buildMainContent(context);
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(
+        appBar: AppBar(title: const Text('Erreur')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Erreur: $e'),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(validatedScheduleProvider),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
@@ -237,14 +195,14 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Text(
-              '${_courses.length} cours cette semaine',
+              '${_courses.length} cours trouvés',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -253,11 +211,11 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
         actions: [
           if (widget.isTeacher || widget.isAdmin)
             IconButton(
-              icon: Icon(Icons.add, color: Color(0xFF2563EB)),
+              icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
               onPressed: _showAddCourseDialog,
             ),
           IconButton(
-            icon: Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.download, color: Theme.of(context).iconTheme.color),
             onPressed: _exportSchedule,
           ),
         ],
@@ -269,7 +227,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -287,16 +245,16 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                   decoration: InputDecoration(
                     hintText: 'Rechercher un cours...',
                     hintStyle: TextStyle(
-                      color: Color(0xFF9CA3AF),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
                       fontSize: 14,
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFF6B7280),
+                      color: Theme.of(context).iconTheme.color,
                       size: 20,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 12,
                       horizontal: 16,
@@ -310,8 +268,8 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5E7EB),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
                         width: 1,
                       ),
                     ),
@@ -347,7 +305,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                     ))
@@ -394,7 +352,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0F172A),
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                     ))
@@ -417,7 +375,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
             margin: const EdgeInsets.symmetric(horizontal: 16),
             height: 400,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -428,6 +386,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
               ],
             ),
             child: TableCalendar(
+                locale: 'fr_FR',
                 firstDay: DateTime.utc(2024, 1, 1),
                 lastDay: DateTime.utc(2026, 12, 31),
                 focusedDay: _focusedDay,
@@ -449,37 +408,37 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 },
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
-                  weekendTextStyle: TextStyle(color: Color(0xFF64748B)),
-                  holidayTextStyle: TextStyle(color: Color(0xFFEF4444)),
+                  weekendTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                  holidayTextStyle: TextStyle(color: Theme.of(context).colorScheme.error),
                   selectedDecoration: BoxDecoration(
-                    color: Color(0xFF2563EB),
+                    color: Theme.of(context).primaryColor,
                     shape: BoxShape.circle,
                   ),
                   todayDecoration: BoxDecoration(
-                    color: Color(0xFF2563EB).withOpacity(0.3),
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   markerDecoration: BoxDecoration(
-                    color: Color(0xFF10B981),
+                    color: Theme.of(context).colorScheme.secondary,
                     shape: BoxShape.circle,
                   ),
                 ),
-                headerStyle: const HeaderStyle(
+                headerStyle: HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
                   titleTextStyle: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
-                  leftChevronIcon: Icon(Icons.chevron_left, color: Color(0xFF64748B)),
-                  rightChevronIcon: Icon(Icons.chevron_right, color: Color(0xFF64748B)),
+                  leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).iconTheme.color),
+                  rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).iconTheme.color),
                 ),
-                daysOfWeekStyle: const DaysOfWeekStyle(
+                daysOfWeekStyle: DaysOfWeekStyle(
                   weekdayStyle: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   weekendStyle: TextStyle(
                     fontSize: 12,
@@ -499,7 +458,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                 children: [
                   if (_selectedDay != null) ...[
                     Text(
-                      'Cours du ${_formatDate(_selectedDay!)}',
+                      'Cours du ${_formatFullDate(_selectedDay!)}',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -509,12 +468,12 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                     const SizedBox(height: 16),
                   ],
                   Expanded(
-                    child: _coursesForSelectedDay.isEmpty
+                    child: _filteredCourses.isEmpty
                         ? _buildEmptyState()
                         : ListView.builder(
-                            itemCount: _coursesForSelectedDay.length,
+                            itemCount: _filteredCourses.length,
                             itemBuilder: (context, index) {
-                              final course = _coursesForSelectedDay[index];
+                              final course = _filteredCourses[index];
                               return _buildCourseCard(course);
                             },
                           ),
@@ -528,7 +487,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
       floatingActionButton: (widget.isTeacher || widget.isAdmin)
           ? FloatingActionButton.extended(
               onPressed: _showAddCourseDialog,
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               icon: Icon(Icons.add),
               label: Text('Ajouter cours'),
@@ -541,7 +500,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -580,25 +539,26 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                               ),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: course['color'].withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              course['type'],
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: course['color'],
+                          if (course['status'] != 'Normal')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getStatusBgColor(course['status']),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                course['status'],
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getStatusTextColor(course['status']),
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -614,7 +574,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                             course['teacher'],
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -629,7 +589,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                             course['room'],
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -648,7 +608,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                             '${course['startTime']} - ${course['endTime']}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -657,7 +617,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: Theme.of(context).scaffoldBackgroundColor,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -684,7 +644,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                                   '${course['students']} étudiants',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF64748B),
+                                    color: Theme.of(context).textTheme.bodyMedium?.color,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -699,7 +659,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
                           course['description'],
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -845,7 +805,7 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatFullDate(DateTime date) {
     const List<String> months = [
       'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
       'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
@@ -855,68 +815,91 @@ class _ModernEnhancedScheduleScreenState extends State<ModernEnhancedScheduleScr
     return '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
+  Color _getStatusBgColor(String status) {
+    switch (status) {
+      case 'Annulé': return Colors.red.withOpacity(0.1);
+      case 'Rejeté': return Colors.red.withOpacity(0.1);
+      case 'Déplacé': return Colors.orange.withOpacity(0.1);
+      case 'En attente': return Colors.blue.withOpacity(0.1);
+      default: return Colors.transparent;
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status) {
+      case 'Annulé': return Colors.red;
+      case 'Rejeté': return Colors.red;
+      case 'Déplacé': return Colors.orange;
+      case 'En attente': return Colors.blue;
+      default: return Colors.transparent;
+    }
+  }
+
   void _showAddCourseDialog() {
+    final titleController = TextEditingController();
+    final teacherController = TextEditingController();
+    final roomController = TextEditingController();
+    final niveauController = TextEditingController();
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Ajouter un cours'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Titre du cours',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Titre du cours'),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Salle',
-                  border: OutlineInputBorder(),
+                TextField(
+                  controller: teacherController,
+                  decoration: const InputDecoration(labelText: 'Enseignant'),
                 ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Heure début',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Heure fin',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                TextField(
+                  controller: roomController,
+                  decoration: const InputDecoration(labelText: 'Salle'),
+                ),
+                TextField(
+                  controller: niveauController,
+                  decoration: const InputDecoration(labelText: 'Niveau (ex: L1)'),
+                ),
+              ],
+            ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cours ajouté avec succès!'),
-                    backgroundColor: Color(0xFF10B981),
-                  ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleController.text.isEmpty) return;
+                
+                final now = DateTime.now();
+                // Utiliser la date sélectionnée ou aujourd'hui
+                final selectedDate = _selectedDay ?? now;
+                final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 8, 0);
+                final endTime = startTime.add(const Duration(hours: 2));
+
+                await ref.read(scheduleControllerProvider.notifier).addSchedule(
+                  subject: titleController.text,
+                  teacher: teacherController.text,
+                  startTime: startTime,
+                  endTime: endTime,
+                  room: roomController.text,
+                  day: selectedDate.weekday - 1,
+                  niveau: niveauController.text,
+                  ref: ref,
                 );
+                
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cours ajouté avec succès')),
+                  );
+                }
               },
-              child: Text('Ajouter'),
+              child: const Text('Ajouter'),
             ),
           ],
         );

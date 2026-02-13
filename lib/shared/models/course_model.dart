@@ -8,9 +8,12 @@ enum DayOfWeek {
 }
 
 enum CourseStatus {
-  scheduled,
+  scheduled, // Legacy name kept for compatibility, treats as 'validated'
   cancelled,
   moved,
+  pending,   // New: Waiting for validation
+  validated, // New: Approved
+  rejected,  // New: Denied
 }
 
 class CourseModel {
@@ -59,6 +62,21 @@ class CourseModel {
 
   // JSON serialization
   factory CourseModel.fromJson(Map<String, dynamic> json) {
+    // Handle 'status' which can be int (index) or String (Supabase enum)
+    CourseStatus statusEnum = CourseStatus.scheduled;
+    
+    if (json['status'] is int) {
+      statusEnum = CourseStatus.values[json['status'] as int];
+    } else if (json['status'] is String) {
+      final statusStr = json['status'] as String;
+      switch (statusStr) {
+        case 'pending': statusEnum = CourseStatus.pending; break;
+        case 'validated': statusEnum = CourseStatus.validated; break;
+        case 'rejected': statusEnum = CourseStatus.rejected; break;
+        default: statusEnum = CourseStatus.scheduled;
+      }
+    }
+
     return CourseModel(
       id: json['id'] as String,
       subject: json['subject'] as String,
@@ -68,7 +86,7 @@ class CourseModel {
       endTime: DateTime.parse(json['endTime'] as String),
       day: DayOfWeek.values[json['day'] as int],
       color: json['color'] as String,
-      status: CourseStatus.values[json['status'] as int],
+      status: statusEnum,
       notes: json['notes'] as String?,
     );
   }
@@ -83,8 +101,12 @@ class CourseModel {
       'endTime': endTime.toIso8601String(),
       'day': day.index,
       'color': color,
-      'status': status.index,
+      'status': status.index, // Or string if preferred for debug
       'notes': notes,
     };
   }
+  
+  bool get isPending => status == CourseStatus.pending;
+  bool get isValidated => status == CourseStatus.validated || status == CourseStatus.scheduled;
+  bool get isRejected => status == CourseStatus.rejected;
 }

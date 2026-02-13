@@ -1,123 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:campusconnect/shared/models/attendance_model.dart';
+import 'package:campusconnect/controllers/attendance_providers.dart';
+import 'package:intl/intl.dart';
 
-class ModernStudentAttendanceScreen extends StatefulWidget {
+class ModernStudentAttendanceScreen extends ConsumerStatefulWidget {
   const ModernStudentAttendanceScreen({super.key});
 
   @override
-  State<ModernStudentAttendanceScreen> createState() => _ModernStudentAttendanceScreenState();
+  ConsumerState<ModernStudentAttendanceScreen> createState() => _ModernStudentAttendanceScreenState();
 }
 
-class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceScreen> {
-  String _selectedMonth = 'Décembre 2024';
-  List<Map<String, dynamic>> _attendanceRecords = [];
-  Map<String, dynamic>? _studentInfo;
+class _ModernStudentAttendanceScreenState extends ConsumerState<ModernStudentAttendanceScreen> {
+  String _selectedMonth = 'Février 2025';
+  // Removed local data
 
   @override
   void initState() {
     super.initState();
-    _loadAttendanceData();
+    // Géré par Riverpod
   }
 
-  void _loadAttendanceData() {
-    // Simulation de chargement des données de présence
-    setState(() {
-      _studentInfo = {
-        'name': 'Alice Martin',
-        'id': 'ET2024001',
-        'program': 'Licence Informatique',
-        'level': 'L2',
-        'totalClasses': 120,
-        'presentClasses': 115,
-        'absentClasses': 5,
-        'lateClasses': 3,
-        'attendanceRate': 95.8,
-      };
-      
-      _attendanceRecords = [
-        {
-          'date': '02/12/2024',
-          'course': 'Mathématiques',
-          'time': '08:00 - 10:00',
-          'teacher': 'Prof. Bernard',
-          'status': 'present',
-          'room': 'A101',
-        },
-        {
-          'date': '02/12/2024',
-          'course': 'Physique',
-          'time': '10:15 - 12:15',
-          'teacher': 'Prof. Dubois',
-          'status': 'present',
-          'room': 'B205',
-        },
-        {
-          'date': '03/12/2024',
-          'course': 'Informatique',
-          'time': '14:00 - 16:00',
-          'teacher': 'Prof. Leroy',
-          'status': 'late',
-          'room': 'C301',
-        },
-        {
-          'date': '04/12/2024',
-          'course': 'Mathématiques',
-          'time': '08:00 - 10:00',
-          'teacher': 'Prof. Bernard',
-          'status': 'absent',
-          'room': 'A101',
-          'justified': true,
-        },
-        {
-          'date': '04/12/2024',
-          'course': 'Algorithmique',
-          'time': '14:00 - 16:00',
-          'teacher': 'Prof. Martin',
-          'status': 'present',
-          'room': 'D201',
-        },
-        {
-          'date': '05/12/2024',
-          'course': 'Base de Données',
-          'time': '10:15 - 12:15',
-          'teacher': 'Prof. Petit',
-          'status': 'present',
-          'room': 'E102',
-        },
-        {
-          'date': '06/12/2024',
-          'course': 'Physique',
-          'time': '14:00 - 16:00',
-          'teacher': 'Prof. Dubois',
-          'status': 'present',
-          'room': 'B205',
-        },
-        {
-          'date': '09/12/2024',
-          'course': 'Mathématiques',
-          'time': '08:00 - 10:00',
-          'teacher': 'Prof. Bernard',
-          'status': 'present',
-          'room': 'A101',
-        },
-        {
-          'date': '10/12/2024',
-          'course': 'Informatique',
-          'time': '14:00 - 16:00',
-          'teacher': 'Prof. Leroy',
-          'status': 'absent',
-          'room': 'C301',
-          'justified': false,
-        },
-        {
-          'date': '11/12/2024',
-          'course': 'Algorithmique',
-          'time': '08:00 - 10:00',
-          'teacher': 'Prof. Martin',
-          'status': 'present',
-          'room': 'D201',
-        },
-      ];
-    });
+  void _refreshData() {
+    ref.invalidate(studentAttendanceProvider);
+    ref.invalidate(studentAttendanceStatsProvider);
   }
 
   @override
@@ -134,7 +40,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Ma Présence',
               style: TextStyle(
                 fontSize: 18,
@@ -142,8 +48,8 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                 color: Color(0xFF0F172A),
               ),
             ),
-            Text(
-              '${_attendanceRecords.length} séances ce mois',
+            const Text(
+              'Historique d\'assiduité',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
@@ -154,7 +60,11 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.download, color: Color(0xFF64748B)),
+            icon: Icon(Icons.refresh, color: Theme.of(context).primaryColor),
+            onPressed: _refreshData,
+          ),
+          IconButton(
+            icon: const Icon(Icons.download, color: Color(0xFF64748B)),
             onPressed: _exportAttendance,
           ),
         ],
@@ -162,122 +72,134 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
       body: Column(
         children: [
           // Carte de statistiques
-          if (_studentInfo != null)
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [const Color(0xFF10B981), const Color(0xFF059669)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 25,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _studentInfo!['name'],
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              '${_studentInfo!['program']} • ${_studentInfo!['level']}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.9),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildAttendanceStatCard(
-                          'Taux de présence',
-                          '${_studentInfo!['attendanceRate'].toStringAsFixed(1)}%',
-                          Icons.check_circle,
-                          Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildAttendanceStatCard(
-                          'Présences',
-                          '${_studentInfo!['presentClasses']}',
-                          Icons.present_to_all,
-                          Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildAttendanceStatCard(
-                          'Absences',
-                          '${_studentInfo!['absentClasses']}',
-                          Icons.cancel,
-                          Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Barre de progression
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
+          Consumer(
+            builder: (context, ref, child) {
+              final statsAsync = ref.watch(studentAttendanceStatsProvider);
+              
+              return statsAsync.when(
+                data: (stats) => Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: _studentInfo!['attendanceRate'] / 100,
-                      child: Container(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 25,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tableau de bord',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Statistiques globales',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildAttendanceStatCard(
+                              'Taux de présence',
+                              '${stats.attendanceRate.toStringAsFixed(1)}%',
+                              Icons.check_circle,
+                              Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildAttendanceStatCard(
+                              'Présences',
+                              '${stats.presentClasses}',
+                              Icons.present_to_all,
+                              Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildAttendanceStatCard(
+                              'Absences',
+                              '${stats.absentClasses}',
+                              Icons.cancel,
+                              Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Barre de progression
+                      Container(
+                        height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: (stats.attendanceRate / 100).clamp(0.0, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, st) => Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Erreur stats: $e', style: const TextStyle(color: Colors.red)),
+                ),
+              );
+            },
+          ),
           
           // Filtre par mois
           Container(
@@ -326,6 +248,7 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                         'Novembre 2024',
                         'Décembre 2024',
                         'Janvier 2025',
+                        'Février 2025',
                       ]
                           .map((month) => DropdownMenuItem(
                                 value: month,
@@ -372,12 +295,27 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
           
           // Liste des présences
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _attendanceRecords.length,
-              itemBuilder: (context, index) {
-                final record = _attendanceRecords[index];
-                return _buildAttendanceCard(record);
+            child: Consumer(
+              builder: (context, ref, child) {
+                final attendanceAsync = ref.watch(studentAttendanceProvider);
+                
+                return attendanceAsync.when(
+                  data: (records) {
+                    if (records.isEmpty) {
+                      return const Center(child: Text('Aucun enregistrement de présence.'));
+                    }
+                    
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: records.length,
+                      itemBuilder: (context, index) {
+                        return _buildAttendanceCard(records[index]);
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, st) => Center(child: Text('Erreur: $e')),
+                );
               },
             ),
           ),
@@ -436,8 +374,8 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
     );
   }
 
-  Widget _buildAttendanceCard(Map<String, dynamic> record) {
-    final status = record['status'];
+  Widget _buildAttendanceCard(AttendanceRecord record) {
+    final status = record.status;
     final statusColor = _getStatusColor(status);
     final statusIcon = _getStatusIcon(status);
     
@@ -480,8 +418,8 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        record['course'],
-                        style: TextStyle(
+                        record.course,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
@@ -489,8 +427,8 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        record['teacher'],
-                        style: TextStyle(
+                        'Enregistré le ${DateFormat('dd/MM/yyyy').format(record.date)}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,
@@ -537,8 +475,8 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    record['date'],
-                    style: TextStyle(
+                    DateFormat('HH:mm').format(record.date),
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
@@ -546,46 +484,31 @@ class _ModernStudentAttendanceScreenState extends State<ModernStudentAttendanceS
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    record['time'],
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
+                if (record.room != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      record.room!,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF8B5CF6),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    record['room'],
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B5CF6),
-                    ),
-                  ),
-                ),
                 const Spacer(),
-                if (record['justified'] == true)
+                if (record.justified)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Justifié',
                       style: TextStyle(
                         fontSize: 10,

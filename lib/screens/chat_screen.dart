@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:campusconnect/core/themes/app_theme.dart';
 import 'package:campusconnect/shared/models/message_model.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
-import 'package:campusconnect/core/services/firebase_service.dart';
+import 'package:campusconnect/core/services/chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserModel user;
@@ -32,7 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    _subscribeToMessages();
   }
 
   @override
@@ -42,108 +41,73 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection('messages')
-          .where('receiverId', isEqualTo: widget.conversation.id)
-          .orderBy('timestamp', descending: true)
-          .get();
-
-      final messages = querySnapshot.docs
-          .map((doc) => MessageModel.fromMap(doc.data() as Map<String, dynamic>))
-          .where((message) => !message.isDeleted)
-          .toList();
-
-      setState(() {
-        _messages = messages;
-        _isLoading = false;
-      });
-
-      // Mark messages as read
-      await _markMessagesAsRead();
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
-      );
-    }
-  }
-
-  Future<void> _markMessagesAsRead() async {
-    final unreadMessages = _messages.where((message) => 
-      !message.isRead && 
-      message.receiverId == widget.user.id
-    ).toList();
-
-    for (final message in unreadMessages) {
-      await FirebaseService.firestore
-          .collection('messages')
-          .doc(message.id)
-          .update({'isRead': true});
-    }
+  void _subscribeToMessages() {
+    ChatService.getMessages(widget.conversation.id).listen((messages) {
+      if (mounted) {
+        setState(() {
+          _messages = messages; // Already sorted by order('created_at') in service
+          _isLoading = false;
+        });
+        
+        // Mark messages as read
+        ChatService.markMessagesAsRead(widget.conversation.id);
+        
+        // Scroll to bottom
+        // WidgetsBinding.instance.addPostFrameCallback((_) {
+        //   if (_scrollController.hasClients) {
+        //     _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        //   }
+        // });
+      }
+    }, onError: (e) {
+      print('Error loading messages: $e');
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
+    final content = _messageController.text.trim();
+    _messageController.clear();
     setState(() => _isSending = true);
 
     try {
-      final message = MessageModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        senderId: widget.user.id,
-        senderName: widget.user.fullName,
-        receiverId: widget.conversation.id,
-        type: MessageType.text,
-        content: _messageController.text.trim(),
-        timestamp: DateTime.now(),
-        isRead: false,
-        isDeleted: false,
+      await ChatService.sendMessage(
+        conversationId: widget.conversation.id,
+        content: content,
       );
-
-      await FirebaseService.firestore
-          .collection('messages')
-          .doc(message.id)
-          .set(message.toMap());
-
-      // Update conversation
-      await FirebaseService.firestore
-          .collection('conversations')
-          .doc(widget.conversation.id)
-          .update({
-            'lastMessage': message.content,
-            'lastMessageTime': message.timestamp,
-            'lastMessageSenderId': message.senderId,
-          });
-
-      _messageController.clear();
-      _loadMessages();
+      // No need to manually add message, stream will update
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
+        SnackBar(content: Text('Erreur envoi: ${e.toString()}')),
       );
     } finally {
-      setState(() => _isSending = false);
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
           widget.otherUser?.fullName ?? 
-          widget.conversation.displayName ?? 
+          widget.conversation.displayName.replaceAll('Utilisateur', 'Chat') ?? 
           'Conversation',
+          style: const TextStyle(
+            color: Color(0xFF0F172A),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info),
+            icon: const Icon(Icons.info_outline),
             onPressed: _showConversationInfo,
           ),
         ],
@@ -155,16 +119,38 @@ class _ChatScreenState extends State<ChatScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _messages.isEmpty
-                    ? const Center(
-                        child: Text('Aucun message. Commencez la conversation!'),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Aucun message. Commencez la discussion !',
+                              style: TextStyle(color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
                       )
                     : ListView.builder(
                         controller: _scrollController,
-                        reverse: true,
+                        reverse: true, // Show latest at bottom
                         padding: const EdgeInsets.all(16),
+                        // Service returns ordered by created_at ascending (oldest first).
+                        // Key trick: if reverse: true, index 0 is at bottom (visual end of list).
+                        // If logic: oldest -> newest.
+                        // ListView reverse means bottoms-up.
+                        // So we want index 0 to be newest message.
+                        // Let's reverse the list locally for display
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
-                          final message = _messages[index];
+                          // _messages is oldest -> newest
+                          // We want newest at bottom.
+                          // ListView reverse=true puts list[0] at bottom.
+                          // So list[0] should be newest.
+                          // => We need to reverse _messages order for UI if using reverse:trueListView
+                          final reversedIndex = _messages.length - 1 - index;
+                          final message = _messages[reversedIndex];
                           return _buildMessageBubble(message);
                         },
                       ),
@@ -177,17 +163,16 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, -1),
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
                 ),
               ],
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.attach_file),
+                  icon: const Icon(Icons.attach_file, color: Color(0xFF64748B)),
                   onPressed: _showAttachmentOptions,
                 ),
                 Expanded(
@@ -197,11 +182,22 @@ class _ChatScreenState extends State<ChatScreen> {
                       hintText: 'Tapez votre message...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: Color(0xFF2563EB)),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 8,
+                        vertical: 10,
                       ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
                     ),
                     maxLines: null,
                     textInputAction: TextInputAction.send,
@@ -209,21 +205,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: _isSending
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Icon(Icons.send),
-                  onPressed: _isSending ? null : _sendMessage,
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2563EB),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: _isSending
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.send, size: 20),
+                    onPressed: _isSending ? null : _sendMessage,
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -241,18 +240,18 @@ class _ChatScreenState extends State<ChatScreen> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryColor,
+              radius: 14,
+              backgroundColor: const Color(0xFFE2E8F0),
               child: Text(
-                message.senderName.isNotEmpty
-                    ? message.senderName[0].toUpperCase()
-                    : 'U',
+                'U', // Placeholder, ideally fetch sender name based on senderId
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -262,74 +261,47 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                if (!isMe) ...[
-                  Text(
-                    message.senderName,
-                    style: AppTheme.captionStyle.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                ],
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isMe ? AppTheme.primaryColor : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(20),
+                    color: isMe ? const Color(0xFF2563EB) : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(4),
+                      bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(16),
+                    ),
+                    boxShadow: [
+                      if (!isMe)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                    ],
                   ),
                   child: Text(
                     message.content,
                     style: TextStyle(
-                      color: isMe ? Colors.white : Colors.black87,
-                      fontSize: 16,
+                      color: isMe ? Colors.white : const Color(0xFF1E293B),
+                      fontSize: 15,
                     ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatMessageTime(message.timestamp),
-                      style: AppTheme.captionStyle.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    if (isMe) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        message.isRead ? Icons.done_all : Icons.done,
-                        size: 12,
-                        color: message.isRead ? AppTheme.primaryColor : Colors.grey,
-                      ),
-                    ],
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  _formatMessageTime(message.timestamp),
+                  style: TextStyle(
+                    color: const Color(0xFF94A3B8),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
           ),
-          if (isMe) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryColor,
-              backgroundImage: widget.user.profileImageUrl != null
-                  ? NetworkImage(widget.user.profileImageUrl!)
-                  : null,
-              child: widget.user.profileImageUrl == null
-                  ? Text(
-                      widget.user.firstName[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    )
-                  : null,
-            ),
-          ],
         ],
       ),
     );
@@ -338,33 +310,59 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showAttachmentOptions() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
             ListTile(
-              leading: const Icon(Icons.image),
-              title: const Text('Image'),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.image, color: Color(0xFF2563EB)),
+              ),
+              title: const Text('Image', style: TextStyle(fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Implement image attachment
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Bientôt disponible')),
                 );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.insert_drive_file),
-              title: const Text('Document'),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.insert_drive_file, color: Color(0xFF10B981)),
+              ),
+              title: const Text('Document', style: TextStyle(fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Implement file attachment
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Bientôt disponible')),
                 );
               },
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -375,54 +373,23 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Informations de la conversation'),
+        title: const Text('Infos conversation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (widget.otherUser != null) ...[
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppTheme.primaryColor,
-                backgroundImage: widget.otherUser!.profileImageUrl != null
-                    ? NetworkImage(widget.otherUser!.profileImageUrl!)
-                    : null,
-                child: widget.otherUser!.profileImageUrl == null
-                    ? Text(
-                        widget.otherUser!.firstName[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                        ),
-                      )
-                    : null,
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: const Color(0xFF2563EB),
+              child: Text(
+                widget.conversation.displayName[0].toUpperCase(),
+                style: const TextStyle(fontSize: 32, color: Colors.white),
               ),
-              const SizedBox(height: 16),
-              Text(
-                widget.otherUser!.fullName,
-                style: AppTheme.subheadingStyle,
-              ),
-              Text(
-                widget.otherUser!.role.name.toUpperCase(),
-                style: AppTheme.captionStyle,
-              ),
-              if (widget.otherUser!.email.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  widget.otherUser!.email,
-                  style: AppTheme.bodyStyle,
-                ),
-              ],
-            ] else ...[
-              Text(
-                widget.conversation.displayName,
-                style: AppTheme.subheadingStyle,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Participants: ${widget.conversation.participants.length}',
-                style: AppTheme.bodyStyle,
-              ),
-            ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.conversation.displayName,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         actions: [
@@ -443,9 +410,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (messageDate == today) {
       return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else if (now.difference(dateTime).inDays < 7) {
-      return DateFormat('EEEE', 'fr_FR').format(dateTime);
+      return DateFormat('EEEE HH:mm', 'fr_FR').format(dateTime);
     } else {
-      return '${dateTime.day}/${dateTime.month}';
+      return '${dateTime.day}/${dateTime.month} ${dateTime.hour}:${dateTime.minute}';
     }
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:campusconnect/core/themes/app_theme.dart';
 import 'package:campusconnect/shared/models/message_model.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
-import 'package:campusconnect/core/services/firebase_service.dart';
+import 'package:campusconnect/core/services/chat_service.dart';
 import 'package:campusconnect/screens/chat_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MessagesScreen extends StatefulWidget {
   final UserModel user;
@@ -20,54 +20,61 @@ class _MessagesScreenState extends State<MessagesScreen> {
   List<UserModel> _users = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  // ignore: unused_field
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    _loadConversations();
+    _subscribeToConversations();
     _loadUsers();
   }
 
-  Future<void> _loadConversations() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection('conversations')
-          .where('participants', arrayContains: widget.user.id)
-          .orderBy('lastMessageTime', descending: true)
-          .get();
-
-      final conversations = querySnapshot.docs
-          .map((doc) => ConversationModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
-
-      setState(() {
-        _conversations = conversations;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
-      );
-    }
+  void _subscribeToConversations() {
+    ChatService.getConversations().listen((conversations) {
+      if (mounted) {
+        setState(() {
+          _conversations = conversations;
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      print('Error loading conversations: $error');
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   Future<void> _loadUsers() async {
     try {
-      final querySnapshot = await FirebaseService.firestore
-          .collection('users')
-          .where('id', isNotEqualTo: widget.user.id)
-          .get();
+      // Fetch profiles excluding current user
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .neq('id', widget.user.id); // Assuming widget.user.id is the current auth id
 
-      final users = querySnapshot.docs
-          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      final List<dynamic> data = response as List<dynamic>;
+      
+      final users = data.map((json) {
+         // Map Supabase profile to UserModel
+         // UserModel expects 'full_name', but DB has 'nom'
+         final Map<String, dynamic> map = Map.from(json);
+         map['full_name'] = (json['nom'] ?? 'Utilisateur').toString().trim();
+         // Handle role mapping if needed, UserModel expects lowercase 'student', 'teacher', etc or Enum string
+         // DB has 'Student', 'Teacher' usually capped.
+         // UserModel._parseRole handles it.
+         return UserModel.fromMap(map);
+      }).toList().cast<UserModel>();
 
-      setState(() {
-        _users = users;
-      });
+      // Filter: If current user is student, remove other students
+      if (widget.user.role == UserRole.student || widget.user.role == UserRole.etudiant) {
+         users.removeWhere((u) => u.role == UserRole.student || u.role == UserRole.etudiant);
+      }
+
+      if (mounted) {
+        setState(() {
+          _users = users;
+        });
+      }
     } catch (e) {
       print('Error loading users: $e');
     }
@@ -78,7 +85,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
     return _conversations.where((conversation) {
       final displayName = conversation.displayName.toLowerCase();
-      final lastMessage = conversation.displayLastMessage.toLowerCase();
+      final lastMessage = (conversation.displayLastMessage ?? '').toLowerCase();
       return displayName.contains(_searchQuery.toLowerCase()) ||
              lastMessage.contains(_searchQuery.toLowerCase());
     }).toList();
@@ -97,49 +104,26 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   Future<void> _createConversation(UserModel otherUser) async {
     try {
-      // Check if conversation already exists
-      final existingConversation = _conversations.firstWhere(
-        (conv) => !conv.isGroup && 
-                 conv.participants.contains(widget.user.id) && 
-                 conv.participants.contains(otherUser.id),
-        orElse: () => ConversationModel(
-          id: '',
-          participants: [widget.user.id, otherUser.id],
-          unreadCount: 0,
-          isGroup: false,
-        ),
-      );
-
-      if (existingConversation.id.isNotEmpty) {
-        // Conversation already exists, navigate to it
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(
-              user: widget.user,
-              conversation: existingConversation,
-              otherUser: otherUser,
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Create new conversation
-      final conversationId = DateTime.now().millisecondsSinceEpoch.toString();
+      // Check if conversation already exists in local list
+      // Note: This logic assumes 1-on-1 and we have participants loaded.
+      // Current ChatService.getConversations returns empty participants list for now to save bandwidth/logic
+      // So checking internally might require fetching.
+      // However, ChatService.createConversation handles creation cleanly.
+      
+      // Let's just create/get the conversation ID
+      final conversationId = await ChatService.createConversation(otherUser.id);
+      
+      // Construct a temporary ConversationModel to navigate immediately
+      // knowing that the stream will eventually update the list.
       final conversation = ConversationModel(
         id: conversationId,
-        userId1: widget.user.id,
-        userId2: otherUser.id,
-        participants: [widget.user.id, otherUser.id],
-        unreadCount: 0,
+        displayName: otherUser.fullName,
+        participantIds: [widget.user.id, otherUser.id],
         isGroup: false,
+        lastMessageTime: DateTime.now(),
       );
 
-      await FirebaseService.firestore
-          .collection('conversations')
-          .doc(conversationId)
-          .set(conversation.toMap());
+      if (!mounted) return;
 
       Navigator.push(
         context,
@@ -152,23 +136,39 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
-      );
+      print('Error creating conversation: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: ${e.toString()}')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Messages'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Messages',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        iconTheme: Theme.of(context).iconTheme,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadConversations,
+            onPressed: () {
+               setState(() => _isLoading = true);
+               _subscribeToConversations();
+               _loadUsers();
+            },
           ),
         ],
       ),
@@ -176,14 +176,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
         children: [
           // Search Bar
           Container(
-            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).cardColor,
             child: TextField(
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               decoration: InputDecoration(
-                hintText: 'Rechercher des conversations ou utilisateurs...',
-                prefixIcon: const Icon(Icons.search),
+                hintText: 'Rechercher...',
+                hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+                filled: true,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (value) {
                 setState(() {
@@ -213,10 +220,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
     return Column(
       children: [
-        // Existing Conversations
+        // Conversations List
         Expanded(
           flex: 2,
           child: ListView.builder(
+            padding: const EdgeInsets.only(top: 8),
             itemCount: _conversations.length,
             itemBuilder: (context, index) {
               final conversation = _conversations[index];
@@ -225,26 +233,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
         ),
 
-        const Divider(height: 32),
+        Divider(height: 1, color: Theme.of(context).dividerColor),
 
-        // New Conversations
+        // New Conversations (Users)
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          color: Theme.of(context).cardColor,
           child: Row(
             children: [
               Text(
-                'Nouvelles conversations',
-                style: AppTheme.subheadingStyle,
+                'Nouvelles discussions',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
               const Spacer(),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _searchQuery = '';
-                  });
-                },
-                child: const Text('Voir tout'),
-              ),
             ],
           ),
         ),
@@ -252,7 +257,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
         Expanded(
           flex: 1,
           child: ListView.builder(
-            itemCount: _users.length > 3 ? 3 : _users.length,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _users.length > 5 ? 5 : _users.length, // Limit to 5 suggestions
             itemBuilder: (context, index) {
               final user = _users[index];
               return _buildUserCard(user);
@@ -268,17 +274,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
       length: 2,
       child: Column(
         children: [
-          const TabBar(
-            tabs: [
-              Tab(text: 'Conversations'),
-              Tab(text: 'Utilisateurs'),
-            ],
+          Container(
+            color: Theme.of(context).cardColor,
+            child: TabBar(
+              labelColor: Theme.of(context).primaryColor,
+              unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
+              indicatorColor: Theme.of(context).primaryColor,
+              tabs: const [
+                Tab(text: 'Conversations'),
+                Tab(text: 'Utilisateurs'),
+              ],
+            ),
           ),
           Expanded(
             child: TabBarView(
               children: [
                 _filteredConversations.isEmpty
-                    ? const Center(child: Text('Aucune conversation trouvée'))
+                    ? Center(child: Text('Aucune conversation trouvée', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)))
                     : ListView.builder(
                         itemCount: _filteredConversations.length,
                         itemBuilder: (context, index) {
@@ -287,7 +299,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         },
                       ),
                 _filteredUsers.isEmpty
-                    ? const Center(child: Text('Aucun utilisateur trouvé'))
+                    ? Center(child: Text('Aucun utilisateur trouvé', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)))
                     : ListView.builder(
                         itemCount: _filteredUsers.length,
                         itemBuilder: (context, index) {
@@ -310,12 +322,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Commencer une nouvelle conversation',
-            style: AppTheme.subheadingStyle,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
         ),
         Expanded(
           child: _users.isEmpty
-              ? const Center(child: Text('Aucun utilisateur disponible'))
+              ? Center(child: Text('Aucun utilisateur disponible', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)))
               : ListView.builder(
                   itemCount: _users.length,
                   itemBuilder: (context, index) {
@@ -329,27 +345,43 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Widget _buildConversationCard(ConversationModel conversation) {
+    // Determine if unread (mock logic for now as ConversationModel doesn't strictly have unreadCount mapped yet in ChatService)
+    // We can add unreadCount logic later.
+    const unreadCount = 0; 
+    
+    // Determine title color based on theme
+    final titleColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subtitleColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
+
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: Theme.of(context).primaryColor,
           child: Text(
             conversation.displayName.isNotEmpty
                 ? conversation.displayName[0].toUpperCase()
                 : 'C',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
         title: Text(
           conversation.displayName,
-          style: AppTheme.bodyStyle.copyWith(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
+            color: titleColor,
           ),
         ),
         subtitle: Text(
-          conversation.displayLastMessage,
-          style: AppTheme.captionStyle,
+          conversation.displayLastMessage ?? 'Aucun message',
+          style: TextStyle(color: subtitleColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -357,39 +389,38 @@ class _MessagesScreenState extends State<MessagesScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (conversation.lastMessageTime != null)
-              Text(
-                _formatTime(conversation.lastMessageTime!),
-                style: AppTheme.captionStyle,
-              ),
+            Text(
+              _formatTime(conversation.lastMessageTime),
+              style: TextStyle(color: subtitleColor, fontSize: 12),
+            ),
             const SizedBox(height: 4),
-            if (conversation.unreadCount > 0)
+            if (unreadCount > 0)
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 20,
-                  minHeight: 20,
-                ),
                 child: Text(
-                  conversation.unreadCount.toString(),
+                  unreadCount.toString(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
           ],
         ),
         onTap: () {
-          // TODO: Navigate to chat screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Chat bientôt disponible')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatScreen(
+                user: widget.user,
+                conversation: conversation,
+              ),
+            ),
           );
         },
       ),
@@ -397,38 +428,64 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Widget _buildUserCard(UserModel user) {
+    final titleColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subtitleColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
+
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+      ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: const Color(0xFF10B981), // Green for new contacts
           backgroundImage: user.profileImageUrl != null
               ? NetworkImage(user.profileImageUrl!)
               : null,
           child: user.profileImageUrl == null
               ? Text(
-                  user.firstName[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white),
+                  user.fullName.isEmpty ? 'U' : user.fullName[0].toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 )
               : null,
         ),
         title: Text(
           user.fullName,
-          style: AppTheme.bodyStyle.copyWith(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
+            color: titleColor,
           ),
         ),
         subtitle: Text(
-          user.role.name.toUpperCase(),
-          style: AppTheme.captionStyle,
+          _getRoleLabel(user.role),
+          style: TextStyle(color: subtitleColor, fontSize: 12),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.message),
+          icon: Icon(Icons.message, color: Theme.of(context).primaryColor),
           onPressed: () => _createConversation(user),
         ),
         onTap: () => _createConversation(user),
       ),
     );
+  }
+  
+  String _getRoleLabel(UserRole role) {
+    switch (role) {
+      case UserRole.student:
+      case UserRole.etudiant:
+        return 'Étudiant';
+      case UserRole.teacher:
+      case UserRole.enseignant:
+        return 'Enseignant';
+      case UserRole.admin:
+      case UserRole.administrateur:
+        return 'Administrateur';
+      default:
+        return 'Utilisateur';
+    }
   }
 
   String _formatTime(DateTime dateTime) {

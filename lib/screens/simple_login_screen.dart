@@ -29,10 +29,22 @@ class _SimpleLoginScreenState extends State<SimpleLoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.school_rounded,
-                    color: Color(0xFF2563EB),
-                    size: 32,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Transform.scale(
+                        scale: 1.35,
+                        child: Image.asset(
+                          'assets/logo/app_logo.png',
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
