@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusconnect/shared/models/attendance_model.dart';
 import 'package:campusconnect/controllers/attendance_providers.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:printing/printing.dart';
+import '../core/services/export_service.dart';
 
 class ModernStudentAttendanceScreen extends ConsumerStatefulWidget {
   const ModernStudentAttendanceScreen({super.key});
@@ -577,28 +580,52 @@ class _ModernStudentAttendanceScreenState extends ConsumerState<ModernStudentAtt
                 leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
                 title: Text('Attestation de présence PDF'),
                 subtitle: Text('Document officiel pour administration'),
-                onTap: () {
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Génération de l\'attestation en cours...'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
+                  try {
+                    final currentUser = Supabase.instance.client.auth.currentUser;
+                    final studentName = currentUser?.userMetadata?['nom'] ?? 'Étudiant';
+                    
+                    final attendanceAsync = ref.read(studentAttendanceProvider);
+                    final records = attendanceAsync.value ?? [];
+                    
+                    final pdfBytes = await ExportService.generateAttendancePdf(records, studentName);
+                    await Printing.layoutPdf(
+                      onLayout: (format) => pdfBytes,
+                      name: 'Attestation_Presence_$studentName.pdf',
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur PDF: $e')),
+                    );
+                  }
                 },
               ),
               ListTile(
                 leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
                 title: Text('Historique Excel'),
                 subtitle: Text('Détail complet des présences'),
-                onTap: () {
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Export Excel en cours...'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
+                  try {
+                    final currentUser = Supabase.instance.client.auth.currentUser;
+                    final studentName = currentUser?.userMetadata?['nom'] ?? 'Étudiant';
+                    
+                    final attendanceAsync = ref.read(studentAttendanceProvider);
+                    final records = attendanceAsync.value ?? [];
+                    
+                    await ExportService.generateAttendanceExcel(records, studentName);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Fichier Excel enregistré dans vos documents.'),
+                        backgroundColor: Color(0xFF10B981),
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur Excel: $e')),
+                    );
+                  }
                 },
               ),
             ],

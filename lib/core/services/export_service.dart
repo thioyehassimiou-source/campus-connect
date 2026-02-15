@@ -1,9 +1,14 @@
+import 'package:campusconnect/core/services/grade_service.dart';
+import 'package:campusconnect/core/services/schedule_service.dart';
+import 'package:campusconnect/shared/models/attendance_model.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
-import '../services/grade_service.dart';
-import 'schedule_service.dart';
 
 class ExportService {
   /// Génère un PDF des notes de l'étudiant
@@ -276,6 +281,168 @@ class ExportService {
     );
 
     return pdf.save();
+  }
+
+  /// Génère un fichier Excel des notes
+  static Future<void> generateGradesExcel(List<Grade> grades, String studentName) async {
+    final excel = Excel.createExcel();
+    final sheet = excel['Relevé_de_Notes'];
+    excel.delete('Sheet1');
+
+    // Style pour l'en-tête
+    final headerStyle = CellStyle(
+      bold: true,
+      backgroundColorHex: ExcelColor.fromHexString('#2563EB'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+    );
+
+    // En-tête
+    sheet.appendRow([
+      TextCellValue('Matière'),
+      TextCellValue('Type'),
+      TextCellValue('Note (/20)'),
+      TextCellValue('Coefficient'),
+      TextCellValue('Date'),
+    ]);
+
+    for (var i = 0; i < 5; i++) {
+        sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0)).cellStyle = headerStyle;
+    }
+
+    // Données
+    for (final grade in grades) {
+      sheet.appendRow([
+        TextCellValue(grade.subject),
+        TextCellValue(grade.type),
+        DoubleCellValue(grade.value),
+        DoubleCellValue(grade.coefficient),
+        TextCellValue(DateFormat('dd/MM/yyyy').format(grade.date)),
+      ]);
+    }
+
+    final bytes = excel.save();
+    if (bytes != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/Notes_$studentName.xlsx');
+      await file.writeAsBytes(bytes);
+      print('Excel saved to: ${file.path}');
+      // En production, on utiliserait open_filex pour l'ouvrir, 
+      // ici on l'enregistre simplement pour que l'utilisateur puisse le récupérer.
+    }
+  }
+
+  /// Génère un fichier Excel de l'emploi du temps
+  static Future<void> generateScheduleExcel(List<ScheduleItem> items, String studentName) async {
+    final excel = Excel.createExcel();
+    final sheet = excel['Emploi_du_Temps'];
+    excel.delete('Sheet1');
+
+    final headerStyle = CellStyle(
+      bold: true,
+      backgroundColorHex: ExcelColor.fromHexString('#2563EB'),
+      fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+    );
+
+    sheet.appendRow([
+      TextCellValue('Jour'),
+      TextCellValue('Heure'),
+      TextCellValue('Matière'),
+      TextCellValue('Salle'),
+      TextCellValue('Enseignant'),
+      TextCellValue('Type'),
+    ]);
+
+    // Data
+    for (var item in items) {
+      sheet.appendRow([
+        TextCellValue(DateFormat('EEEE', 'fr_FR').format(item.startTime)),
+        TextCellValue('${DateFormat('HH:mm').format(item.startTime)} - ${DateFormat('HH:mm').format(item.endTime)}'),
+        TextCellValue(item.subject),
+        TextCellValue(item.room),
+        TextCellValue(item.teacher),
+        TextCellValue(item.type),
+      ]);
+    }
+
+    final bytes = excel.encode();
+    if (bytes == null) return;
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/EmploiDuTemps_$studentName.xlsx');
+    await file.writeAsBytes(bytes);
+    print('Excel saved to: ${file.path}');
+  }
+
+  static Future<Uint8List> generateAttendancePdf(List<AttendanceRecord> records, String studentName) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Header(
+            level: 0,
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Attestation de Présence', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.Text('CampusConnect', style: pw.TextStyle(fontSize: 16, color: PdfColors.blue)),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 20),
+          pw.Text('Étudiant: $studentName'),
+          pw.Text('Date d\'édition: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}'),
+          pw.SizedBox(height: 20),
+          pw.TableHelper.fromTextArray(
+            headers: ['Date', 'Heure', 'Cours', 'Statut', 'Salle'],
+            data: records.map((r) => [
+              DateFormat('dd/MM/yyyy').format(r.date),
+              DateFormat('HH:mm').format(r.date),
+              r.course,
+              r.status.toUpperCase(),
+              r.room ?? 'N/A',
+            ]).toList().cast<List<dynamic>>(),
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.green),
+            cellAlignment: pw.Alignment.centerLeft,
+          ),
+        ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  static Future<void> generateAttendanceExcel(List<AttendanceRecord> records, String studentName) async {
+    final excel = Excel.createExcel();
+    final Sheet sheet = excel['Sheet1'];
+
+    sheet.appendRow([
+      TextCellValue('Date'),
+      TextCellValue('Heure'),
+      TextCellValue('Cours'),
+      TextCellValue('Statut'),
+      TextCellValue('Salle'),
+      TextCellValue('Justifié'),
+    ]);
+
+    for (var r in records) {
+      sheet.appendRow([
+        TextCellValue(DateFormat('dd/MM/yyyy').format(r.date)),
+        TextCellValue(DateFormat('HH:mm').format(r.date)),
+        TextCellValue(r.course),
+        TextCellValue(r.status),
+        TextCellValue(r.room ?? ''),
+        TextCellValue(r.justified ? 'Oui' : 'Non'),
+      ]);
+    }
+
+    final bytes = excel.encode();
+    if (bytes == null) return;
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/Presence_$studentName.xlsx');
+    await file.writeAsBytes(bytes);
   }
 
   static pw.Widget _buildTableCell(String text, {bool isHeader = false}) {

@@ -13,7 +13,7 @@ class AssignmentService {
       // Fetch assignments joined with submission status for current student
       final response = await _supabase
           .from('assignments')
-          .select('*, submissions(status, grade)')
+          .select('*, submissions(status, grade, feedback)')
           .order('due_date', ascending: true);
 
       final List<dynamic> data = response as List<dynamic>;
@@ -27,6 +27,7 @@ class AssignmentService {
           'submitted': submission != null,
           'grade': submission?['grade'],
           'status': submission?['status'] ?? 'pending',
+          'feedback': submission?['feedback'],
         });
       }).toList();
     } catch (e) {

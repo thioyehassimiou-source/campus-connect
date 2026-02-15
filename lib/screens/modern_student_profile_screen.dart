@@ -789,25 +789,37 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
     }
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulation de sauvegarde
-    Future.delayed(const Duration(seconds: 2), () {
+    final updatedData = {
+      'nom': '${_firstNameController.text} ${_lastNameController.text}',
+      'email': _emailController.text,
+      'telephone': _phoneController.text,
+      'address': _addressController.text,
+      'bio': _bioController.text,
+    };
+
+    final success = await ProfileService.updateProfile(updatedData);
+
+    if (mounted) {
       setState(() {
         _isLoading = false;
-        _isEditing = false;
+        if (success) {
+          _isEditing = false;
+          _loadStudentData(); // Rafraîchir les données locales
+        }
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil mis à jour avec succès!'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(success ? 'Profil mis à jour avec succès!' : 'Erreur lors de la mise à jour.'),
+          backgroundColor: success ? const Color(0xFF10B981) : Colors.red,
         ),
       );
-    });
+    }
   }
 
   void _exportProfile() {
@@ -927,9 +939,12 @@ class _ModernStudentProfileScreenState extends State<ModernStudentProfileScreen>
               child: Text('Annuler'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                Navigator.pushReplacementNamed(context, '/login');
+                await SupabaseAuthService.signOut();
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
               },
               child: Text('Se déconnecter'),
             ),

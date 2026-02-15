@@ -7,6 +7,9 @@ class UserModel {
   final String? profileImage;
   final String? profileImageUrl;
   final UserRole role;
+  final String? serviceType;
+  final String? scopeFaculteId;
+  final String? scopeDepartementId;
   final String? phone;
   final String? address;
   final DateTime createdAt;
@@ -21,6 +24,9 @@ class UserModel {
     this.profileImage,
     this.profileImageUrl,
     required this.role,
+    this.serviceType,
+    this.scopeFaculteId,
+    this.scopeDepartementId,
     this.phone,
     this.address,
     required this.createdAt,
@@ -37,6 +43,9 @@ class UserModel {
       profileImage: json['profile_image'],
       profileImageUrl: json['profile_image_url'],
       role: _parseRole(json['role']),
+      serviceType: json['service_type'],
+      scopeFaculteId: json['scope_faculte_id'],
+      scopeDepartementId: json['scope_departement_id'],
       phone: json['phone'],
       address: json['address'],
       createdAt: json['created_at'] != null
@@ -59,6 +68,9 @@ class UserModel {
         'profile_image': profileImage,
         'profile_image_url': profileImageUrl,
         'role': role.toString().split('.').last,
+        'service_type': serviceType,
+        'scope_faculte_id': scopeFaculteId,
+        'scope_departement_id': scopeDepartementId,
         'phone': phone,
         'address': address,
         'created_at': createdAt.toIso8601String(),
@@ -66,12 +78,13 @@ class UserModel {
       };
 
   static UserRole _parseRole(dynamic roleValue) {
-    if (roleValue == null) return UserRole.student;
-    final roleStr = roleValue.toString().toLowerCase();
-    if (roleStr.contains('admin')) return UserRole.admin;
-    if (roleStr.contains('teacher')) return UserRole.teacher;
-    if (roleStr.contains('student')) return UserRole.student;
-    return UserRole.student;
+    if (roleValue == null) return UserRole.ETUDIANT;
+    final roleStr = roleValue.toString().toUpperCase();
+    if (roleStr == 'SUPER_ADMIN' || roleStr == 'ADMIN' || roleStr == 'ADMINISTRATEUR') return UserRole.SUPER_ADMIN;
+    if (roleStr == 'ADMIN_SERVICE') return UserRole.ADMIN_SERVICE;
+    if (roleStr == 'ENSEIGNANT' || roleStr.contains('TEACHER') || roleStr.contains('PROF')) return UserRole.ENSEIGNANT;
+    if (roleStr == 'ETUDIANT' || roleStr.contains('STUDENT')) return UserRole.ETUDIANT;
+    return UserRole.ETUDIANT;
   }
 
   UserModel copyWith({
@@ -80,6 +93,9 @@ class UserModel {
     String? fullName,
     String? profileImage,
     UserRole? role,
+    String? serviceType,
+    String? scopeFaculteId,
+    String? scopeDepartementId,
     String? phone,
     String? address,
     DateTime? createdAt,
@@ -91,6 +107,9 @@ class UserModel {
       fullName: fullName ?? this.fullName,
       profileImage: profileImage ?? this.profileImage,
       role: role ?? this.role,
+      serviceType: serviceType ?? this.serviceType,
+      scopeFaculteId: scopeFaculteId ?? this.scopeFaculteId,
+      scopeDepartementId: scopeDepartementId ?? this.scopeDepartementId,
       phone: phone ?? this.phone,
       address: address ?? this.address,
       createdAt: createdAt ?? this.createdAt,
@@ -100,10 +119,8 @@ class UserModel {
 }
 
 enum UserRole {
-  student,
-  teacher,
-  admin,
-  etudiant,
-  enseignant,
-  administrateur,
+  SUPER_ADMIN,
+  ADMIN_SERVICE,
+  ENSEIGNANT,
+  ETUDIANT,
 }

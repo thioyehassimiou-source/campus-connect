@@ -24,9 +24,11 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
   final List<String> _levelOptions = ['Licence 1', 'Licence 2', 'Licence 3'];
   dynamic _selectedFacultyId;
   dynamic _selectedDepartmentId;
+  dynamic _selectedFiliereId;
   dynamic _selectedServiceId;
   List<Map<String, dynamic>> _faculties = [];
   List<Map<String, dynamic>> _departments = [];
+  List<Map<String, dynamic>> _filieres = [];
   List<Map<String, dynamic>> _services = [];
   bool _isInitialLoading = true;
   String? _initialLoadError;
@@ -84,9 +86,26 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       setState(() {
         _departments = List<Map<String, dynamic>>.from(response);
         _selectedDepartmentId = null;
+        _filieres = [];
+        _selectedFiliereId = null;
       });
     } catch (e) {
       print('Erreur chargement départements: $e');
+    }
+  }
+
+  Future<void> _loadFilieres(int departmentId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('filieres')
+          .select()
+          .eq('department_id', departmentId);
+      setState(() {
+        _filieres = List<Map<String, dynamic>>.from(response);
+        _selectedFiliereId = null;
+      });
+    } catch (e) {
+      print('Erreur chargement filières: $e');
     }
   }
 
@@ -118,24 +137,44 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
     }
   }
 
+  Future<void> _loadAllServices() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('services')
+          .select()
+          .eq('is_active', true)
+          .order('nom');
+      
+      setState(() {
+        _services = List<Map<String, dynamic>>.from(response);
+        _selectedServiceId = null;
+      });
+    } catch (e) {
+      print('Erreur chargement tous les services: $e');
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     // ✅ Validation spécifique par rôle
-    if (_selectedRole == 'Administratif' && _selectedServiceId == null) {
-      setState(() {
-        _errorMessage = 'Veuillez sélectionner un service';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    if (_selectedFacultyId == null) {
-      setState(() {
-        _errorMessage = 'Veuillez sélectionner une faculté';
-        _isLoading = false;
-      });
-      return;
+    if (_selectedRole == 'Administratif') {
+      if (_selectedServiceId == null) {
+        setState(() {
+          _errorMessage = 'Veuillez sélectionner un service';
+          _isLoading = false;
+        });
+        return;
+      }
+    } else {
+      // Pour Étudiant et Enseignant, la faculté est obligatoire
+      if (_selectedFacultyId == null) {
+        setState(() {
+          _errorMessage = 'Veuillez sélectionner une faculté';
+          _isLoading = false;
+        });
+        return;
+      }
     }
 
     setState(() {
@@ -148,12 +187,12 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       final userData = {
         'nom': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
         'role': _selectedRole,
-        'faculty_id': _selectedFacultyId,
+        'faculty_id': _selectedRole == 'Administratif' ? null : _selectedFacultyId,
         'department_id': _selectedRole == 'Étudiant' ? _selectedDepartmentId : null,
         'service_id': _selectedRole == 'Administratif' ? _selectedServiceId : null,
         'telephone': '',
         'niveau': _selectedRole == 'Étudiant' ? _selectedLevel : 'Non renseigné',
-        'filiere_id': null,
+        'filiere_id': _selectedRole == 'Étudiant' ? _selectedFiliereId : null,
       };
 
       print('[Registration] Attempting registration with data:');
@@ -162,6 +201,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
       print('[Registration] Faculty ID: ${userData['faculty_id']}');
       print('[Registration] Department ID: ${userData['department_id']}');
       print('[Registration] Service ID: ${userData['service_id']}');
+      print('[Registration] Filiere ID: ${userData['filiere_id']}');
       print('[Registration] User metadata: $userData');
 
       /*
@@ -182,11 +222,11 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         role: _selectedRole,
-        facultyId: _selectedFacultyId,
+        facultyId: _selectedRole == 'Administratif' ? null : _selectedFacultyId,
         departementId: _selectedRole == 'Étudiant' ? _selectedDepartmentId : null,
         serviceId: _selectedRole == 'Administratif' ? _selectedServiceId : null,
         niveau: _selectedRole == 'Étudiant' ? _selectedLevel : null,
-        filiereId: null, // Pas géré dans ce formulaire pour l'instant
+        filiereId: _selectedRole == 'Étudiant' ? _selectedFiliereId : null,
         telephone: '',
       );
 
@@ -387,6 +427,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                       onTap: () {
                                         setState(() {
                                           _selectedRole = 'Étudiant';
+                                          // Reset Admin selection if needed, but keep Faculties loaded
                                         });
                                       },
                                       child: Container(
@@ -447,6 +488,8 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                                       onTap: () {
                                         setState(() {
                                           _selectedRole = 'Administratif';
+                                          // Load services for Admin
+                                          _loadAllServices();
                                         });
                                       },
                                       child: Container(
@@ -530,31 +573,32 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                             ),
                           )
                         else ...[
-                          // Sélecteur de faculté
-                          _buildDropdown(
-                            'Faculté',
-                            _selectedFacultyId,
-                            _faculties.map((f) => DropdownMenuItem<dynamic>(
-                              value: f['id'],
-                              child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
-                            )).toList(),
-                            (value) {
-                              setState(() {
-                                _selectedFacultyId = value;
-                                if (value != null) {
-                                  int? fIdInt;
-                                  try {
-                                      fIdInt = value is int ? value : int.tryParse(value.toString());
-                                  } catch (_) {}
-                                  
-                                  if (fIdInt != null) {
-                                      _loadDepartments(fIdInt);
-                                      _loadServices(fIdInt);
+                          // Sélecteur de faculté (UNIQUEMENT pour Étudiant et Enseignant)
+                          if (_selectedRole != 'Administratif')
+                            _buildDropdown(
+                              'Faculté',
+                              _selectedFacultyId,
+                              _faculties.map((f) => DropdownMenuItem<dynamic>(
+                                value: f['id'],
+                                child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
+                              )).toList(),
+                              (value) {
+                                setState(() {
+                                  _selectedFacultyId = value;
+                                  if (value != null) {
+                                    int? fIdInt;
+                                    try {
+                                        fIdInt = value is int ? value : int.tryParse(value.toString());
+                                    } catch (_) {}
+                                    
+                                    if (fIdInt != null) {
+                                        _loadDepartments(fIdInt);
+                                        _loadServices(fIdInt);
+                                    }
                                   }
-                                }
-                              });
-                            },
-                          ),
+                                });
+                              },
+                            ),
                         ],
 
                         if (_selectedRole == 'Étudiant') ...[
@@ -570,7 +614,7 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                           ),
                         ],
 
-                        if (_selectedFacultyId != null) const SizedBox(height: 20),
+                        if (_selectedFacultyId != null && _selectedRole != 'Administratif') const SizedBox(height: 20),
 
                         // Sélecteur département: uniquement pour ÉTUDIANT
                         if (_selectedRole == 'Étudiant' && _departments.isNotEmpty)
@@ -581,14 +625,46 @@ class _ModernRegisterScreenState extends State<ModernRegisterScreen> {
                               value: d['id'],
                               child: Text(d['nom']?.toString() ?? d['name']?.toString() ?? 'Inconnu'),
                             )).toList(),
-                            (value) => setState(() => _selectedDepartmentId = value),
+                            (value) {
+                              setState(() {
+                                _selectedDepartmentId = value;
+                                if (value != null) {
+                                  int? dIdInt;
+                                  try {
+                                    dIdInt = value is int ? value : int.tryParse(value.toString());
+                                  } catch (_) {}
+                                  
+                                  if (dIdInt != null) {
+                                    _loadFilieres(dIdInt);
+                                  }
+                                } else {
+                                  _filieres = [];
+                                  _selectedFiliereId = null;
+                                }
+                              });
+                            },
                           ),
 
-
-                        // Service: OBLIGATOIRE pour Administratif
-                        if (_selectedRole == 'Administratif' && _services.isNotEmpty)
+                        if (_selectedRole == 'Étudiant' && _filieres.isNotEmpty) ...[
+                          const SizedBox(height: 20),
                           _buildDropdown(
-                            'Service *', // ✅ Astérisque pour obligatoire
+                            'Filière',
+                            _selectedFiliereId,
+                            _filieres.map((f) => DropdownMenuItem<dynamic>(
+                              value: f['id'],
+                              child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) => setState(() => _selectedFiliereId = value),
+                          ),
+                        ],
+
+
+                        // Service: OBLIGATOIRE pour Administratif (et visible pour tout le monde si chargé ?)
+                        // Non, pour Administratif on montre TOUS les services chargés via _loadAllServices
+                        // Pour les autres, on montre les services liés à la faculté si besoin (mais ici on se concentre sur Admin)
+                        if (_selectedRole == 'Administratif')
+                          _buildDropdown(
+                            'Service / Entité de rattachement *', // ✅ Plus clair
                             _selectedServiceId,
                             _services.map((s) => DropdownMenuItem<dynamic>(
                               value: s['id'], // Peut être UUID string ou int

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusconnect/core/services/announcement_service.dart';
 import 'package:campusconnect/services/ai_assistant_service.dart';
+import 'package:campusconnect/controllers/profile_providers.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
+import 'package:campusconnect/controllers/announcement_providers.dart';
 
-class ModernEnhancedAnnouncementsScreen extends StatefulWidget {
+class ModernEnhancedAnnouncementsScreen extends ConsumerStatefulWidget {
   final bool isTeacher;
   final bool isAdmin;
   
@@ -11,12 +15,12 @@ class ModernEnhancedAnnouncementsScreen extends StatefulWidget {
     this.isTeacher = false,
     this.isAdmin = false,
   });
-
+  
   @override
-  State<ModernEnhancedAnnouncementsScreen> createState() => _ModernEnhancedAnnouncementsScreenState();
+  ConsumerState<ModernEnhancedAnnouncementsScreen> createState() => _ModernEnhancedAnnouncementsScreenState();
 }
 
-class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnouncementsScreen> {
+class _ModernEnhancedAnnouncementsScreenState extends ConsumerState<ModernEnhancedAnnouncementsScreen> {
   String _selectedCategory = 'Toutes';
   late Future<List<Announcement>> _announcementsFuture;
   final TextEditingController _searchController = TextEditingController();
@@ -25,6 +29,12 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
   void initState() {
     super.initState();
     _refreshAnnouncements();
+    // Invalidate provider for other parts of the app after build completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.invalidate(allAnnouncementsProvider);
+      }
+    });
   }
 
   void _refreshAnnouncements() {
@@ -41,87 +51,95 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
 
   @override
   Widget build(BuildContext context) {
-    final canCreateAnnouncement = widget.isTeacher || widget.isAdmin;
-    
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Annonces',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Theme.of(context).iconTheme.color),
-            onPressed: _refreshAnnouncements,
-          ),
-          if (canCreateAnnouncement)
-            IconButton(
-              icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
-              onPressed: _showCreateAnnouncementDialog,
+    final profileAsync = ref.watch(userProfileProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ETUDIANT';
+        final serviceType = profile?['service_type']?.toString().toUpperCase();
+        
+        final isCommAdmin = roleStr == 'ADMIN_SERVICE' && serviceType == 'COMMUNICATION';
+        final isEnseignant = roleStr == 'ENSEIGNANT';
+        final canCreateAnnouncement = isCommAdmin || isEnseignant;
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
+              onPressed: () => Navigator.pop(context),
             ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Filtres et Recherche
-          _buildFilters(),
+            title: Text(
+              'Annonces',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.refresh, color: Theme.of(context).iconTheme.color),
+                onPressed: _refreshAnnouncements,
+              ),
+              if (canCreateAnnouncement)
+                IconButton(
+                  icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
+                  onPressed: () => _showCreateAnnouncementDialog(profile),
+                ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Filtres et Recherche
+              _buildFilters(),
 
-          // Liste des annonces
-          Expanded(
-            child: FutureBuilder<List<Announcement>>(
-              future: _announcementsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                if (snapshot.hasError) {
-                  // Fallback silencieux ou message d'erreur
-                  return Center(child: Text('Erreur chargement: ${snapshot.error}'));
-                }
+              // Liste des annonces
+              Expanded(
+                child: FutureBuilder<List<Announcement>>(
+                  future: _announcementsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Erreur: ${snapshot.error}'));
+                    }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text("Aucune annonce pour le moment.", style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)));
-                }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(child: Text("Aucune annonce pour le moment."));
+                    }
 
-                final announcements = _filterAnnouncements(snapshot.data!);
+                    final announcements = _filterAnnouncements(snapshot.data!);
 
-                if (announcements.isEmpty) {
-                   return Center(child: Text("Aucune annonce ne correspond à votre recherche.", style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)));
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: announcements.length,
-                  itemBuilder: (context, index) {
-                    return _buildAnnouncementCard(announcements[index]);
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: announcements.length,
+                      itemBuilder: (context, index) {
+                        return _buildAnnouncementCard(announcements[index]);
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: canCreateAnnouncement
-          ? FloatingActionButton.extended(
-              onPressed: _showCreateAnnouncementDialog,
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Nouvelle annonce'),
-            )
-          : null,
+          floatingActionButton: canCreateAnnouncement
+              ? FloatingActionButton.extended(
+                  onPressed: () => _showCreateAnnouncementDialog(profile),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nouvelle annonce'),
+                )
+              : null,
+        );
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Erreur: $e'))),
     );
   }
 
@@ -302,7 +320,7 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
     }
   }
 
-  void _showCreateAnnouncementDialog() {
+  void _showCreateAnnouncementDialog(Map<String, dynamic>? profile) {
     final titleController = TextEditingController();
     final contentController = TextEditingController();
     String category = 'General';
@@ -454,6 +472,9 @@ class _ModernEnhancedAnnouncementsScreenState extends State<ModernEnhancedAnnoun
                         title: titleController.text,
                         content: contentController.text,
                         category: category,
+                        facultyId: profile?['faculty_id']?.toString(),
+                        departmentId: profile?['department_id']?.toString(),
+                        scope: (profile?['role']?.toString().toUpperCase() == 'ENSEIGNANT') ? 'department' : 'university',
                       );
                       
                       _refreshAnnouncements();

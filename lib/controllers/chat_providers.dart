@@ -85,18 +85,28 @@ class ChatController extends StateNotifier<AsyncValue<void>> {
       final convId = await ChatService.createConversation(otherUserId);
       state = const AsyncValue.data(null);
       return convId;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
   Future<void> markAsRead(String conversationId) async {
     try {
       await ChatService.markMessagesAsRead(conversationId);
     } catch (e) {
       print('Erreur marquage lecture: $e');
     }
+  }
+
+  Future<void> clearChat(String conversationId) async {
+    try {
+      await ChatService.clearChat(conversationId);
+    } catch (e) {
+      print('Error clearing chat: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAvailableContacts() async {
+    return await ChatService.getAvailableContacts();
+  }
+
+  Future<String> createConversation(String otherUserId) async {
+    return await ChatService.getOrCreateConversation(otherUserId);
   }
 }
 

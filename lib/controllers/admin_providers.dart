@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/admin_service.dart';
+import '../core/services/room_service.dart';
 
 /// Provider pour les statistiques globales
 final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
@@ -9,6 +10,20 @@ final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
 /// Provider pour la liste de tous les utilisateurs
 final allUsersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return await AdminService.getAllUsers();
+});
+
+/// Provider pour les statistiques des salles par bloc
+final roomStatsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final rooms = await RoomService.getAllRooms();
+  final Map<String, int> stats = {};
+  
+  for (final room in rooms) {
+    // Si le bloc n'est pas spécifié ou vide, on le met dans "Autre"
+    final bloc = (room.bloc.isEmpty) ? 'Autre' : room.bloc;
+    stats[bloc] = (stats[bloc] ?? 0) + 1;
+  }
+  
+  return stats;
 });
 
 /// StateNotifier pour les actions d'administration

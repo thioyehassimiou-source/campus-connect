@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/core/services/campus_service.dart';
+import 'package:campusconnect/models/institutional_service.dart';
 import 'package:campusconnect/shared/widgets/campus_button.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:sticky_headers/sticky_headers.dart';
+import 'package:campusconnect/screens/modern_service_detail_screen.dart';
 
 class ModernServicesScreen extends StatefulWidget {
   const ModernServicesScreen({super.key});
@@ -11,10 +14,23 @@ class ModernServicesScreen extends StatefulWidget {
 }
 
 class _ModernServicesScreenState extends State<ModernServicesScreen> {
-
   bool _isLoading = true;
-  List<Map<String, dynamic>> services = [];
+  List<InstitutionalService> _allServices = [];
+  Map<String, List<InstitutionalService>> _groupedServices = {};
   String? _errorMessage;
+  final TextEditingController _searchController = TextEditingController();
+
+  // Assistant IA (Simulé comme un service)
+  final InstitutionalService _aiAssistant = InstitutionalService(
+    id: 'ai-assistant',
+    nom: 'Assistant IA Académique',
+    description: 'Votre assistant intelligent pour toutes vos questions universitaires.',
+    category: ServiceCategory.OTHER, // Special handling
+    isActive: true,
+    email: 'Assistant Virtuel',
+    telephone: '24/7',
+    localisation: 'Application',
+  );
 
   @override
   void initState() {
@@ -24,40 +40,24 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
 
   Future<void> _fetchServices() async {
     try {
-      final response = await Supabase.instance.client
-          .from('services')
-          .select()
-          .order('nom', ascending: true);
-
+      final services = await CampusService.getInstitutionalServices();
+      
+      // Deduplicate services based on lowercase name
+      final uniqueServices = <String, InstitutionalService>{};
+      for (var s in services) {
+        final key = s.nom.toLowerCase().trim();
+        if (!uniqueServices.containsKey(key)) {
+          uniqueServices[key] = s;
+        } else {
+          // If we have a duplicate, keep the one with more info (e.g. description) or just first one
+          // Here we just keep the first one found, assuming newer ones come first or last depending on sort
+          // Ideally, we'd pick the "best" one. For now, first wins.
+        }
+      }
+      
       setState(() {
-        services = List<Map<String, dynamic>>.from(response).map((data) {
-          return {
-            'name': data['nom'] ?? 'Service',
-            'description': data['description'] ?? 'Service disponible sur le campus',
-            'icon': _getIconForService(data['nom'] ?? ''),
-            'color': _getColorForService(data['nom'] ?? ''),
-            'phone': data['telephone'] ?? 'Non renseigné',
-            'email': data['email'] ?? 'Non renseigné',
-            'location': data['localisation'] ?? data['location'] ?? 'Campus',
-            'hours': data['horaires'] ?? 'Lun-Ven: 8h-17h',
-            'website': data['site_web'] ?? data['website'],
-          };
-        }).toList();
-
-        // Ajout de l'Assistant IA en tête de liste
-        services.insert(0, {
-          'name': 'Assistant IA Académique',
-          'description': 'Votre assistant intelligent pour toutes vos questions universitaires.',
-          'icon': Icons.psychology_outlined,
-          'color': const Color(0xFF6366F1), // Indigo
-          'phone': 'Numérique',
-          'email': 'Disponible 24h/24',
-          'location': 'Application CampusConnect',
-          'hours': '24/7',
-          'website': null,
-          'isAi': true, // Marqueur pour navigation spéciale
-        });
-
+        _allServices = uniqueServices.values.toList();
+        _groupServices(_allServices);
         _isLoading = false;
       });
     } catch (e) {
@@ -69,35 +69,67 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
     }
   }
 
-  IconData _getIconForService(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains('bibli')) return Icons.library_books;
-    if (lower.contains('scolar')) return Icons.school;
-    if (lower.contains('exam')) return Icons.assignment;
-    if (lower.contains('sport')) return Icons.fitness_center;
-    if (lower.contains('sant')) return Icons.local_hospital;
-    if (lower.contains('informatique') || lower.contains('numerique')) return Icons.computer;
-    if (lower.contains('logement')) return Icons.home;
-    if (lower.contains('transport')) return Icons.directions_bus;
-    if (lower.contains('resto') || lower.contains('cafe')) return Icons.restaurant;
-    if (lower.contains('bde') || lower.contains('assoc')) return Icons.groups;
-    if (lower.contains('inter')) return Icons.public;
-    return Icons.business; 
+  void _groupServices(List<InstitutionalService> services) {
+    final Map<String, List<InstitutionalService>> grouped = {};
+
+    // 1. Assistant IA (Toujours en premier si pas de recherche)
+    if (_searchController.text.isEmpty) {
+       grouped['Assistant Intelligent'] = [_aiAssistant];
+    }
+
+    // 2. Gouvernance
+    final gouv = services.where((s) => s.category == ServiceCategory.GOVERNANCE).toList();
+    if (gouv.isNotEmpty) grouped['Gouvernance & Direction'] = gouv;
+
+    // 3. Administration
+    final admin = services.where((s) => s.category == ServiceCategory.ADMIN).toList();
+    if (admin.isNotEmpty) grouped['Administration Centrale'] = admin;
+
+    // 4. Académique
+     final academic = services.where((s) => s.category == ServiceCategory.ACADEMIC).toList();
+    if (academic.isNotEmpty) grouped['Services Académiques'] = academic;
+
+    // 5. Support
+    final support = services.where((s) => s.category == ServiceCategory.SUPPORT).toList();
+    if (support.isNotEmpty) grouped['Appui & Ressources'] = support;
+
+    // 6. Autres
+    final other = services.where((s) => s.category == ServiceCategory.OTHER).toList();
+    if (other.isNotEmpty) grouped['Autres Services'] = other;
+
+    _groupedServices = grouped;
   }
 
-  Color _getColorForService(String name) {
-    final colors = [
-      const Color(0xFF2563EB), // Blue
-      const Color(0xFF10B981), // Green
-      const Color(0xFFEF4444), // Red
-      const Color(0xFFF59E0B), // Orange
-      const Color(0xFF8B5CF6), // Purple
-      const Color(0xFF06B6D4), // Cyan
-      const Color(0xFFEA580C), // Dark Orange
-      const Color(0xFF7C3AED), // Violet
-      const Color(0xFF059669), // Emerald
-    ];
-    return colors[name.length % colors.length];
+  void _filterServices(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _groupServices(_allServices);
+      } else {
+        final filteredIds = _allServices.where((s) {
+          final name = s.nom.toLowerCase();
+          final desc = (s.description ?? '').toLowerCase();
+          final q = query.toLowerCase();
+          return name.contains(q) || desc.contains(q);
+        }).toList();
+        
+        // On regroupe uniquement les résultats filtrés
+        _groupServices(filteredIds);
+        
+        // Si l'assistant matche aussi
+        if ('assistant ia académique'.contains(query.toLowerCase())) {
+           // Déjà géré par _groupServices si on veut, mais ici on simplifie
+           // L'assistant est ajouté manuellement dans _groupServices si search vide,
+           // sinon on l'ajoute ici si match
+           if (_groupedServices.containsKey('Assistant Intelligent')) {
+             // keep it
+           } else {
+              _groupedServices = {
+                'Résultats': [_aiAssistant, ...filteredIds]
+              };
+           }
+        }
+      }
+    });
   }
 
   @override
@@ -115,7 +147,7 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Services du Campus',
+              'Services du Campus (V2)',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -123,7 +155,7 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
               ),
             ),
             Text(
-              _isLoading ? 'Chargement...' : '${services.length} services disponibles',
+               _isLoading ? 'Chargement...' : '${_allServices.length} services répertoriés',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -134,263 +166,291 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
-            onPressed: () {
-              _showSearchDialog(context);
-            },
+            icon: Icon(Icons.refresh, color: Theme.of(context).primaryColor),
+            onPressed: _fetchServices,
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(_errorMessage!),
-                      TextButton(
-                        onPressed: _fetchServices,
-                        child: Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                )
-              : services.isEmpty
-                  ? const Center(child: Text('Aucun service trouvé'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: services.length,
-                      itemBuilder: (context, index) {
-                        final service = services[index];
-                        return _buildServiceCard(context, service);
-                      },
-                    ),
+          : Column(
+              children: [
+                _buildSearchField(),
+                Expanded(
+                  child: _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(_errorMessage!),
+                              TextButton(
+                                onPressed: _fetchServices,
+                                child: const Text('Réessayer'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _groupedServices.isEmpty
+                          ? const Center(child: Text('Aucun service trouvé'))
+                          : ListView.builder(
+                              itemCount: _groupedServices.length,
+                              itemBuilder: (context, index) {
+                                final categoryName = _groupedServices.keys.elementAt(index);
+                                final services = _groupedServices[categoryName]!;
+
+                                return StickyHeader(
+                                  header: Container(
+                                    height: 50.0,
+                                    color: Theme.of(context).scaffoldBackgroundColor,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      categoryName.toUpperCase(),
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  content: Column(
+                                    children: services.map((service) => Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      child: _buildServiceCard(context, service),
+                                    )).toList(),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
     );
   }
 
-  Widget _buildServiceCard(BuildContext context, Map<String, dynamic> service) {
-    final name = service['name'] as String;
-    final description = service['description'] as String;
-    final icon = service['icon'] as IconData;
-    final color = service['color'] as Color;
-    final phone = service['phone'] as String;
-    final email = service['email'] as String;
-    final location = service['location'] as String;
-    final hours = service['hours'] as String;
-    final website = service['website'] as String?;
+  Widget _buildSearchField() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _filterServices,
+        decoration: InputDecoration(
+          hintText: 'Rechercher un service...',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          filled: true,
+          fillColor: Theme.of(context).cardColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceCard(BuildContext context, InstitutionalService service) {
+    final bool isAi = service.id == 'ai-assistant';
+    final name = service.nom;
+    final description = service.description ?? '';
+    final color = _getColorForCategory(service.category, isAi);
+    final icon = _getIconForService(service.nom, service.category, isAi);
+    
+    // DEBUG: Print service details to verify SQL update
+    if (service.nom.toLowerCase().contains('scolarité') || service.nom.toLowerCase().contains('médical')) {
+      print('DEBUG SERVICE [${service.nom}]: Loc: ${service.localisation}, Phone: ${service.telephone}, Email: ${service.email}');
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
-          color: Theme.of(context).dividerColor,
+          color: Theme.of(context).dividerColor.withOpacity(0.5),
           width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // En-tête du service
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.05),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ModernServiceDetailScreen(service: service),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: color,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                              ),
+                            ),
+                            if (description.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.grey[400]),
+                    ],
+                   ),
+                   if (!isAi) ...[
+                     const SizedBox(height: 16),
+                     Row(
+                        children: [
+                          if (service.telephone != null)
+                             Padding(
+                               padding: const EdgeInsets.only(right: 8),
+                               child: Icon(Icons.phone, size: 16, color: color),
+                             ),
+                          if (service.email != null)
+                             Padding(
+                               padding: const EdgeInsets.only(right: 8),
+                               child: Icon(Icons.email, size: 16, color: color),
+                             ),
+                          if (service.localisation != null)
+                             Icon(Icons.location_on, size: 16, color: color),
+                             
+                          const Spacer(),
+                          Text(
+                            "Voir l'espace",
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                     ),
+                   ],
+                   if (isAi) ...[
+                      const SizedBox(height: 16),
+                       SizedBox(
+                        width: double.infinity,
+                        child: CampusButton.primary(
+                          text: "Lancer l'Assistant",
+                          icon: Icons.chat_bubble_outline,
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/ai-assistant');
+                          },
+                        ),
+                      )
+                   ]
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                // Icône du service
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                
-                // Nom et description
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ),
-          
-          // Informations de contact et localisation
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Localisation
-                _buildInfoRow(
-                  Icons.location_on_outlined,
-                  'Localisation',
-                  location,
-                  color,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Horaires
-                _buildInfoRow(
-                  Icons.access_time,
-                  'Horaires',
-                  hours,
-                  color,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Contact
-                if (service['isAi'] == true)
-                  SizedBox(
-                    width: double.infinity,
-                    child: CampusButton.primary(
-                      text: "Lancer l'Assistant",
-                      icon: Icons.chat_bubble_outline,
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/ai-assistant');
-                      },
-                    ),
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildContactButton(
-                          Icons.phone,
-                          phone,
-                          'Appeler',
-                          color,
-                          () {
-                            _makePhoneCall(phone);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildContactButton(
-                          Icons.email,
-                          email,
-                          'Email',
-                          color,
-                          () {
-                            _sendEmail(email);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                
-                // Site web (si disponible)
-                if (website != null && service['isAi'] != true) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _buildContactButton(
-                      Icons.language,
-                      website,
-                      'Site web',
-                      color,
-                      () {
-                        _openWebsite(website);
-                      },
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: FontWeight.w600,
-                ),
+   Color _getColorForCategory(ServiceCategory category, bool isAi) {
+     if (isAi) return const Color(0xFF6366F1); // Indigo
+     switch (category) {
+       case ServiceCategory.GOVERNANCE: return const Color(0xFF2563EB); // Blue
+       case ServiceCategory.ADMIN: return const Color(0xFF059669); // Emerald
+       case ServiceCategory.ACADEMIC: return const Color(0xFFEA580C); // Orange
+       case ServiceCategory.SUPPORT: return const Color(0xFF7C3AED); // Violet
+       default: return Colors.grey;
+     }
+  }
+
+  IconData _getIconForService(String name, ServiceCategory category, bool isAi) {
+    if (isAi) return Icons.psychology_outlined;
+    
+    // Icone par défaut selon catégorie
+    switch (category) {
+       case ServiceCategory.GOVERNANCE: 
+         if (name.contains('Rectorat')) return Icons.account_balance;
+         return Icons.gavel;
+       case ServiceCategory.ADMIN:
+         if (name.contains('Santé') || name.contains('Médical')) return Icons.local_hospital;
+         if (name.contains('Scolarité')) return Icons.school;
+         if (name.contains('Finance') || name.contains('Comptable')) return Icons.attach_money;
+         if (name.contains('Sécurité') || name.contains('Ordre')) return Icons.security;
+         return Icons.admin_panel_settings;
+       case ServiceCategory.ACADEMIC:
+         if (name.contains('Recherche')) return Icons.science;
+         return Icons.menu_book;
+       case ServiceCategory.SUPPORT:
+         if (name.contains('Bibliothèque')) return Icons.local_library;
+         if (name.contains('Informatique')) return Icons.computer;
+         if (name.contains('Sport')) return Icons.sports_basketball;
+         return Icons.support;
+       default: return Icons.business;
+    }
+  }
+
+   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$label: $value',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -403,95 +463,31 @@ class _ModernServicesScreenState extends State<ModernServicesScreen> {
   ) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 16),
       label: Text(label),
       style: ElevatedButton.styleFrom(
         backgroundColor: color.withOpacity(0.1),
         foregroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
+  // ... (keep _makePhoneCall, _sendEmail, _openWebsite same as before but adapted if needed)
   Future<void> _makePhoneCall(String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri launchUri = Uri(scheme: 'tel', path: cleanPhone);
     try {
-      if (!await launchUrl(launchUri)) {
-        throw Exception('Impossible de lancer l\'appel');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
-    }
+      if (!await launchUrl(launchUri)) throw Exception('Erreur');
+    } catch (_) {}
   }
 
   Future<void> _sendEmail(String email) async {
-    final Uri launchUri = Uri(
-      scheme: 'mailto',
-      path: email,
-    );
+    final Uri launchUri = Uri(scheme: 'mailto', path: email);
     try {
-      if (!await launchUrl(launchUri)) {
-        throw Exception('Impossible d\'ouvrir l\'email');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _openWebsite(String website) async {
-    // Ensure scheme exists
-    String urlObj = website;
-    if (!website.startsWith('http')) {
-      urlObj = 'https://$website';
-    }
-    
-    final Uri launchUri = Uri.parse(urlObj);
-    try {
-      if (!await launchUrl(launchUri, mode: LaunchMode.externalApplication)) {
-        throw Exception('Impossible d\'ouvrir le site web');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
-    }
-  }
-
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Rechercher un service'),
-          content: TextField(
-            decoration: InputDecoration(
-              hintText: 'Entrez le nom du service...',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
+      if (!await launchUrl(launchUri)) throw Exception('Erreur');
+    } catch (_) {}
   }
 }

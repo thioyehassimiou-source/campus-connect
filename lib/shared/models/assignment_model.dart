@@ -14,6 +14,7 @@ class Assignment {
   final List<String> attachments;
   final int submissionCount;
   final int maxSubmissions;
+  final String? feedback;
 
   Assignment({
     required this.id,
@@ -31,6 +32,7 @@ class Assignment {
     required this.attachments,
     required this.submissionCount,
     required this.maxSubmissions,
+    this.feedback,
   });
 
   factory Assignment.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class Assignment {
       attachments: List<String>.from(json['attachments'] ?? []),
       submissionCount: json['submission_count'] ?? 0,
       maxSubmissions: json['max_submissions'] ?? 45,
+      feedback: json['feedback'],
     );
   }
 }

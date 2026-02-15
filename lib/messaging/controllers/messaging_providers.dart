@@ -20,12 +20,14 @@ class MessagingController extends StateNotifier<AsyncValue<void>> {
   Future<void> sendMessage({
     required String conversationId,
     required String content,
+    String? replyToId,
   }) async {
     state = const AsyncValue.loading();
     try {
       await MessagingService.sendMessage(
         conversationId: conversationId,
         content: content,
+        replyToId: replyToId,
       );
       state = const AsyncValue.data(null);
     } catch (e, st) {

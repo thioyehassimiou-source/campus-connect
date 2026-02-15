@@ -53,6 +53,9 @@ class ChatConversation extends ConversationModel {
 class ChatMessage extends MessageModel {
   final MessageStatus status;
   final List<ChatAttachment>? attachments;
+  final String? replyToId;
+  final String? repliedMessageContent;
+  final String? repliedMessageSenderName;
 
   ChatMessage({
     required super.id,
@@ -65,6 +68,9 @@ class ChatMessage extends MessageModel {
     super.type = MessageType.text,
     this.status = MessageStatus.sent,
     this.attachments,
+    this.replyToId,
+    this.repliedMessageContent,
+    this.repliedMessageSenderName,
   });
 }
 

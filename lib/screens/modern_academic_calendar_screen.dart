@@ -102,7 +102,7 @@ class _ModernAcademicCalendarScreenState extends ConsumerState<ModernAcademicCal
               ),
             ),
             Text(
-              'Semestre 1 - 2024/2025',
+              '${DateTime.now().month < 8 ? "Semestre 2" : "Semestre 1"} - ${DateTime.now().year}/${DateTime.now().year + 1}',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).textTheme.bodyMedium?.color,

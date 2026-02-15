@@ -20,52 +20,61 @@ class ProfileService {
       try {
         final response = await _supabase
             .from('profiles')
-            .select('*, faculties(nom), departments(nom), services(nom)')
+            .select('*, faculties(nom), departments(nom)')
             .eq('id', userId)
             .maybeSingle();
 
         if (response != null) {
-          print('[ProfileService] Profile found in DB (attempt ${attempt + 1})');
-          return response;
+          // Copie mutable des données
+          final data = Map<String, dynamic>.from(response);
+
+          // 🚀 Calcul des statistiques dynamiques pour les étudiants
+          if (data['role'] == 'Étudiant') {
+            try {
+              final gradesResponse = await _supabase
+                  .from('grades')
+                  .select('value, coefficient')
+                  .eq('student_id', userId);
+              
+              final grades = (gradesResponse as List).cast<Map<String, dynamic>>();
+              
+              if (grades.isNotEmpty) {
+                double totalPoints = 0;
+                double totalCoeff = 0;
+                double earnedCredits = 0;
+
+                for (var grade in grades) {
+                  final value = (grade['value'] as num).toDouble();
+                  final coeff = (grade['coefficient'] as num).toDouble();
+                  
+                  totalPoints += value * coeff;
+                  totalCoeff += coeff;
+                  
+                  if (value >= 10) {
+                    earnedCredits += coeff;
+                  }
+                }
+
+                if (totalCoeff > 0) {
+                  data['moyenne'] = double.parse((totalPoints / totalCoeff).toStringAsFixed(2));
+                }
+                data['credits_valides'] = earnedCredits;
+                data['classement'] = '5ème'; // Simulation
+              }
+            } catch (e) {
+              print('Erreur calcul stats: $e');
+            }
+          }
+          return data;
         }
 
         print('[ProfileService] Profile not found in DB, retry ${attempt + 1}/$retryCount');
-        
-        if (attempt < retryCount - 1) {
-          await Future.delayed(Duration(milliseconds: delayMs * (attempt + 1)));
-        }
+        await Future.delayed(Duration(milliseconds: delayMs));
+
       } catch (e) {
         print('[ProfileService] Error fetching profile: $e');
-        if (attempt == retryCount - 1) break;
         await Future.delayed(Duration(milliseconds: delayMs));
       }
-    }
-
-    // 🚀 Fallback : Utiliser les métadonnées de l'utilisateur si la DB est vide ou en erreur
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      print('[ProfileService] Falling back to user metadata for ${user.id}');
-      final metadata = user.userMetadata ?? {};
-      return {
-        'id': user.id,
-        'nom': metadata['nom'] ?? metadata['full_name'] ?? 'Utilisateur',
-        'email': user.email,
-        'role': metadata['role'] ?? 'Étudiant',
-        'faculty_id': metadata['faculty_id'],
-        'department_id': metadata['department_id'],
-        'service_id': metadata['service_id'],
-        'niveau': metadata['niveau'] ?? 'Licence 1',
-        'moyenne': metadata['moyenne'],
-        'credits_valides': metadata['credits_valides'],
-        'classement': metadata['classement'],
-        'linkedin': metadata['linkedin'],
-        'github': metadata['github'],
-        'twitter': metadata['twitter'],
-        'bio': metadata['bio'],
-        'office': metadata['office'],
-        'specialization': metadata['specialization'],
-        'is_fallback': true, // Marqueur pour debug
-      };
     }
 
     return null;
@@ -90,14 +99,13 @@ class ProfileService {
           'nom': metadata['nom'] ?? 'Utilisateur',
           'email': user.email,
           'role': role,
+          'service_type': metadata['service_type'],
+          'scope_faculte_id': metadata['scope_faculte_id'],
+          'scope_departement_id': metadata['scope_departement_id'],
           'faculty_id': metadata['faculty_id'],
           'department_id': metadata['department_id'],
-          'service_id': metadata['service_id'],
           'telephone': metadata['telephone'] ?? '',
-          'niveau': role == 'Étudiant' ? (metadata['niveau'] ?? 'Licence 1') : 'Non renseigné',
-          'filiere_id': metadata['filiere_id'], // ✅ null si non renseignée
-          'office': metadata['office'],
-          'specialization': metadata['specialization'],
+          'niveau': role == 'ETUDIANT' ? (metadata['niveau'] ?? 'Licence 1') : 'Non renseigné',
           'bio': metadata['bio'],
         });
         
@@ -109,16 +117,20 @@ class ProfileService {
     }
   }
 
-  /// Met à jour le profil de l'utilisateur (optionnel pour l'instant).
+  /// Met à jour le profil de l'utilisateur.
   static Future<bool> updateProfile(Map<String, dynamic> data) async {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return false;
+      if (userId == null) {
+        print('[ProfileService] Update failed: No authenticated user');
+        return false;
+      }
 
+      print('[ProfileService] Updating profile for $userId with data: $data');
       await _supabase.from('profiles').update(data).eq('id', userId);
       return true;
     } catch (e) {
-      print('Error updating profile: $e');
+      print('[ProfileService] Error updating profile: $e');
       return false;
     }
   }

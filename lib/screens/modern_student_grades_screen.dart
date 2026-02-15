@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusconnect/controllers/grade_providers.dart';
 import 'package:campusconnect/core/services/grade_service.dart';
+import 'package:campusconnect/core/services/export_service.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:printing/printing.dart';
 
 class ModernStudentGradesScreen extends ConsumerStatefulWidget {
   const ModernStudentGradesScreen({super.key});
@@ -437,41 +441,92 @@ class _ModernStudentGradesScreenState extends ConsumerState<ModernStudentGradesS
     return const Color(0xFFEF4444);
   }
 
-  void _exportGrades() {
+  void _exportGrades() async {
+    final gradesAsync = ref.read(studentGradesProvider);
+    
+    if (gradesAsync.asData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Données non disponibles pour l\'exportation.')),
+      );
+      return;
+    }
+
+    final grades = gradesAsync.asData!.value;
+    final semesterKey = _selectedSemester == 'Semestre 1' ? 'S1' : 'S2';
+    final filteredGrades = grades.where((g) => g.semester == semesterKey).toList();
+
+    if (filteredGrades.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune note à exporter pour ce semestre.')),
+      );
+      return;
+    }
+
+    // Calcul de la moyenne pour le PDF
+    double totalValue = 0;
+    double totalCoeff = 0;
+    for (var g in filteredGrades) {
+      totalValue += g.value * g.coefficient;
+      totalCoeff += g.coefficient;
+    }
+    final average = totalCoeff > 0 ? totalValue / totalCoeff : 0.0;
+
+    // Récupérer le nom de l'étudiant
+    final user = Supabase.instance.client.auth.currentUser;
+    final studentName = user?.userMetadata?['nom'] ?? user?.userMetadata?['full_name'] ?? 'Etudiant';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Exporter mes notes'),
+          title: const Text('Exporter mes notes'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: Text('Relevé de notes PDF'),
-                subtitle: Text('Format officiel pour impression'),
-                onTap: () {
+                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: const Text('Relevé de notes PDF'),
+                subtitle: const Text('Format officiel pour impression'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Génération du PDF en cours...'),
-                      backgroundColor: Color(0xFF2563EB),
-                    ),
-                  );
+                  try {
+                    final pdfBytes = await ExportService.generateGradesPdf(filteredGrades, average);
+                    await Printing.layoutPdf(
+                      onLayout: (format) => pdfBytes,
+                      name: 'Releve_Notes_$studentName.pdf',
+                    );
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur export PDF: $e')),
+                      );
+                    }
+                  }
                 },
               ),
               ListTile(
-                leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
-                title: Text('Excel'),
-                subtitle: Text('Pour analyse personnelle'),
-                onTap: () {
+                leading: const Icon(Icons.table_chart, color: Color(0xFF10B981)),
+                title: const Text('Excel'),
+                subtitle: const Text('Pour analyse personnelle'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Export Excel en cours...'),
-                      backgroundColor: Color(0xFF2563EB),
-                    ),
-                  );
+                  try {
+                    await ExportService.generateGradesExcel(filteredGrades, studentName);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fichier Excel généré et enregistré dans vos documents.'),
+                          backgroundColor: Color(0xFF10B981),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur export Excel: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ],
@@ -479,7 +534,7 @@ class _ModernStudentGradesScreenState extends ConsumerState<ModernStudentGradesS
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
           ],
         );

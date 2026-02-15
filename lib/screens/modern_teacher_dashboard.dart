@@ -23,6 +23,8 @@ import 'package:campusconnect/controllers/notification_providers.dart';
 import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:campusconnect/core/services/resource_service.dart';
+import 'package:campusconnect/controllers/profile_providers.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
 
 class ModernTeacherDashboard extends ConsumerStatefulWidget {
   const ModernTeacherDashboard({super.key});
@@ -127,30 +129,6 @@ class TeacherDashboardHome extends ConsumerStatefulWidget {
 }
 
 class _TeacherDashboardHomeState extends ConsumerState<TeacherDashboardHome> {
-  String _fullName = 'Enseignant';
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserProfile();
-  }
-
-  Future<void> _loadUserProfile() async {
-    try {
-      final profile = await ProfileService.getCurrentUserProfile();
-      if (profile != null && mounted) {
-        setState(() {
-          _fullName = profile['nom'] ?? 'Enseignant';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading profile: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -158,139 +136,156 @@ class _TeacherDashboardHomeState extends ConsumerState<TeacherDashboardHome> {
     final scheduleAsync = ref.watch(teacherProposalsProvider);
     final resourcesAsync = ref.watch(teacherResourcesProvider);
     final coursesAsync = ref.watch(teacherCoursesProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Transform.scale(
-                scale: 1.35,
-                child: Image.asset(
-                  'assets/logo/app_logo.png',
-                  fit: BoxFit.fill,
+    return profileAsync.when(
+      data: (profile) {
+        final fullName = profile?['nom'] ?? 'Enseignant';
+        final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ENSEIGNANT';
+        final roleLabel = roleStr == 'ENSEIGNANT' ? 'Enseignant' : roleStr;
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Transform.scale(
+                    scale: 1.35,
+                    child: Image.asset(
+                      'assets/logo/app_logo.png',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              greeting,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: FontWeight.w500,
-              ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, $roleLabel',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  fullName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              _fullName,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          const ThemeToggleButton(),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: Consumer(
-              builder: (context, ref, child) {
-                final unreadCount = ref.watch(unreadNotificationsCountProvider);
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.notifications_outlined,
-                        color: Theme.of(context).iconTheme.color,
-                      ),
-                      onPressed: () => Navigator.pushNamed(context, '/notifications'),
-                    ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
+            actions: [
+              const ThemeToggleButton(),
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final unreadCount = ref.watch(unreadNotificationsCountProvider);
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications_outlined,
+                            color: Theme.of(context).iconTheme.color,
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '$unreadCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                          onPressed: () => Navigator.pushNamed(context, '/notifications'),
                         ),
-                      ),
-                  ],
-                );
-              },
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(teacherProposalsProvider);
+              ref.invalidate(userProfileProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Aperçu emploi du temps
+                  scheduleAsync.when(
+                    data: (items) {
+                      final todayItems = items.where((item) => 
+                        item.startTime.day == now.day && 
+                        item.startTime.month == now.month && 
+                        item.startTime.year == now.year
+                      ).toList();
+                      return _buildScheduleOverview(context, todayItems);
+                    },
+                    loading: () => const Center(child: LinearProgressIndicator()),
+                    error: (e, st) => _buildScheduleOverview(context, []),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Boutons rapides
+                  _buildQuickActions(context),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Accès aux documents publiés
+                  _buildPublishedDocuments(context, resourcesAsync),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Statistiques rapides
+                  _buildQuickStats(coursesAsync, resourcesAsync, scheduleAsync),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Aperçu emploi du temps
-            scheduleAsync.when(
-              data: (items) {
-                // Pour l'enseignant, on montre les cours d'aujourd'hui
-                final todayItems = items.where((item) => 
-                  item.startTime.day == now.day && 
-                  item.startTime.month == now.month && 
-                  item.startTime.year == now.year
-                ).toList();
-                return _buildScheduleOverview(context, todayItems);
-              },
-              loading: () => const Center(child: LinearProgressIndicator()),
-              error: (e, st) => _buildScheduleOverview(context, []),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Boutons rapides
-            _buildQuickActions(context),
-            
-            const SizedBox(height: 24),
-            
-            // Accès aux documents publiés
-            _buildPublishedDocuments(context, resourcesAsync),
-            
-            const SizedBox(height: 24),
-            
-            // Statistiques rapides
-            _buildQuickStats(coursesAsync, resourcesAsync, scheduleAsync),
-          ],
-        ),
-      ),
+        );
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Erreur profil: $e'))),
     );
   }
 

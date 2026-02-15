@@ -18,6 +18,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
+  ChatMessage? _repliedMessage;
 
   @override
   void initState() {
@@ -33,7 +34,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     ref.read(messagingControllerProvider.notifier).sendMessage(
       conversationId: widget.conversation.id,
       content: text,
+      replyToId: _repliedMessage?.id,
     );
+    setState(() => _repliedMessage = null); // Clear reply after sending
+  }
+
+  void _handleReply(ChatMessage message) {
+    setState(() => _repliedMessage = message);
   }
 
   @override
@@ -179,7 +186,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Stack(
         children: [
-          // WhatsApp Wallpaper Pattern (Simulated with a subtle overlay if needed)
+          // WhatsApp Wallpaper Pattern
           Positioned.fill(
             child: Opacity(
               opacity: isDark ? 0.05 : 0.08,
@@ -195,14 +202,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               Expanded(
                 child: messagesAsync.when(
                   data: (messages) {
-                    // Optimized auto-scroll: call only significantly change
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (_scrollController.hasClients) {
-                        _scrollController.animateTo(
-                          _scrollController.position.maxScrollExtent,
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeOutCubic,
-                        );
+                        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
                       }
                     });
 
@@ -222,11 +224,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       itemBuilder: (context, index) {
                         final message = messages[index];
                         return MessageBubble(
+                          messageId: message.id,
                           content: message.content,
                           timestamp: message.timestamp,
                           isMe: message.senderId == currentUserId,
                           isRead: message.status == MessageStatus.read,
                           senderName: widget.conversation.isGroup ? message.senderName : null,
+                          onReply: () => _handleReply(message),
+                          repliedMessageContent: message.repliedMessageContent,
+                          repliedMessageSenderName: message.repliedMessageSenderName,
                         );
                       },
                     );
@@ -239,6 +245,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 onSend: _handleSend,
                 readOnly: widget.conversation.type == ChatConversationType.announcement,
                 onAttach: () {},
+                repliedMessage: _repliedMessage,
+                onCancelReply: () => setState(() => _repliedMessage = null),
               ),
             ],
           ),

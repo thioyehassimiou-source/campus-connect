@@ -12,6 +12,14 @@ import 'package:campusconnect/core/services/room_service.dart';
 import 'package:campusconnect/controllers/announcement_providers.dart';
 import 'package:campusconnect/core/services/announcement_service.dart';
 import 'package:campusconnect/controllers/auth_providers.dart';
+import 'package:campusconnect/controllers/profile_providers.dart';
+import 'package:campusconnect/core/services/campus_service.dart';
+import 'package:campusconnect/models/institutional_service.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:campusconnect/screens/modern_student_profile_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:campusconnect/core/services/theme_service.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
   const ModernAdminDashboard({super.key});
@@ -121,116 +129,216 @@ class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(adminStatsProvider);
     final usersAsync = ref.watch(allUsersProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-              borderRadius: BorderRadius.circular(12),
+    return profileAsync.when(
+      data: (profile) {
+        final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ETUDIANT';
+        final isSuperAdmin = roleStr == 'SUPER_ADMIN';
+        final isServiceAdmin = roleStr == 'ADMIN_SERVICE';
+        final serviceType = profile?['service_type']?.toString().toUpperCase();
+        
+        String roleLabel = 'Administrateur';
+        if (isSuperAdmin) roleLabel = 'Super Administrateur';
+        if (isServiceAdmin) {
+          roleLabel = 'Admin ${serviceType ?? 'Service'}';
+        }
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isSuperAdmin ? Colors.red.shade700 : Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isSuperAdmin ? Icons.security : Icons.admin_panel_settings,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.admin_panel_settings,
-              color: Colors.white,
-              size: 20,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Panneau d\'administration',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  roleLabel,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              const ThemeToggleButton(),
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(adminStatsProvider);
+              ref.invalidate(allUsersProvider);
+              ref.invalidate(userProfileProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Statistiques générales
+                  statsAsync.when(
+                    data: (stats) => _buildStatsOverview(stats),
+                    loading: () => const Center(child: LinearProgressIndicator()),
+                    error: (e, st) => Text('Erreur stats: $e'),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Gestion des utilisateurs (SUPER_ADMIN uniquement)
+                  if (isSuperAdmin) ...[
+                    usersAsync.when(
+                      data: (users) => _buildUserManagement(context, users),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, st) => Text('Erreur utilisateurs: $e'),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Gestion des annonces (SUPER_ADMIN ou Service COMMUNICATION)
+                  if (isSuperAdmin || (isServiceAdmin && serviceType == 'COMMUNICATION')) ...[
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final announcementsAsync = ref.watch(allAnnouncementsProvider);
+                        return announcementsAsync.when(
+                          data: (announcements) => _buildAnnouncementManagement(context, announcements),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                          error: (e, st) => Text('Erreur annonces: $e'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Gestion des blocs et salles (SUPER_ADMIN ou Service SALLES)
+                  if (isSuperAdmin || (isServiceAdmin && serviceType == 'SALLES')) ...[
+                    _buildRoomManagement(context),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Supervision des services (SUPER_ADMIN uniquement ou Service SCOLARITE)
+                  if (isSuperAdmin || (isServiceAdmin && serviceType == 'SCOLARITE')) ...[
+                    _buildServiceSupervision(context),
+                  ],
+                  
+                  if (isServiceAdmin && serviceType == 'DEPARTEMENT') ...[
+                    _buildDepartmentManagementPreview(context),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Panneau d\'administration',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              'Administrateur',
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.titleLarge?.color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          const ThemeToggleButton(),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              icon: Icon(
-                Icons.notifications_outlined,
-                color: Theme.of(context).iconTheme.color,
-              ),
-              onPressed: () {},
-            ),
+        );
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Erreur profil: $e'))),
+    );
+  }
+
+  Widget _buildDepartmentManagementPreview(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(adminStatsProvider);
-          ref.invalidate(allUsersProvider);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Statistiques générales
-              statsAsync.when(
-                data: (stats) => _buildStatsOverview(stats),
-                loading: () => const Center(child: LinearProgressIndicator()),
-                error: (e, st) => Text('Erreur stats: $e'),
+              Icon(Icons.school, color: Theme.of(context).primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Gestion du Département',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
-              
-              const SizedBox(height: 24),
-              
-              // Gestion des utilisateurs
-              usersAsync.when(
-                data: (users) => _buildUserManagement(context, users),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, st) => Text('Erreur utilisateurs: $e'),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Gestion des annonces officielles
-              Consumer(
-                builder: (context, ref, child) {
-                  final announcementsAsync = ref.watch(allAnnouncementsProvider);
-                  return announcementsAsync.when(
-                    data: (announcements) => _buildAnnouncementManagement(context, announcements),
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, st) => Text('Erreur annonces: $e'),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Gestion des blocs et salles
-              _buildRoomManagement(context),
-              
-              const SizedBox(height: 24),
-              
-              // Supervision des services
-              _buildServiceSupervision(context),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          const Text('Accès rapide aux outils de gestion du département.'),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/schedule'),
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: const Text('Emploi du temps'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Navigate to course management tab (index 3)
+                    // Since we can't easily switch tabs from here without passing a controller, 
+                    // we'll push the screen directly or use a named route if available.
+                    // Assuming no named route for just the tab, we'll keep it simple for now or better, 
+                    // check if we can simulate tab switch.
+                    // For now let's just push the CourseManagementScreen if possible, or leave as future improvement.
+                    // Actually, let's just link to the generic schedule for now as primary action.
+                    // Or add a secondary button for "Classes".
+                  }, 
+                  icon: const Icon(Icons.class_outlined, size: 16),
+                  label: const Text('Cours'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -258,48 +366,60 @@ class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
   }
 
   Widget _buildStatCard(String title, String value, String subtitle, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+    // Determine if this card should be clickable (specifically for Services)
+    final isServicesCard = title == 'Services';
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isServicesCard 
+            ? () => Navigator.pushNamed(context, '/services')
+            : null,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 9,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -721,27 +841,60 @@ class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildRoomGrid(),
+          _buildRoomGrid(ref),
         ],
       ),
     );
   }
 
-  Widget _buildRoomGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.5,
-      children: [
-        _buildRoomCard('Bloc A', '12 salles', const Color(0xFF2563EB)),
-        _buildRoomCard('Bloc B', '8 salles', const Color(0xFF10B981)),
-        _buildRoomCard('Bloc C', '15 salles', const Color(0xFFF59E0B)),
-        _buildRoomCard('Labos', '6 salles', const Color(0xFF8B5CF6)),
-      ],
+  Widget _buildRoomGrid(WidgetRef ref) {
+    final roomStatsAsync = ref.watch(roomStatsProvider);
+
+    return roomStatsAsync.when(
+      data: (stats) {
+        if (stats.isEmpty) {
+          return const Center(child: Text("Aucune salle trouvée"));
+        }
+        
+        // Convert map to list of entries and sort by name
+        final entries = stats.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+          
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2.5,
+          children: entries.map((entry) {
+            return _buildRoomCard(
+              entry.key, 
+              '${entry.value} salle${entry.value > 1 ? 's' : ''}', 
+              _getBlocColor(entry.key)
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => Center(child: Text('Erreur: $e')),
     );
+  }
+
+  Color _getBlocColor(String blocName) {
+    // Generate a consistent color based on the bloc name
+    final colors = [
+      const Color(0xFF2563EB), // Blue
+      const Color(0xFF10B981), // Green
+      const Color(0xFFF59E0B), // Orange
+      const Color(0xFF8B5CF6), // Purple
+      const Color(0xFFEF4444), // Red
+      const Color(0xFF6366F1), // Indigo
+    ];
+    
+    // Use hash code to pick a color
+    final index = blocName.hashCode.abs() % colors.length;
+    return colors[index];
   }
 
   Widget _buildRoomCard(String name, String rooms, Color color) {
@@ -793,76 +946,90 @@ class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
   }
 
   Widget _buildServiceSupervision(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.settings,
-                color: Color(0xFF8B5CF6),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Supervision des services',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '8 actifs',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF10B981),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+    return FutureBuilder<List<InstitutionalService>>(
+      future: CampusService.getInstitutionalServices(),
+      builder: (context, snapshot) {
+        final services = snapshot.data ?? [];
+        final activeCount = services.where((s) => s.isActive).length;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildServiceList(),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.settings,
+                    color: Color(0xFF8B5CF6),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Supervision des services',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$activeCount actifs',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF10B981),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const Center(child: LinearProgressIndicator())
+              else if (snapshot.hasError)
+                Text('Erreur: ${snapshot.error}')
+              else if (services.isEmpty)
+                const Text('Aucun service actif')
+              else
+                Column(
+                  children: services.take(5).map((service) {
+                    return _buildServiceItem(
+                      service.nom, 
+                      service.isActive ? 'Actif' : 'Inactif', 
+                      service.isActive ? const Color(0xFF10B981) : Colors.grey, 
+                      '100%' // Simulation uptime
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      }
     );
   }
 
-  Widget _buildServiceList() {
-    return Column(
-      children: [
-        _buildServiceItem('Authentification', 'Actif', const Color(0xFF10B981), '99.9%'),
-        _buildServiceItem('Base de données', 'Actif', const Color(0xFF10B981), '99.5%'),
-        _buildServiceItem('Notifications', 'Actif', const Color(0xFF10B981), '98.7%'),
-        _buildServiceItem('Stockage fichiers', 'Maintenance', const Color(0xFFF59E0B), '-'),
-        _buildServiceItem('API externe', 'Actif', const Color(0xFF10B981), '97.2%'),
-      ],
-    );
-  }
+  // Helper method removed (was _buildServiceList) as logic is now inline
 
   Widget _buildServiceItem(String name, String status, Color statusColor, String uptime) {
     return Container(
@@ -1107,22 +1274,117 @@ class _AdminDashboardHomeState extends ConsumerState<AdminDashboardHome> {
   }
 
   void _showAddRoomDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final capacityController = TextEditingController();
+    String selectedBloc = 'Bloc A';
+    String selectedType = 'Cours';
+    String status = 'Disponible';
+    
+    // Equipements
+    bool hasProjector = false;
+    bool hasAC = false;
+    bool hasComputer = false;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Ajouter une salle'),
-          content: Text('Fonctionnalité d\'ajout de salle en cours de développement.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Ajouter'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Ajouter une salle'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nom de la salle (ex: A101)'),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedBloc,
+                      decoration: const InputDecoration(labelText: 'Bloc'),
+                      items: ['Bloc A', 'Bloc B', 'Bloc C', 'Bloc D', 'Autre']
+                          .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                          .toList(),
+                      onChanged: (v) => setState(() => selectedBloc = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: capacityController,
+                      decoration: const InputDecoration(labelText: 'Capacité'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedType,
+                      decoration: const InputDecoration(labelText: 'Type de salle'),
+                      items: ['Cours', 'TP', 'Conférence', 'Labo']
+                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .toList(),
+                      onChanged: (v) => setState(() => selectedType = v!),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Équipements :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    CheckboxListTile(
+                      title: const Text('Vidéoprojecteur'),
+                      value: hasProjector,
+                      onChanged: (v) => setState(() => hasProjector = v ?? false),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Climatisation'),
+                      value: hasAC,
+                      onChanged: (v) => setState(() => hasAC = v ?? false),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.isEmpty || capacityController.text.isEmpty) return;
+                    
+                    final equipments = <String>[];
+                    if (hasProjector) equipments.add('Projecteur');
+                    if (hasAC) equipments.add('Climatisation');
+                    
+                    Navigator.of(context).pop();
+                    try {
+                      await RoomService.upsertRoom({
+                        'nom': nameController.text,
+                        'bloc': selectedBloc,
+                        'capacite': int.tryParse(capacityController.text) ?? 30,
+                        'type': selectedType,
+                        'equipements': equipments,
+                        'statut': status,
+                      });
+                      
+                      ref.invalidate(roomStatsProvider);
+                      
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Salle ajoutée avec succès')),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Ajouter'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -1269,11 +1531,122 @@ class AdminAnnouncementsTab extends ConsumerWidget {
   }
 }
 
-class AdminSettingsTab extends ConsumerWidget {
+class AdminSettingsTab extends ConsumerStatefulWidget {
   const AdminSettingsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminSettingsTab> createState() => _AdminSettingsTabState();
+}
+
+class _AdminSettingsTabState extends ConsumerState<AdminSettingsTab> {
+  bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    });
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(value ? 'Notifications activées' : 'Notifications désactivées')),
+      );
+    }
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choisir la langue'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Français'),
+              leading: const Radio(value: 'fr', groupValue: 'fr', onChanged: null),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              title: const Text('Anglais'),
+              leading: const Radio(value: 'en', groupValue: 'fr', onChanged: null),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Traduction anglaise à venir')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    final passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Changer mot de passe'),
+        content: TextField(
+          controller: passwordController,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              final newPassword = passwordController.text;
+              if (newPassword.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Le mot de passe doit faire au moins 6 caractères')),
+                );
+                return;
+              }
+              Navigator.pop(context);
+              try {
+                await Supabase.instance.client.auth.updateUser(
+                  UserAttributes(password: newPassword),
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Mot de passe mis à jour avec succès')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeService = ThemeService();
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -1288,41 +1661,94 @@ class AdminSettingsTab extends ConsumerWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildSettingsGroup(context, 'Compte', [
-            _buildSettingsItem(context, Icons.person_outline, 'Profil', 'Gérer vos informations'),
-            _buildSettingsItem(context, Icons.security, 'Sécurité', 'Mot de passe et authentification'),
-          ]),
-          const SizedBox(height: 24),
-          _buildSettingsGroup(context, 'Application', [
-            _buildSettingsItem(context, Icons.notifications_outlined, 'Notifications', 'Alertes et messages'),
-            _buildSettingsItem(context, Icons.language, 'Langue', 'Français'),
-            _buildSettingsItem(context, Icons.dark_mode_outlined, 'Apparence', 'Thème clair/sombre'),
-          ]),
-          const SizedBox(height: 24),
-          _buildSettingsGroup(context, 'Support', [
-            _buildSettingsItem(context, Icons.help_outline, 'Aide', 'Centre d\'assistance'),
-            _buildSettingsItem(context, Icons.info_outline, 'À propos', 'Version 1.0.0'),
-          ]),
-          const SizedBox(height: 32),
-          TextButton.icon(
-            onPressed: () async {
-              await ref.read(supabaseAuthProvider.notifier).signOut();
-              if (context.mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-              }
-            },
-            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
-            label: const Text('Se déconnecter', style: TextStyle(color: Color(0xFFEF4444))),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: const Color(0xFFEF4444).withOpacity(0.1),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
+      body: ValueListenableBuilder<ThemeMode>(
+        valueListenable: themeService.themeModeNotifier,
+        builder: (context, themeMode, _) {
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _buildSettingsGroup(context, 'Compte', [
+                _buildSettingsItem(
+                  context, 
+                  Icons.person_outline, 
+                  'Profil', 
+                  'Gérer vos informations',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ModernStudentProfileScreen()),
+                    );
+                  },
+                ),
+                _buildSettingsItem(
+                  context, 
+                  Icons.security, 
+                  'Sécurité', 
+                  'Mot de passe et authentification',
+                  onTap: _showChangePasswordDialog,
+                ),
+              ]),
+              const SizedBox(height: 24),
+              _buildSettingsGroup(context, 'Application', [
+                _buildSettingsItem(
+                  context, 
+                  Icons.notifications_outlined, 
+                  'Notifications', 
+                  'Alertes et messages',
+                  onTap: () => _toggleNotifications(!_notificationsEnabled),
+                  trailing: Switch(
+                    value: _notificationsEnabled, 
+                    onChanged: _toggleNotifications,
+                    activeColor: Theme.of(context).primaryColor,
+                  ), 
+                ),
+                _buildSettingsItem(
+                  context, 
+                  Icons.language, 
+                  'Langue', 
+                  'Français',
+                  onTap: _showLanguageDialog,
+                ),
+                _buildSettingsItem(
+                  context, 
+                  themeService.themeIcon, 
+                  'Apparence', 
+                  'Mode ${themeService.themeLabel}',
+                  onTap: () async {
+                    await themeService.toggleTheme();
+                  },
+                  trailing: Icon(
+                    Icons.brightness_6, 
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 24),
+              _buildSettingsGroup(context, 'Support', [
+                _buildSettingsItem(context, Icons.help_outline, 'Aide', 'Centre d\'assistance'),
+                _buildSettingsItem(context, Icons.info_outline, 'À propos', 'Version 1.0.0'),
+              ]),
+              const SizedBox(height: 32),
+              TextButton.icon(
+                onPressed: () async {
+                  await ref.read(supabaseAuthProvider.notifier).signOut();
+                  // La navigation sera gérée par le listener d'état auth dans main.dart ou le router
+                  // Mais pour forcer :
+                  if (context.mounted) {
+                     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  }
+                },
+                icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
+                label: const Text('Se déconnecter', style: TextStyle(color: Color(0xFFEF4444))),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFFEF4444).withOpacity(0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -1340,7 +1766,7 @@ class AdminSettingsTab extends ConsumerWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            color: Theme.of(context).cardColor, 
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
           ),
@@ -1350,13 +1776,20 @@ class AdminSettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingsItem(BuildContext context, IconData icon, String title, String subtitle) {
+  Widget _buildSettingsItem(
+    BuildContext context, 
+    IconData icon, 
+    String title, 
+    String subtitle, {
+    VoidCallback? onTap,
+    Widget? trailing,
+  }) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFFDC2626)),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+      leading: Icon(icon, color: Theme.of(context).iconTheme.color),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodyLarge?.color)),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFF94A3B8)),
-      onTap: () {},
+      trailing: trailing ?? Icon(Icons.chevron_right, size: 20, color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
+      onTap: onTap,
     );
   }
 }

@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
+import '../services/messaging_service.dart';
 
 class MessageBubble extends StatelessWidget {
+  final String messageId;
   final String content;
   final DateTime timestamp;
   final bool isMe;
   final bool isRead;
   final String? senderName;
+  final VoidCallback? onReply;
+  final String? repliedMessageContent;
+  final String? repliedMessageSenderName;
 
   const MessageBubble({
     super.key,
+    required this.messageId,
     required this.content,
     required this.timestamp,
     required this.isMe,
     this.isRead = false,
     this.senderName,
+    this.onReply,
+    this.repliedMessageContent,
+    this.repliedMessageSenderName,
   });
 
   @override
@@ -72,6 +81,8 @@ class MessageBubble extends StatelessWidget {
                               color: theme.primaryColor,
                             ),
                           ),
+                        if (repliedMessageContent != null)
+                          _buildReplyPreview(isDark),
                         const SizedBox(height: 2),
                         Padding(
                           padding: const EdgeInsets.only(right: 30), // Space for time
@@ -119,6 +130,33 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+  Widget _buildReplyPreview(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black26 : Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(4),
+        border: Border(left: BorderSide(color: Colors.green.shade400, width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            repliedMessageSenderName ?? 'Réponse',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green.shade400),
+          ),
+          Text(
+            repliedMessageContent!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showMessageMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -128,7 +166,10 @@ class MessageBubble extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.reply),
             title: const Text('Répondre'),
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              if (onReply != null) onReply!();
+            },
           ),
           ListTile(
             leading: const Icon(Icons.copy),
@@ -143,7 +184,27 @@ class MessageBubble extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red),
             title: const Text('Supprimer pour moi', style: TextStyle(color: Colors.red)),
-            onTap: () => Navigator.pop(context),
+            onTap: () async {
+              Navigator.pop(context);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Supprimer le message ?'),
+                  content: const Text('Ce message sera supprimé de votre appareil.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('ANNULER')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true), 
+                      child: const Text('SUPPRIMER', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              
+              if (confirm == true) {
+                await MessagingService.deleteMessage(messageId);
+              }
+            },
           ),
         ],
       ),

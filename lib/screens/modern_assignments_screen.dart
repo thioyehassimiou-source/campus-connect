@@ -986,8 +986,8 @@ class _ModernAssignmentsScreenState extends ConsumerState<ModernAssignmentsScree
             children: [
               Text('Note: ${assignment.grade}/${assignment.maxGrade}'),
               const SizedBox(height: 16),
-              const Text('Commentaires:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('Excellent travail! L\'analyse est pertinente et la présentation est claire.'),
+                const Text('Commentaires:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(assignment.feedback ?? 'Aucun commentaire pour le moment.'),
             ],
           ),
           actions: [

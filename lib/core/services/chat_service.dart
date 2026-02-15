@@ -27,7 +27,6 @@ class ChatService {
           final List<ConversationModel> conversations = [];
 
           for (final conv in conversationsData) {
-            // Get other participant (assuming 1-on-1 for now for display name)
             final otherParticipantRes = await _supabase
                 .from('conversation_participants')
                 .select('user_id')
@@ -151,12 +150,95 @@ class ChatService {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
 
-    // Mark all messages in this conversation as read where receiver is current user
-    // Note: In our current schema, we don't explicitly store receiver_id on message (only sender).
-    // so we mark all messages in conversation NOT sent by me as read.
-    
     await _supabase.from('messages').update({
       'is_read': true,
     }).eq('conversation_id', conversationId).neq('sender_id', userId);
+  }
+
+
+  /// Fetch available contacts based on user role
+  static Future<List<Map<String, dynamic>>> getAvailableContacts() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return [];
+
+    final role = user.userMetadata?['role'] ?? 'Étudiant';
+    
+    var query = _supabase.from('profiles').select('id, nom, avatar_url, role').neq('id', user.id);
+
+    // Role filtering: Students only see non-students (teachers/admins)
+    if (role == 'Étudiant') {
+      query = query.neq('role', 'Étudiant');
+    }
+
+    final data = await query;
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  /// Create or get existing conversation between two users
+  static Future<String> getOrCreateConversation(String otherUserId) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not logged in');
+
+    // 1. Check if private conversation already exists (simple client-side check for now)
+    final existingPart = await _supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', userId);
+    
+    final otherPart = await _supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', otherUserId);
+
+    final myConvIds = existingPart.map((e) => e['conversation_id']).toSet();
+    final otherConvIds = otherPart.map((e) => e['conversation_id']).toSet();
+    
+    final commonIds = myConvIds.intersection(otherConvIds);
+    
+    if (commonIds.isNotEmpty) {
+      // Need to verify it's a private chat (is_group = false)
+      for (final id in commonIds) {
+        final conv = await _supabase.from('conversations').select('is_group').eq('id', id).single();
+        if (conv['is_group'] == false) return id;
+      }
+    }
+
+    // 2. Create if not exists
+    final convRes = await _supabase.from('conversations').insert({
+      'is_group': false,
+      'last_message_time': DateTime.now().toIso8601String(),
+    }).select().single();
+
+    final convId = convRes['id'];
+
+    await _supabase.from('conversation_participants').insert([
+      {'conversation_id': convId, 'user_id': userId},
+      {'conversation_id': convId, 'user_id': otherUserId},
+    ]);
+
+    return convId;
+  }
+
+  /// Clear all messages and reset last message
+  static Future<void> clearChat(String conversationId) async {
+    await _supabase.from('messages').delete().eq('conversation_id', conversationId);
+    await _supabase.from('conversations').update({
+      'last_message': 'Discussion vidée',
+      'last_message_time': DateTime.now().toIso8601String(),
+    }).eq('id', conversationId);
+  }
+
+  /// Delete a conversation completely
+  static Future<void> deleteConversation(String conversationId) async {
+    try {
+      // Les messages seront supprimés en cascade si la FK est configurée avec ON DELETE CASCADE
+      // Sinon on doit les supprimer manuellement
+      await _supabase.from('messages').delete().eq('conversation_id', conversationId);
+      await _supabase.from('conversation_participants').delete().eq('conversation_id', conversationId);
+      await _supabase.from('conversations').delete().eq('id', conversationId);
+    } catch (e) {
+      print('Error deleting conversation: $e');
+      rethrow;
+    }
   }
 }

@@ -154,6 +154,45 @@ class _ModernMessagingScreenState extends ConsumerState<ModernMessagingScreen> {
         ref.read(selectedConversationProvider.notifier).state = conversation;
         ref.read(chatControllerProvider.notifier).markAsRead(conversation.id);
       },
+      onLongPress: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Supprimer la conversation ?'),
+            content: const Text('Cette action est irréversible et supprimera tous les messages.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  try {
+                    await ChatService.deleteConversation(conversation.id);
+                    // Si c'était la conversation sélectionnée, on la désélectionne
+                    if (isSelected) {
+                      ref.read(selectedConversationProvider.notifier).state = null;
+                    }
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Conversation supprimée')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur: $e')),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -168,18 +207,35 @@ class _ModernMessagingScreenState extends ConsumerState<ModernMessagingScreen> {
         child: Row(
           children: [
             // Avatar
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                conversation.isGroup ? Icons.group : Icons.person,
-                color: Theme.of(context).primaryColor,
-                size: 24,
-              ),
+            Stack(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Icon(
+                    conversation.isGroup ? Icons.group : Icons.person,
+                    color: Theme.of(context).primaryColor,
+                    size: 24,
+                  ),
+                ),
+                if (!conversation.isRead && !isSelected)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
             
@@ -200,10 +256,13 @@ class _ModernMessagingScreenState extends ConsumerState<ModernMessagingScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    conversation.displayLastMessage ?? 'Pas de message',
+                    conversation.displayLastMessage ?? 'Start a conversation',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      color: isSelected 
+                          ? Theme.of(context).primaryColor 
+                          : Theme.of(context).textTheme.bodyMedium?.color,
+                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -433,19 +492,131 @@ class _ModernMessagingScreenState extends ConsumerState<ModernMessagingScreen> {
   }
 
   void _showNewConversationDialog() {
-    // TODO: Implémenter le dialog pour créer une nouvelle conversation
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nouvelle conversation'),
-        content: const Text('Fonctionnalité en cours de développement'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      builder: (BuildContext context) {
+        String searchQuery = '';
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Nouvelle conversation'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 500,
+                child: Column(
+                  children: [
+                    // Barre de recherche
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher un contact...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Liste des contacts
+                    Expanded(
+                      child: FutureBuilder<List<Map<String, dynamic>>>(
+                        future: ref.read(chatControllerProvider.notifier).getAvailableContacts(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(child: Text('Erreur: ${snapshot.error}'));
+                          }
+                          
+                          final allContacts = snapshot.data ?? [];
+                          
+                          // Filtrage local
+                          final contacts = allContacts.where((c) {
+                            final name = (c['nom'] ?? '').toString().toLowerCase();
+                            final role = (c['role'] ?? '').toString().toLowerCase();
+                            return name.contains(searchQuery) || role.contains(searchQuery);
+                          }).toList();
+
+                          if (contacts.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.person_off_outlined, size: 48, color: Colors.grey.shade400),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    searchQuery.isEmpty ? 'Aucun contact disponible' : 'Aucun résultat',
+                                    style: TextStyle(color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          
+                          return ListView.separated(
+                            itemCount: contacts.length,
+                            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
+                            itemBuilder: (context, index) {
+                              final contact = contacts[index];
+                              final avatarUrl = contact['avatar_url'];
+                              final name = contact['nom'] ?? 'Utilisateur'; // Fallback already handled in service but good to be safe
+                              final role = contact['role'] ?? 'Autre';
+                              final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+                              
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                leading: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                                  child: avatarUrl == null 
+                                      ? Text(initial, style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold))
+                                      : null,
+                                ),
+                                title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                subtitle: Text(role, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  try {
+                                    // Utiliser getOrCreateConversation au lieu de createConversation direct
+                                    // méthode exposée via le notifier comme createConversation
+                                    await ref.read(chatControllerProvider.notifier).createConversation(contact['id']);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                                      );
+                                    }
+                                  }
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

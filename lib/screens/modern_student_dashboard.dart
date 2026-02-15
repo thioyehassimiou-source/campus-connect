@@ -14,8 +14,10 @@ import 'package:campusconnect/core/services/announcement_service.dart';
 import 'package:campusconnect/controllers/announcement_providers.dart';
 import 'package:campusconnect/controllers/grade_providers.dart';
 import 'package:campusconnect/controllers/attendance_providers.dart';
-import 'package:campusconnect/controllers/notification_providers.dart';
 import 'package:campusconnect/widgets/theme_toggle_button.dart';
+import 'package:campusconnect/controllers/profile_providers.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
+import 'package:campusconnect/controllers/notification_providers.dart';
 
 class ModernStudentDashboard extends StatefulWidget {
   const ModernStudentDashboard({super.key});
@@ -114,179 +116,167 @@ class DashboardHome extends ConsumerStatefulWidget {
 }
 
 class _DashboardHomeState extends ConsumerState<DashboardHome> {
-  String _fullName = 'Étudiant';
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // 🚀 Chargement immédiat depuis les métadonnées (pas de flash "Étudiant")
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      final metadata = user.userMetadata ?? {};
-      _fullName = metadata['nom'] ?? metadata['full_name'] ?? 'Étudiant';
-    }
-    _loadUserProfile();
-  }
-
-  Future<void> _loadUserProfile() async {
-    try {
-      final profile = await ProfileService.getCurrentUserProfile();
-      if (profile != null && mounted) {
-        setState(() {
-          _fullName = profile['nom'] ?? _fullName;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading profile: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final greeting = _getGreeting(now);
     final dayName = _getDayName(now.weekday);
     final scheduleAsync = ref.watch(validatedScheduleProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Transform.scale(
-                scale: 1.35,
-                child: Image.asset(
-                  'assets/logo/app_logo.png',
-                  fit: BoxFit.fill,
+    return profileAsync.when(
+      data: (profile) {
+        final fullName = profile?['nom'] ?? 'Étudiant';
+        final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ETUDIANT';
+        final roleLabel = roleStr == 'ETUDIANT' ? 'Étudiant' : roleStr;
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Transform.scale(
+                    scale: 1.35,
+                    child: Image.asset(
+                      'assets/logo/app_logo.png',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              greeting,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              _fullName,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const ThemeToggleButton(),
-                Consumer(
-                  builder: (context, ref, child) {
-                    final unreadCount = ref.watch(unreadNotificationsCountProvider);
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.notifications_outlined,
-                            color: Theme.of(context).iconTheme.color,
-                          ),
-                          onPressed: () => Navigator.pushNamed(context, '/notifications'),
-                        ),
-                        if (unreadCount > 0)
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Text(
-                                '$unreadCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
+                Text(
+                  '$greeting, $roleLabel',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  fullName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const ThemeToggleButton(),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final unreadCount = ref.watch(unreadNotificationsCountProvider);
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.notifications_outlined,
+                                color: Theme.of(context).iconTheme.color,
+                              ),
+                              onPressed: () => Navigator.pushNamed(context, '/notifications'),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Carte Emploi du temps du jour
-            scheduleAsync.when(
-              data: (items) {
-                final todayItems = items.where((item) => 
-                  item.startTime.day == now.day && 
-                  item.startTime.month == now.month && 
-                  item.startTime.year == now.year
-                ).toList();
-                return _buildTodayScheduleCard(context, dayName, todayItems);
-              },
-              loading: () => const Center(child: LinearProgressIndicator()),
-              error: (e, st) => _buildTodayScheduleCard(context, dayName, []),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(validatedScheduleProvider);
+              ref.invalidate(userProfileProvider);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Carte Emploi du temps du jour
+                  scheduleAsync.when(
+                    data: (items) {
+                      final todayItems = items.where((item) => 
+                        item.startTime.day == now.day && 
+                        item.startTime.month == now.month && 
+                        item.startTime.year == now.year
+                      ).toList();
+                      return _buildTodayScheduleCard(context, dayName, todayItems);
+                    },
+                    loading: () => const Center(child: LinearProgressIndicator()),
+                    error: (e, st) => _buildTodayScheduleCard(context, dayName, []),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Carte Dernières annonces
+                  _buildLatestAnnouncementsCard(context, ref),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Accès rapide
+                  _buildQuickAccessSection(context),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Cartes additionnelles - Dynamiques
+                  _buildStatsCards(context, ref),
+                ],
+              ),
             ),
-            
-            const SizedBox(height: 24),
-            
-            // Carte Dernières annonces
-            _buildLatestAnnouncementsCard(context, ref),
-            
-            const SizedBox(height: 24),
-            
-            // Accès rapide
-            _buildQuickAccessSection(context),
-            
-            const SizedBox(height: 24),
-            
-            // Cartes additionnelles - Dynamiques
-            _buildStatsCards(context, ref),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Erreur profil: $e'))),
     );
   }
 
@@ -917,101 +907,5 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
   String _getDayName(int weekday) {
     const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     return days[weekday - 1];
-  }
-}
-
-class ScheduleTab extends StatelessWidget {
-  const ScheduleTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
-        title: Text(
-          'Annonces',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Annonces - En cours de développement',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-            fontSize: 16,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class NewsTab extends StatelessWidget {
-  const NewsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
-        title: Text(
-          'Services',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Services - En cours de développement',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-            fontSize: 16,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ProfileTab extends StatelessWidget {
-  const ProfileTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
-        title: Text(
-          'Profil',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Profil - En cours de développement',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-            fontSize: 16,
-          ),
-        ),
-      ),
-    );
   }
 }

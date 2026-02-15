@@ -101,15 +101,22 @@ class AnnouncementService {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('Utilisateur non connecté');
 
-      // Récupérer le nom de l'auteur depuis le profil
-      String authorName = 'Enseignant'; 
+      // Récupérer le nom de l'auteur et son service depuis le profil
+      String authorName = 'Enseignant';
+      String? serviceId;
       try {
         final profile = await ProfileService.getCurrentUserProfile();
-        if (profile != null && profile['nom'] != null) {
-          authorName = profile['nom'];
+        if (profile != null) {
+          if (profile['nom'] != null) {
+            authorName = profile['nom'];
+          }
+          // Récupération automatique du service_id
+          if (profile['service_id'] != null) {
+            serviceId = profile['service_id'];
+          }
         }
       } catch (e) {
-        print('Erreur récupération nom auteur: $e');
+        print('Erreur récupération profil auteur: $e');
       }
       
       await _supabase.from('announcements').insert({
@@ -123,10 +130,76 @@ class AnnouncementService {
         'department_id': departmentId,
         'niveau': niveau,
         'faculty_id': facultyId,
+        'service_id': serviceId,
       });
+
+      // 🔔 Notification automatique aux utilisateurs concernés
+      _notifyTargetUsers(
+        title: title,
+        content: content,
+        scope: scope,
+        facultyId: facultyId,
+        departmentId: departmentId,
+        niveau: niveau,
+        excludeUserId: user.id, 
+      );
+
     } catch (e) {
       print('❌ Erreur création annonce: $e');
       rethrow;
+    }
+  }
+
+  /// Envoie une notification aux utilisateurs ciblés par l'annonce
+  static Future<void> _notifyTargetUsers({
+    required String title,
+    required String content,
+    required String scope,
+    String? facultyId,
+    String? departmentId,
+    String? niveau,
+    required String excludeUserId,
+  }) async {
+    try {
+      var query = _supabase.from('profiles').select('id');
+
+      // Filtrage selon la portée
+      if (scope == 'faculty' && facultyId != null) {
+        query = query.eq('faculty_id', facultyId);
+      } else if (scope == 'department' && departmentId != null) {
+        query = query.eq('department_id', departmentId);
+      }
+      
+      // Filtrage par niveau si spécifié
+      if (niveau != null && niveau.isNotEmpty && niveau != 'Tous') {
+        query = query.eq('niveau', niveau);
+      }
+
+      final response = await query;
+      final List<dynamic> users = response as List<dynamic>;
+
+      if (users.isEmpty) return;
+
+      final notifications = users
+          .where((u) => u['id'] != excludeUserId)
+          .map((u) => {
+                'user_id': u['id'],
+                'title': '📢 $title',
+                'content': content.length > 60 ? '${content.substring(0, 60)}...' : content,
+                'type': 'announcement',
+                'is_read': false,
+                'created_at': DateTime.now().toIso8601String(),
+              })
+          .toList();
+
+      if (notifications.isNotEmpty) {
+        // Insertion par lot (batch)
+        await _supabase.from('notifications').insert(notifications);
+        print('✅ ${notifications.length} notifications envoyées.');
+      }
+    } catch (e) {
+      print('⚠️ Erreur lors de l\'envoi des notifications: $e');
+      // On ne rethrow pas pour ne pas bloquer la création de l'annonce
     }
   }
 

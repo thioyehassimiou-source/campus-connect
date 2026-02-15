@@ -8,17 +8,10 @@ import 'package:campusconnect/screens/test_supabase_screen.dart';
 import 'package:campusconnect/screens/splash_screen.dart';
 import 'package:campusconnect/screens/modern_login_screen.dart';
 import 'package:campusconnect/screens/modern_student_dashboard.dart';
-import 'package:campusconnect/screens/modern_schedule_screen.dart';
-import 'package:campusconnect/screens/modern_documents_screen.dart';
-import 'package:campusconnect/screens/modern_announcements_screen.dart';
-import 'package:campusconnect/screens/modern_profile_screen.dart';
 import 'package:campusconnect/screens/modern_services_screen.dart';
 import 'package:campusconnect/screens/modern_campus_map_screen.dart';
-import 'package:campusconnect/screens/modern_grades_screen.dart';
-import 'package:campusconnect/screens/modern_attendance_screen.dart';
 import 'package:campusconnect/screens/modern_student_grades_screen.dart';
 import 'package:campusconnect/screens/modern_student_attendance_screen.dart';
-import 'package:campusconnect/screens/modern_student_messaging_screen.dart';
 import 'package:campusconnect/screens/modern_enhanced_announcements_screen.dart';
 import 'package:campusconnect/screens/modern_enhanced_schedule_screen.dart';
 import 'package:campusconnect/screens/modern_student_profile_screen.dart';
@@ -29,7 +22,6 @@ import 'package:campusconnect/screens/modern_admin_dashboard.dart';
 import 'package:campusconnect/screens/test_profile_screen.dart';
 import 'package:campusconnect/screens/modern_teacher_dashboard.dart';
 import 'package:campusconnect/screens/ai_assistant_screen.dart';
-import 'package:campusconnect/screens/messages_screen.dart';
 import 'package:campusconnect/screens/modern_rooms_screen.dart';
 import 'package:campusconnect/screens/modern_assignments_screen.dart';
 import 'package:campusconnect/screens/modern_notifications_screen.dart';
@@ -90,17 +82,17 @@ class CampusConnectApp extends StatelessWidget {
             '/splash': (context) => const SplashScreen(),
             '/login': (context) => const ModernLoginScreen(),
             '/student-dashboard': (context) => const ModernStudentDashboard(),
-            '/schedule': (context) => const ModernScheduleScreen(),
-            '/documents': (context) => const ModernDocumentsScreen(),
+            '/schedule': (context) => const ModernEnhancedScheduleScreen(),
+            '/documents': (context) => const ModernResourcesScreen(),
             '/news': (context) => const ModernEnhancedAnnouncementsScreen(),
-            '/profile': (context) => const ModernProfileScreen(),
+            '/profile': (context) => const ModernStudentProfileScreen(),
             '/services': (context) => const ModernServicesScreen(),
             '/campus-map': (context) => const ModernCampusMapScreen(),
-            '/grades': (context) => const ModernGradesScreen(),
-            '/attendance': (context) => const ModernAttendanceScreen(),
+            '/grades': (context) => const ModernStudentGradesScreen(),
+            '/attendance': (context) => const ModernStudentAttendanceScreen(),
             '/student-grades': (context) => const ModernStudentGradesScreen(),
             '/student-attendance': (context) => const ModernStudentAttendanceScreen(),
-            '/student-messaging': (context) => const ModernStudentMessagingScreen(),
+            '/student-messaging': (context) => const MessagingListScreen(),
             '/messages': (context) => const MessagingListScreen(),
             '/enhanced-announcements': (context) => const ModernEnhancedAnnouncementsScreen(),
             '/enhanced-schedule': (context) => const ModernEnhancedScheduleScreen(),

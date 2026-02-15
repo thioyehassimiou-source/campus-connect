@@ -219,13 +219,32 @@ class MessagingService {
   }
 
   static Future<List<ChatMessage>> _fetchMessages(String conversationId) async {
+    // Advanced query: Fetch message, sender name, AND replied message details in ONE trip
     final data = await _supabase
         .from('messages')
-        .select()
+        .select('''
+          *,
+          sender:profiles!sender_id(full_name),
+          reply_message:messages!reply_to_id(
+            content,
+            sender:profiles!sender_id(full_name)
+          )
+        ''')
         .eq('conversation_id', conversationId)
         .order('created_at');
     
-    return (data as List).map((json) => _mapToChatMessage(json)).toList();
+    return (data as List).map((json) {
+      final senderName = json['sender']?['full_name'];
+      final repliedContent = json['reply_message']?['content'];
+      final repliedSender = json['reply_message']?['sender']?['full_name'];
+      
+      return _mapToChatMessage({
+        ...json, 
+        'sender_name': senderName,
+        'replied_content': repliedContent,
+        'replied_sender_name': repliedSender,
+      });
+    }).toList();
   }
 
   static ChatMessage _mapToChatMessage(Map<String, dynamic> json) {
@@ -233,11 +252,15 @@ class MessagingService {
       id: json['id'],
       conversationId: json['conversation_id'],
       senderId: json['sender_id'] ?? '',
+      senderName: json['sender_name'],
       content: json['content'] ?? '',
       timestamp: DateTime.parse(json['created_at']),
       isRead: json['is_read'] ?? false,
       type: _parseMessageType(json['type']),
       status: json['is_read'] == true ? MessageStatus.read : MessageStatus.sent,
+      replyToId: json['reply_to_id'],
+      repliedMessageContent: json['replied_content'],
+      repliedMessageSenderName: json['replied_sender_name'],
     );
   }
 
@@ -254,6 +277,7 @@ class MessagingService {
     required String conversationId,
     required String content,
     String type = 'text',
+    String? replyToId,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -263,6 +287,7 @@ class MessagingService {
       'sender_id': userId,
       'content': content,
       'type': type,
+      'reply_to_id': replyToId,
     });
 
     await _supabase.from('conversations').update({
@@ -296,5 +321,10 @@ class MessagingService {
       'last_message': 'Discussion vidée',
       'last_message_time': DateTime.now().toIso8601String(),
     }).eq('id', conversationId);
+  }
+
+  /// Delete a single message
+  static Future<void> deleteMessage(String messageId) async {
+    await _supabase.from('messages').delete().eq('id', messageId);
   }
 }

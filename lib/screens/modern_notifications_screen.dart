@@ -202,7 +202,7 @@ class _NotificationTile extends ConsumerWidget {
         Navigator.pushNamed(context, '/assignments');
         break;
       case 'grade':
-        // Navigation vers l'écran des notes
+        Navigator.pushNamed(context, '/student-grades');
         break;
       case 'announcement':
         Navigator.pushNamed(context, '/announcements');

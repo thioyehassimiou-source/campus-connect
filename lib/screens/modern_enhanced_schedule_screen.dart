@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/controllers/schedule_providers.dart';
 import 'package:campusconnect/core/services/schedule_service.dart';
+import 'package:campusconnect/core/services/export_service.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:campusconnect/controllers/profile_providers.dart';
+import 'package:campusconnect/shared/models/user_model.dart';
 
 class ModernEnhancedScheduleScreen extends ConsumerStatefulWidget {
   final bool isTeacher;
@@ -142,42 +148,64 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
 
   @override
   Widget build(BuildContext context) {
-    // Sélection du provider selon le rôle
-    AsyncValue<List<ScheduleItem>> scheduleAsync;
-    if (widget.isAdmin) {
-      scheduleAsync = ref.watch(pendingSchedulesProvider);
-    } else if (widget.isTeacher) {
-      scheduleAsync = ref.watch(teacherProposalsProvider);
-    } else {
-      scheduleAsync = ref.watch(validatedScheduleProvider);
-    }
+    final profileAsync = ref.watch(userProfileProvider);
 
-    return scheduleAsync.when(
-      data: (items) {
-        // Only reload if items have changed to avoid unnecessary re-renders
-        _loadScheduleFromItems(items);
-        return _buildMainContent(context);
+    return profileAsync.when(
+      data: (profile) {
+        final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ETUDIANT';
+        final serviceType = profile?['service_type']?.toString().toUpperCase();
+
+        final isSallesAdmin = roleStr == 'ADMIN_SERVICE' && serviceType == 'SALLES';
+        final isScolariteAdmin = roleStr == 'ADMIN_SERVICE' && serviceType == 'SCOLARITE';
+        final isDeptAdmin = roleStr == 'ADMIN_SERVICE' && serviceType == 'DEPARTEMENT';
+        final isEnseignant = roleStr == 'ENSEIGNANT';
+        
+        // Seuls ces rôles peuvent modifier l'emploi du temps
+        final canManageSchedule = isSallesAdmin || isScolariteAdmin || isDeptAdmin || isEnseignant;
+        
+        // Sélection du provider selon le rôle
+        AsyncValue<List<ScheduleItem>> scheduleAsync;
+        if (isSallesAdmin || isScolariteAdmin || isDeptAdmin) {
+          scheduleAsync = ref.watch(pendingSchedulesProvider);
+        } else if (isEnseignant) {
+          scheduleAsync = ref.watch(teacherProposalsProvider);
+        } else {
+          scheduleAsync = ref.watch(validatedScheduleProvider);
+        }
+
+        return scheduleAsync.when(
+          data: (items) {
+            _loadScheduleFromItems(items);
+            return _buildMainContent(context, canManageSchedule, isEnseignant, isDeptAdmin || isScolariteAdmin || isSallesAdmin);
+          },
+          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, st) => _buildErrorState(e),
+        );
       },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) => Scaffold(
-        appBar: AppBar(title: const Text('Erreur')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Erreur: $e'),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(validatedScheduleProvider),
-                child: const Text('Réessayer'),
-              ),
-            ],
-          ),
+      error: (e, st) => _buildErrorState(e),
+    );
+  }
+
+  Widget _buildErrorState(Object e) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Erreur')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Erreur: $e'),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(userProfileProvider),
+              child: const Text('Réessayer'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMainContent(BuildContext context) {
+  Widget _buildMainContent(BuildContext context, bool canManage, bool isTeacher, bool isAdmin) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -209,7 +237,7 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
           ],
         ),
         actions: [
-          if (widget.isTeacher || widget.isAdmin)
+          if (canManage)
             IconButton(
               icon: Icon(Icons.add, color: Theme.of(context).primaryColor),
               onPressed: _showAddCourseDialog,
@@ -373,7 +401,6 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
           // Calendrier
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            height: 400,
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
@@ -474,7 +501,7 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
                             itemCount: _filteredCourses.length,
                             itemBuilder: (context, index) {
                               final course = _filteredCourses[index];
-                              return _buildCourseCard(course);
+                              return _buildCourseCard(course, isTeacher, isAdmin);
                             },
                           ),
                   ),
@@ -484,19 +511,19 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
           ),
         ],
       ),
-      floatingActionButton: (widget.isTeacher || widget.isAdmin)
+      floatingActionButton: canManage
           ? FloatingActionButton.extended(
               onPressed: _showAddCourseDialog,
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               icon: Icon(Icons.add),
-              label: Text('Ajouter cours'),
+              label: Text(isTeacher ? 'Proposer cours' : 'Ajouter cours'),
             )
           : null,
     );
   }
 
-  Widget _buildCourseCard(Map<String, dynamic> course) {
+  Widget _buildCourseCard(Map<String, dynamic> course, bool isTeacher, bool isAdmin) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -714,7 +741,7 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (widget.isTeacher)
+                if (isTeacher)
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _manageCourse(course),
@@ -728,6 +755,27 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
                       ),
                       child: Text(
                         'Gérer',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (isAdmin)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _manageCourse(course),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: course['color'],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Détails Admin',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -766,41 +814,43 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(40),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Icon(
+                Icons.event_available,
+                color: Theme.of(context).primaryColor,
+                size: 40,
+              ),
             ),
-            child: Icon(
-              Icons.event_available,
-              color: Color(0xFF2563EB),
-              size: 40,
+            const SizedBox(height: 16),
+            Text(
+              'Aucun cours ce jour',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Aucun cours ce jour',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+            const SizedBox(height: 8),
+            Text(
+              'Profitez de votre journée libre!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Profitez de votre journée libre!',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -940,12 +990,50 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addToGoogleCalendar(course);
+              },
+              icon: const Icon(Icons.calendar_today, size: 16),
+              label: const Text('Google Calendar'),
+              style: ElevatedButton.styleFrom(
+                 backgroundColor: const Color(0xFF2563EB),
+                 foregroundColor: Colors.white,
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  void _addToGoogleCalendar(Map<String, dynamic> course) async {
+    final title = Uri.encodeComponent(course['title']);
+    final details = Uri.encodeComponent('Prof: ${course['teacher']}\nSalle: ${course['room']}');
+    final location = Uri.encodeComponent(course['room']);
+    
+    // Format: 20231231T120000Z
+    // Note: On va tricher un peu car on n'a pas la date précise ici, juste l'horaire simulé.
+    // L'idéal est d'utiliser le ScheduleItem si disponible.
+    
+    final now = DateTime.now();
+    final start = DateFormat("yyyyMMdd'T'HHmmss'Z'").format(now.toUtc());
+    final end = DateFormat("yyyyMMdd'T'HHmmss'Z'").format(now.add(const Duration(hours: 2)).toUtc());
+    
+    final url = 'https://www.google.com/calendar/render?action=TEMPLATE&text=$title&details=$details&location=$location&dates=$start/$end';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir Google Calendar')),
+        );
+      }
+    }
   }
 
   void _manageCourse(Map<String, dynamic> course) {
@@ -1012,46 +1100,72 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
     );
   }
 
-  void _exportSchedule() {
+  void _exportSchedule() async {
+    final scheduleAsync = ref.read(validatedScheduleProvider);
+    
+    if (scheduleAsync.asData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Données non disponibles.')),
+      );
+      return;
+    }
+
+    final items = scheduleAsync.asData!.value;
+    final user = Supabase.instance.client.auth.currentUser;
+    final studentName = user?.userMetadata?['nom'] ?? user?.userMetadata?['full_name'] ?? 'Etudiant';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Exporter l\'emploi du temps'),
+          title: const Text('Exporter l\'emploi du temps'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.calendar_today, color: Color(0xFF2563EB)),
-                title: Text('Calendrier Google'),
-                subtitle: Text('Synchroniser avec Google Calendar'),
-                onTap: () {
+                leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
+                title: const Text('PDF'),
+                subtitle: const Text('Télécharger en format PDF'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Synchronisation en cours...')),
-                  );
+                  try {
+                    final pdfBytes = await ExportService.generateSchedulePdf(items);
+                    await Printing.layoutPdf(
+                      onLayout: (format) => pdfBytes,
+                      name: 'EmploiDuTemps_$studentName.pdf',
+                    );
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur export PDF: $e')),
+                      );
+                    }
+                  }
                 },
               ),
               ListTile(
-                leading: Icon(Icons.picture_as_pdf, color: Color(0xFFEF4444)),
-                title: Text('PDF'),
-                subtitle: Text('Télécharger en format PDF'),
-                onTap: () {
+                leading: const Icon(Icons.table_chart, color: Color(0xFF10B981)),
+                title: const Text('Excel'),
+                subtitle: const Text('Exporter en format Excel'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Génération du PDF...')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.table_chart, color: Color(0xFF10B981)),
-                title: Text('Excel'),
-                subtitle: Text('Exporter en format Excel'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export Excel...')),
-                  );
+                  try {
+                    await ExportService.generateScheduleExcel(items, studentName);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fichier Excel généré et enregistré dans vos documents.'),
+                          backgroundColor: Color(0xFF10B981),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur export Excel: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ],
@@ -1059,7 +1173,7 @@ class _ModernEnhancedScheduleScreenState extends ConsumerState<ModernEnhancedSch
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
           ],
         );

@@ -15,6 +15,7 @@ class ModernResourcesScreen extends ConsumerStatefulWidget {
 class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
   String _selectedCategory = 'Toutes';
   String _selectedType = 'Tous';
+  String _selectedLevel = 'Tous';
   late Future<List<Resource>> _resourcesFuture;
   final TextEditingController _searchController = TextEditingController();
 
@@ -191,14 +192,14 @@ class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value: _selectedType,
+                        value: _selectedLevel,
                         isExpanded: true,
                         icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-                        items: ['Tous', 'PDF', 'VIDEO', 'LINK']
-                            .map((type) => DropdownMenuItem(
-                                  value: type,
+                        items: ['Tous', 'L1', 'L2', 'L3', 'M1', 'M2']
+                            .map((level) => DropdownMenuItem(
+                                  value: level,
                                   child: Text(
-                                    type,
+                                    level,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
@@ -209,7 +210,7 @@ class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
                             .toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedType = value!;
+                            _selectedLevel = value!;
                           });
                         },
                       ),
@@ -240,6 +241,12 @@ class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
                     }
                     if (_selectedType != 'Tous') {
                       resources = resources.where((r) => r.type == _selectedType).toList();
+                    }
+                    if (_selectedLevel != 'Tous') {
+                      resources = resources.where((r) => r.niveau == _selectedLevel).toList();
+                    }
+                    if (_selectedCategory != 'Toutes') {
+                      resources = resources.where((r) => r.description.contains(_selectedCategory)).toList();
                     }
 
                     if (resources.isEmpty) {
@@ -515,6 +522,13 @@ class _ModernResourcesScreenState extends ConsumerState<ModernResourcesScreen> {
                TextField(
                 decoration: const InputDecoration(labelText: 'Matière'),
                 onChanged: (v) => subject = v,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: 'L1',
+                items: ['L1', 'L2', 'L3', 'M1', 'M2'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                onChanged: (v) => subject = v!,
+                decoration: const InputDecoration(labelText: 'Niveau'),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(

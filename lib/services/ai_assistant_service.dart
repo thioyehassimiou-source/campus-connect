@@ -1,6 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:campusconnect/services/auth_service.dart';
+import 'package:campusconnect/core/services/profile_service.dart';
+import 'package:campusconnect/core/constants/university_hierarchy.dart';
 import 'dart:convert';
 
 class AIAssistantService {
@@ -20,7 +22,30 @@ class AIAssistantService {
         throw Exception('Vous devez être connecté pour utiliser l\'assistant.');
       }
 
-      return _sendRequest(accessToken, message, context);
+      final profile = await ProfileService.getCurrentUserProfile();
+      final roleStr = profile?['role']?.toString().toUpperCase() ?? 'ETUDIANT';
+      final serviceType = profile?['service_type']?.toString().toUpperCase();
+      final facultyId = profile?['faculty_id']?.toString();
+      final departmentId = profile?['department_id']?.toString();
+
+      final institutionalContext = """
+Structure de l'université (référence) :
+- Gouvernance : Rectorat, Secrétariat général, Vice-rectorats.
+- Services Centraux : Scolarité, DAAF, DRH, COUV, Sécurité.
+- Appui : Bibliothèque, Centre Informatique, Laboratoires.
+- Académique : Services de Facultés et Départements, Recherche.
+Utilisateur actuel : Rôle $roleStr, Service ${serviceType ?? 'Aucun'}, Faculté ${facultyId ?? 'N/A'}, Département ${departmentId ?? 'N/A'}.
+""";
+
+      return _sendRequest(
+        token: accessToken, 
+        message: message, 
+        context: "$institutionalContext\n$context",
+        role: roleStr,
+        serviceType: serviceType,
+        facultyId: facultyId,
+        departmentId: departmentId,
+      );
 
     } catch (e) {
       print('❌ Erreur appel IA: $e');
@@ -33,11 +58,15 @@ class AIAssistantService {
   }
 
   // Méthode séparée pour envoyer la requête
-  Future<Map<String, dynamic>> _sendRequest(
-    String token,
-    String message,
-    String context,
-  ) async {
+  Future<Map<String, dynamic>> _sendRequest({
+    required String token,
+    required String message,
+    required String context,
+    String? role,
+    String? serviceType,
+    String? facultyId,
+    String? departmentId,
+  }) async {
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -50,6 +79,10 @@ class AIAssistantService {
       'message': message,
       'context': context,
       'userId': Supabase.instance.client.auth.currentUser?.id,
+      'userRole': role,
+      'serviceType': serviceType,
+      'facultyId': facultyId,
+      'departmentId': departmentId,
       'timestamp': DateTime.now().toIso8601String(),
     });
 
