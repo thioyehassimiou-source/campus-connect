@@ -27,6 +27,7 @@ import 'package:campusconnect/screens/modern_assignments_screen.dart';
 import 'package:campusconnect/screens/modern_notifications_screen.dart';
 import 'package:campusconnect/messaging/screens/messaging_list_screen.dart';
 import 'package:campusconnect/shared/models/user_model.dart';
+import 'package:campusconnect/features/admin/presentation/screens/admin_shell_screen.dart';
 
 import 'package:campusconnect/core/services/theme_service.dart';
 import 'package:campusconnect/core/theme/app_theme.dart';
@@ -101,6 +102,7 @@ class CampusConnectApp extends StatelessWidget {
             '/resources': (context) => const ModernResourcesScreen(),
             '/academic-calendar': (context) => const ModernAcademicCalendarScreen(),
             '/admin-dashboard': (context) => const ModernAdminDashboard(),
+            '/admin': (context) => const AdminShellScreen(),
             '/teacher-dashboard': (context) => const ModernTeacherDashboard(),
             '/test-profile': (context) => const TestProfileScreen(),
             '/ai-assistant': (context) => const AIAssistantScreen(),
