@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inscription CampusConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#136dec",
+                "background-light": "#f6f7f8",
+                "background-dark": "#101822",
+              },
+              fontFamily: {
+                "display": ["Lexend", "sans-serif"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .ios-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-white dark:bg-background-dark group/design-root overflow-x-hidden max-w-md mx-auto shadow-2xl">
+<!-- TopAppBar / University Logo Section -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between">
+<div class="text-[#111418] dark:text-white flex size-12 shrink-0 items-center justify-start cursor-pointer">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<div class="flex-1 flex justify-center pr-12">
+<div class="w-32 h-12 bg-contain bg-no-repeat bg-center" data-alt="University of Labé official logo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC5CNFWnNyZ2mpq36maELRb_oWhJQCk1GzvGASmNiqUXJX753blK8RyCf932eknUF83HOHuXDvsga5nNYTbxzhunJp5MG0EjgDZnLnIj0Zva8lMGXRkJfSxVvrcw_q2shEs6NoHIfxHpHqvFtFW0whR7IEGKKhvl51oLSBpNChl2EIsKbfqo-qam7Dem304k0zPNgP6BsAMExpZ2kRrqiaM2SELo_oF-nlDuHs4DezTPTDTgVSbzNKdiNFfsWjEw41fNUTDn9xQYAw');"></div>
+</div>
+</div>
+<!-- Header / Welcome Text -->
+<div class="px-4 pt-6 text-center">
+<h2 class="text-[#111418] dark:text-white tracking-tight text-[26px] font-bold leading-tight">Inscription CampusConnect</h2>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal pt-2">Créez votre compte officiel universitaire</p>
+</div>
+<!-- Segmented Role Selector -->
+<div class="flex px-4 py-6">
+<div class="flex h-12 flex-1 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 p-1 ios-shadow">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm has-[:checked]:text-primary text-[#617289] text-sm font-semibold transition-all">
+<span class="truncate">Étudiant</span>
+<input checked="" class="invisible w-0" name="role" type="radio" value="Étudiant"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm has-[:checked]:text-primary text-[#617289] text-sm font-semibold transition-all">
+<span class="truncate">Enseignant</span>
+<input class="invisible w-0" name="role" type="radio" value="Enseignant"/>
+</label>
+</div>
+</div>
+<!-- Registration Form -->
+<div class="px-4 space-y-5">
+<!-- Full Name -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Nom et prénom</label>
+<div class="relative group">
+<input class="w-full h-12 px-4 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary ios-shadow" placeholder="Jean Dupont" type="text"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 material-symbols-outlined text-xl">check_circle</span>
+</div>
+</div>
+<!-- ID / Email -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Email universitaire / Matricule</label>
+<div class="relative group">
+<input class="w-full h-12 px-4 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary ios-shadow" placeholder="matricule@univ-labe.edu.gn" type="text"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 material-symbols-outlined text-xl">check_circle</span>
+</div>
+</div>
+<!-- Password -->
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Mot de passe</label>
+<div class="relative group">
+<input class="w-full h-12 px-4 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary ios-shadow" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-xl">visibility</button>
+</div>
+<!-- Password Strength Indicator -->
+<div class="flex items-center gap-1 mt-1 px-1">
+<div class="h-1.5 flex-1 bg-green-500 rounded-full"></div>
+<div class="h-1.5 flex-1 bg-green-500 rounded-full"></div>
+<div class="h-1.5 flex-1 bg-green-500 rounded-full"></div>
+<div class="h-1.5 flex-1 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+<span class="text-[10px] font-semibold text-green-600 ml-2">Fort</span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="px-4 pt-10 pb-4">
+<button class="w-full h-14 bg-primary hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2">
+<span>S’inscrire</span>
+<span class="material-symbols-outlined text-lg">app_registration</span>
+</button>
+</div>
+<!-- Footer Links -->
+<div class="px-8 text-center space-y-4 pb-10">
+<p class="text-xs text-gray-500 dark:text-gray-400">
+                En vous inscrivant, vous acceptez nos <a class="text-primary font-medium" href="#">conditions d'utilisation</a> et notre politique de confidentialité.
+            </p>
+<div class="pt-4 border-t border-gray-100 dark:border-gray-800">
+<p class="text-sm text-gray-600 dark:text-gray-400">
+                    Déjà inscrit ? <a class="text-primary font-bold" href="#">Se connecter</a>
+</p>
+</div>
+</div>
+<!-- Decorative Spacer -->
+<div class="h-2 bg-primary/10 w-full mt-auto"></div>
+</div>
+</body></html>

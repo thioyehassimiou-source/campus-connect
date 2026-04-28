@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tableau de bord Administrateur - CampusConnect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 ios-blur border-b border-[#f0f2f4] dark:border-gray-800 pt-12 pb-2">
+<div class="flex items-center px-4 justify-between h-14">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl">shield_person</span>
+</div>
+<div>
+<h1 class="text-lg font-bold leading-tight tracking-tight">Portail Admin</h1>
+<p class="text-xs text-[#617289] font-medium">Université de Labé</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-[#f0f2f4] dark:bg-gray-800 text-[#111418] dark:text-white">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-32">
+<!-- Search Bar Section -->
+<div class="px-4 py-4">
+<label class="flex flex-col min-w-40 h-14 w-full group">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full transition-all group-focus-within:ring-2 group-focus-within:ring-primary/50 shadow-sm">
+<div class="text-[#617289] flex border-none bg-white dark:bg-gray-800 items-center justify-center pl-4 rounded-l-xl">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-white dark:bg-gray-800 h-full placeholder:text-[#617289] px-4 text-base font-normal leading-normal" placeholder="Chercher utilisateur, salle ou log..." value=""/>
+</div>
+</label>
+</div>
+<!-- Section Header -->
+<div class="px-4 pb-2 pt-2 flex items-center justify-between">
+<h3 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Modules de Gestion</h3>
+<span class="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full uppercase tracking-wider">Live</span>
+</div>
+<!-- Management Modules List -->
+<div class="flex flex-col gap-3 px-4 mt-2">
+<!-- Users Management -->
+<div class="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 active:scale-[0.98] transition-transform">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined">group</span>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-normal">Gestion des utilisateurs</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal">2,450 profils actifs</p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- Announcements -->
+<div class="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 active:scale-[0.98] transition-transform">
+<div class="text-orange-500 flex items-center justify-center rounded-lg bg-orange-500/10 shrink-0 size-12">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-normal">Annonces Officielles</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal">3 diffusions en cours</p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- Infrastructure -->
+<div class="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 active:scale-[0.98] transition-transform">
+<div class="text-indigo-600 flex items-center justify-center rounded-lg bg-indigo-600/10 shrink-0 size-12">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-normal">Infrastructure</p>
+<p class="text-[#617289] dark:text-gray-400 text-sm font-normal leading-normal">15 Blocs, 120 Salles</p>
+</div>
+<div class="shrink-0 flex items-center gap-2">
+<div class="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+<!-- System Supervision -->
+<div class="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 active:scale-[0.98] transition-transform">
+<div class="text-emerald-600 flex items-center justify-center rounded-lg bg-emerald-600/10 shrink-0 size-12">
+<span class="material-symbols-outlined">monitoring</span>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-normal">Supervision des services</p>
+<p class="text-emerald-600 dark:text-emerald-400 text-sm font-medium leading-normal">Système Opérationnel (99.9%)</p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-[#617289]">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Quick Actions Grid -->
+<h3 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-4 pt-8">Actions Rapides</h3>
+<div class="grid grid-cols-2 gap-4 px-4">
+<div class="bg-primary p-4 rounded-2xl text-white shadow-lg shadow-primary/20 flex flex-col gap-3">
+<span class="material-symbols-outlined text-3xl">add_moderator</span>
+<p class="font-semibold text-sm">Ajouter un Admin</p>
+</div>
+<div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-[#f0f2f4] dark:border-gray-800 flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">print</span>
+<p class="font-semibold text-sm">Générer Rapport</p>
+</div>
+</div>
+<!-- Recent Logs Section -->
+<div class="px-4 pt-8">
+<div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-[#f0f2f4] dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-bold text-sm uppercase text-[#617289]">Dernières Activités</h4>
+<button class="text-primary text-xs font-bold">Voir Tout</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<div class="size-2 mt-1.5 rounded-full bg-blue-500"></div>
+<div class="flex-1">
+<p class="text-sm font-medium">Nouvelle annonce par Dr. Diallo</p>
+<p class="text-xs text-[#617289]">Il y a 10 minutes</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="size-2 mt-1.5 rounded-full bg-amber-500"></div>
+<div class="flex-1">
+<p class="text-sm font-medium">Modification accès Bloc A2</p>
+<p class="text-xs text-[#617289]">Il y a 45 minutes</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 ios-blur border-t border-[#f0f2f4] dark:border-gray-800 pb-8 pt-2">
+<div class="flex justify-around items-center px-6">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined font-variation-fill text-[28px]">grid_view</span>
+<span class="text-[10px] font-bold">Dashboard</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#617289]">
+<span class="material-symbols-outlined text-[28px]">history</span>
+<span class="text-[10px] font-medium">Logs</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#617289]">
+<span class="material-symbols-outlined text-[28px]">assessment</span>
+<span class="text-[10px] font-medium">Rapports</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#617289]">
+<span class="material-symbols-outlined text-[28px]">settings</span>
+<span class="text-[10px] font-medium">Paramètres</span>
+</button>
+</div>
+</nav>
+<!-- Map Indicator Hidden Element -->
+<div class="hidden" data-location="Labé, Guinea" style=""></div>
+</body></html>

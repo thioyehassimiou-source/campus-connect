@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "secondary-green": "#2ecc71",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "neutral-gray": "#bdc3c7",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-200">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-50 flex items-center bg-white dark:bg-background-dark border-b border-gray-200 dark:border-gray-800 p-4 justify-between">
+<div class="text-[#111418] dark:text-white flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</div>
+<div class="flex-1 flex flex-col items-center">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">CampusConnect</h2>
+<p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Design System v1.0</p>
+</div>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-[#111418] dark:text-white">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<div class="max-w-md mx-auto pb-20">
+<!-- Palette de Couleurs -->
+<section class="mt-6">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Couleurs</h2>
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex flex-col gap-2">
+<label class="size-16 rounded-xl border border-[#dbe0e6] dark:border-gray-700 ring-primary/50 has-[:checked]:ring-2" style="background-color: #136dec;">
+<input checked="" class="invisible" name="color-palette" type="radio"/>
+</label>
+<span class="text-[10px] font-bold text-center">Primary</span>
+<span class="text-[9px] text-gray-500 text-center">#136DEC</span>
+</div>
+<div class="flex flex-col gap-2">
+<label class="size-16 rounded-xl border border-[#dbe0e6] dark:border-gray-700 ring-primary/50 has-[:checked]:ring-2" style="background-color: #2ecc71;">
+<input class="invisible" name="color-palette" type="radio"/>
+</label>
+<span class="text-[10px] font-bold text-center">Success</span>
+<span class="text-[9px] text-gray-500 text-center">#2ECC71</span>
+</div>
+<div class="flex flex-col gap-2">
+<label class="size-16 rounded-xl border border-[#dbe0e6] dark:border-gray-700 ring-primary/50 has-[:checked]:ring-2" style="background-color: #bdc3c7;">
+<input class="invisible" name="color-palette" type="radio"/>
+</label>
+<span class="text-[10px] font-bold text-center">Neutral</span>
+<span class="text-[9px] text-gray-500 text-center">#BDC3C7</span>
+</div>
+<div class="flex flex-col gap-2">
+<label class="size-16 rounded-xl border border-[#dbe0e6] dark:border-gray-700 ring-primary/50 has-[:checked]:ring-2 bg-background-dark">
+<input class="invisible" name="color-palette" type="radio"/>
+</label>
+<span class="text-[10px] font-bold text-center">Surface</span>
+<span class="text-[9px] text-gray-500 text-center">#101822</span>
+</div>
+</div>
+</section>
+<!-- Typographie -->
+<section class="mt-8">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Typographie</h2>
+<div class="px-4 space-y-6">
+<div>
+<p class="text-[10px] font-mono text-gray-400 mb-1">Headline 1 - Lexend Bold 32px</p>
+<h1 class="text-[#111418] dark:text-white tracking-light text-[32px] font-bold leading-tight">Campus News</h1>
+</div>
+<div>
+<p class="text-[10px] font-mono text-gray-400 mb-1">Headline 2 - Lexend SemiBold 22px</p>
+<h2 class="text-[#111418] dark:text-white text-[22px] font-semibold leading-tight tracking-[-0.015em]">Prochains Cours</h2>
+</div>
+<div>
+<p class="text-[10px] font-mono text-gray-400 mb-1">Body - Lexend Regular 16px</p>
+<p class="text-[#111418] dark:text-gray-300 text-base font-normal leading-normal">L'application officielle pour rester connecté à votre campus universitaire partout et tout le temps.</p>
+</div>
+<div>
+<p class="text-[10px] font-mono text-gray-400 mb-1">Caption - Lexend Light 12px</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-light">Mis à jour le 24 Mai 2024 à 14:30</p>
+</div>
+</div>
+</section>
+<!-- Boutons -->
+<section class="mt-10">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Boutons</h2>
+<div class="p-4 grid grid-cols-1 gap-4">
+<div class="flex flex-col gap-2">
+<p class="text-[10px] font-mono text-gray-400">Primary (ElevatedButton)</p>
+<button class="bg-primary text-white font-bold py-4 px-6 rounded-xl shadow-md active:opacity-90">Confirmer l'inscription</button>
+</div>
+<div class="flex flex-col gap-2">
+<p class="text-[10px] font-mono text-gray-400">Secondary (OutlinedButton)</p>
+<button class="border-2 border-primary text-primary font-bold py-4 px-6 rounded-xl active:bg-primary/5">Modifier le profil</button>
+</div>
+<div class="flex flex-col gap-2">
+<p class="text-[10px] font-mono text-gray-400">Disabled State</p>
+<button class="bg-gray-200 dark:bg-gray-800 text-gray-400 font-bold py-4 px-6 rounded-xl cursor-not-allowed" disabled="">Envoyer le formulaire</button>
+</div>
+</div>
+</section>
+<!-- Formulaire -->
+<section class="mt-10">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Champs de formulaire</h2>
+<div class="p-4 space-y-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold px-1">Nom d'utilisateur</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">person</span>
+<input class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl py-4 pl-12 pr-4 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Entrez votre identifiant" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold px-1 text-red-500">Mot de passe</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-red-500">lock</span>
+<input class="w-full bg-white dark:bg-gray-900 border border-red-500 rounded-xl py-4 pl-12 pr-4 outline-none" type="password" value="********"/>
+</div>
+<p class="text-[10px] text-red-500 px-1">Le mot de passe est incorrect.</p>
+</div>
+</div>
+</section>
+<!-- Cartes -->
+<section class="mt-10">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Cartes (M3)</h2>
+<div class="p-4">
+<div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+<div class="h-32 bg-primary/10 flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="University campus architecture building" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDILUBQNeUOKJUT5W7Lq3ric0AR51xGwQPVOxD21AtspAQ4lERaIkx503j9LmG7RKPp-0kKiMEc1y9LFd9Mqz4SkEyUnUYcrVPlDXY7EUYp4eoJkqCBe_-l24rBHq0FntRR3VMFhpBxET3OlCQcGaWKCbl0q67_5jnkDdpbzT26aiX3kxqz4LbsBQcEE6aQwS5ch43XwEtwQ3N9TQ6rn3ii3R2VE7tlguWnlOXDnXuNupQ7qxDVpZ_Hz-YC4CtVxcdKWvtJAmnsjrI"/>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-lg">Bibliothèque Centrale</h3>
+<span class="material-symbols-outlined text-primary">bookmark</span>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Ouverte jusqu'à 22h00 aujourd'hui. Profitez des espaces de co-working.</p>
+<div class="flex gap-2">
+<button class="bg-primary/10 text-primary text-xs font-bold py-2 px-4 rounded-lg">Voir l'itinéraire</button>
+<button class="text-gray-500 text-xs font-bold py-2 px-4">Plus d'infos</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Badges -->
+<section class="mt-10">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Badges &amp; Catégories</h2>
+<div class="px-4 flex flex-wrap gap-2">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+<span class="size-1.5 rounded-full bg-primary mr-2"></span>
+                    Académique
+                </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary-green/10 text-secondary-green">
+<span class="size-1.5 rounded-full bg-secondary-green mr-2"></span>
+                    Administratif
+                </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
+<span class="size-1.5 rounded-full bg-orange-500 mr-2"></span>
+                    Événement
+                </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                    Sport
+                </span>
+</div>
+</section>
+<!-- Icônes -->
+<section class="mt-10">
+<h2 class="text-[#111418] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">Icônes</h2>
+<div class="p-4 grid grid-cols-4 gap-6 text-center">
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">home</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Accueil</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">school</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Cours</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">calendar_month</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Agenda</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Alertes</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">map</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Carte</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">restaurant</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Resto U</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">mail</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Contact</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-12 rounded-xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-800">
+<span class="material-symbols-outlined text-primary">more_horiz</span>
+</div>
+<span class="text-[9px] text-gray-500 uppercase">Plus</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Technical Note Footer -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 p-3 text-center">
+<p class="text-[10px] text-gray-400 font-mono">Flutter Framework Compliance: Material Design 3 + Cupertino Aesthetics</p>
+</div>
+</body></html>

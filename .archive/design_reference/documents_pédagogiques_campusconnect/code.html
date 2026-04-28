@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white transition-colors duration-200">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-white dark:bg-[#1a2431] border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">school</span>
+<h1 class="text-xl font-bold tracking-tight">CampusConnect</h1>
+</div>
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-md mx-auto pb-24">
+<!-- Section Header -->
+<div class="px-4 pt-6 pb-2">
+<h2 class="text-2xl font-bold text-[#111418] dark:text-white">Documents Pédagogiques</h2>
+<p class="text-sm text-[#617289] dark:text-gray-400">Accédez à vos cours et exercices</p>
+</div>
+<!-- Search Bar -->
+<div class="px-4 py-3">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm border border-gray-100 dark:border-gray-700">
+<div class="text-[#617289] flex bg-white dark:bg-[#1a2431] items-center justify-center pl-4 rounded-l-xl" data-icon="MagnifyingGlass">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-white dark:bg-[#1a2431] h-full placeholder:text-[#617289] px-4 pl-2 text-base font-normal" placeholder="Rechercher un document..." value=""/>
+</div>
+</label>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 px-4 py-2 overflow-x-auto no-scrollbar">
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5 text-white shadow-md">
+<p class="text-sm font-medium">Tous</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-[#1a2431] border border-gray-100 dark:border-gray-700 px-5 text-[#111418] dark:text-gray-200">
+<p class="text-sm font-medium">Informatique</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-[#1a2431] border border-gray-100 dark:border-gray-700 px-5 text-[#111418] dark:text-gray-200">
+<p class="text-sm font-medium">Mathématiques</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-[#1a2431] border border-gray-100 dark:border-gray-700 px-5 text-[#111418] dark:text-gray-200">
+<p class="text-sm font-medium">Physique</p>
+</div>
+</div>
+<!-- Dropdown Selection -->
+<div class="px-4 py-3">
+<label class="flex flex-col w-full">
+<p class="text-[#111418] dark:text-gray-200 text-sm font-semibold pb-2 px-1">Filière</p>
+<div class="relative">
+<select class="appearance-none flex w-full rounded-xl text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2431] h-12 px-4 text-base font-normal pr-10">
+<option value="all">Toutes les filières</option>
+<option value="licence-info">Licence Informatique</option>
+<option value="master-data">Master Data Science</option>
+<option value="ing-cyber">Ingénierie Cybersécurité</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#617289]">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</label>
+</div>
+<!-- Document List -->
+<div class="px-4 space-y-3 mt-2">
+<!-- Document Card 1 (PDF) -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#1a2431] p-4 rounded-xl shadow-sm border border-gray-50 dark:border-gray-800">
+<div class="flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 shrink-0 size-12 text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-[32px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-tight truncate">Cours_Algèbre_Linéaire_S1.pdf</p>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-normal mt-1">4.2 MB • 12 Oct 2023</p>
+</div>
+<button class="flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary rounded-lg h-9 w-9 shrink-0 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+<!-- Document Card 2 (DOC) -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#1a2431] p-4 rounded-xl shadow-sm border border-gray-50 dark:border-gray-800">
+<div class="flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 shrink-0 size-12 text-primary">
+<span class="material-symbols-outlined text-[32px]">description</span>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-tight truncate">TD_Java_Avancé.docx</p>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-normal mt-1">1.8 MB • 15 Oct 2023</p>
+</div>
+<button class="flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary rounded-lg h-9 w-9 shrink-0 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+<!-- Document Card 3 (PDF) -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#1a2431] p-4 rounded-xl shadow-sm border border-gray-50 dark:border-gray-800">
+<div class="flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 shrink-0 size-12 text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-[32px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-tight truncate">Examen_Physique_2022.pdf</p>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-normal mt-1">5.1 MB • 20 Oct 2023</p>
+</div>
+<button class="flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary rounded-lg h-9 w-9 shrink-0 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+<!-- Document Card 4 (PDF) -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#1a2431] p-4 rounded-xl shadow-sm border border-gray-50 dark:border-gray-800">
+<div class="flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 shrink-0 size-12 text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-[32px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-tight truncate">Architecture_Système.pdf</p>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-normal mt-1">3.4 MB • 22 Oct 2023</p>
+</div>
+<button class="flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary rounded-lg h-9 w-9 shrink-0 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+<!-- Document Card 5 (DOC) -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#1a2431] p-4 rounded-xl shadow-sm border border-gray-50 dark:border-gray-800">
+<div class="flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 shrink-0 size-12 text-primary">
+<span class="material-symbols-outlined text-[32px]">description</span>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<p class="text-[#111418] dark:text-white text-base font-semibold leading-tight truncate">Rapport_Stage_Modèle.docx</p>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-normal mt-1">0.9 MB • 25 Oct 2023</p>
+</div>
+<button class="flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary rounded-lg h-9 w-9 shrink-0 transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1a2431] border-t border-gray-100 dark:border-gray-800 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+<div class="flex justify-around items-center h-16 max-w-md mx-auto">
+<button class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Accueil</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">folder_open</span>
+<span class="text-[10px] font-medium">Documents</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] font-medium">Agenda</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profil</span>
+</button>
+</div>
+</nav>
+</body></html>

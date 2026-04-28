@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CampusConnect - Emploi du temps</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "type-cm": "#136dec",
+                        "type-td": "#10b981",
+                        "type-exam": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'WHT' 300, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white min-h-screen">
+<!-- Top Navigation Bar -->
+<div class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="flex size-12 shrink-0 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-primary/20" data-alt="User profile avatar showing a smiling student" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAm3bpu92SE0c6jk---2xps0Tsbi4xfLRnMHJB7Vc9A2hANUGEC_8o0mktXF9JVncmop0LVqtsZlrh0y7rJCjK8IyA4tZKQuKIpycjGwSfZe-i0sAjZGnvn0lpnAUKNWT7psbN0o1uwy79ZEsi7AJsIkiJ5AgCME-f2zZftvwMch33BJoB5QOm66oZTBcV6f4bOA86wgGYbfw4jj3bLxJJRLvn3e8IEpfNtO3Dt3R6FImtls1paKlGkxVN9Ldu8clWCEIPRkQJ1Jhc");'>
+</div>
+</div>
+<div class="flex flex-col items-center flex-1">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Mars 2024</h2>
+<p class="text-[#617289] dark:text-gray-400 text-xs font-medium">Semaine 12</p>
+</div>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+<!-- Chips: Horizontal Date Picker -->
+<div class="flex gap-3 px-4 py-4 overflow-x-auto whitespace-nowrap">
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-gray-50 dark:bg-gray-800 border border-transparent">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lun</p>
+<p class="text-lg font-bold">11</p>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-primary text-white shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2 dark:ring-offset-background-dark">
+<p class="text-xs font-medium opacity-80 mb-1">Mar</p>
+<p class="text-lg font-bold">12</p>
+<div class="size-1.5 bg-white rounded-full mt-1"></div>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-gray-50 dark:bg-gray-800 border border-transparent">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mer</p>
+<p class="text-lg font-bold">13</p>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-gray-50 dark:bg-gray-800 border border-transparent">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Jeu</p>
+<p class="text-lg font-bold">14</p>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-gray-50 dark:bg-gray-800 border border-transparent">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ven</p>
+<p class="text-lg font-bold">15</p>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-gray-50 dark:bg-gray-800 border border-transparent">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Sam</p>
+<p class="text-lg font-bold">16</p>
+</div>
+</div>
+</div>
+<!-- Section Header -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-tight">Planning du jour</h3>
+<p class="text-[#617289] dark:text-gray-400 text-sm">Mardi 12 Mars</p>
+</div>
+<!-- Timeline Content -->
+<div class="relative px-4 pb-20">
+<!-- Vertical Timeline Line -->
+<div class="absolute left-10 top-8 bottom-0 w-px bg-gray-200 dark:bg-gray-800"></div>
+<!-- Schedule Items -->
+<div class="space-y-6 mt-4">
+<!-- Time: 08:00 -->
+<div class="grid grid-cols-[50px_1fr] gap-x-4">
+<div class="text-[11px] font-bold text-gray-400 pt-1 text-right">08:30</div>
+<div class="relative">
+<div class="flex items-stretch bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+<div class="w-1.5 bg-type-cm"></div>
+<div class="flex-1 p-4">
+<div class="flex justify-between items-start mb-1">
+<span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wider">CM</span>
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">08:30 - 10:00</span>
+</div>
+<h4 class="text-[#111418] dark:text-white text-base font-bold leading-snug">Algorithmique</h4>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">person</span>
+<span class="text-xs">Dr. Aris</span>
+</div>
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Amphi A</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Current Time Indicator -->
+<div class="grid grid-cols-[50px_1fr] gap-x-4 items-center relative z-10">
+<div class="text-[10px] font-bold text-primary text-right bg-background-light dark:bg-background-dark pr-1 py-1">10:15</div>
+<div class="h-px bg-primary flex items-center">
+<div class="size-2 rounded-full bg-primary -ml-1"></div>
+</div>
+</div>
+<!-- Time: 10:30 -->
+<div class="grid grid-cols-[50px_1fr] gap-x-4">
+<div class="text-[11px] font-bold text-gray-400 pt-1 text-right">10:30</div>
+<div class="relative">
+<div class="flex items-stretch bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+<div class="w-1.5 bg-type-td"></div>
+<div class="flex-1 p-4">
+<div class="flex justify-between items-start mb-1">
+<span class="px-2 py-0.5 bg-type-td/10 text-type-td text-[10px] font-bold rounded uppercase tracking-wider">TD</span>
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">10:30 - 12:30</span>
+</div>
+<h4 class="text-[#111418] dark:text-white text-base font-bold leading-snug">Mathématiques Discrètes</h4>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">person</span>
+<span class="text-xs">Prof. Lucas</span>
+</div>
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Salle 302</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pause lunch gap -->
+<div class="grid grid-cols-[50px_1fr] gap-x-4 py-2">
+<div></div>
+<div class="flex items-center gap-2 text-gray-400 dark:text-gray-600">
+<div class="h-px flex-1 border-t border-dashed border-gray-300 dark:border-gray-700"></div>
+<span class="material-symbols-outlined text-sm">restaurant</span>
+<div class="h-px flex-1 border-t border-dashed border-gray-300 dark:border-gray-700"></div>
+</div>
+</div>
+<!-- Time: 14:00 -->
+<div class="grid grid-cols-[50px_1fr] gap-x-4">
+<div class="text-[11px] font-bold text-gray-400 pt-1 text-right">14:00</div>
+<div class="relative">
+<div class="flex items-stretch bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden ring-1 ring-type-exam/20">
+<div class="w-1.5 bg-type-exam"></div>
+<div class="flex-1 p-4">
+<div class="flex justify-between items-start mb-1">
+<span class="px-2 py-0.5 bg-type-exam/10 text-type-exam text-[10px] font-bold rounded uppercase tracking-wider">Examen</span>
+<span class="text-[#617289] dark:text-gray-400 text-xs font-medium">14:00 - 17:00</span>
+</div>
+<h4 class="text-[#111418] dark:text-white text-base font-bold leading-snug">Examen Final: UX Design</h4>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">info</span>
+<span class="text-xs">Matériel requis: PC</span>
+</div>
+<div class="flex items-center gap-1.5 text-[#617289] dark:text-gray-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Hall Sportif</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation (iOS Style) -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 px-6 py-3 flex justify-between items-center z-50">
+<button class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Accueil</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="text-[10px] font-medium">Planning</span>
+</button>
+<div class="size-12 rounded-full bg-primary flex items-center justify-center text-white -mt-10 shadow-lg shadow-primary/40 border-4 border-white dark:border-background-dark">
+<span class="material-symbols-outlined">add</span>
+</div>
+<button class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">school</span>
+<span class="text-[10px] font-medium">Cours</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Profil</span>
+</button>
+</div>
+</body></html>
