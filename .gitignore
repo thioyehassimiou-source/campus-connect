@@ -1,53 +1,151 @@
-# Miscellaneous
+# ============================================================================
+# DART BUILD ARTIFACTS
+# ============================================================================
+.dart_tool/
+.packages
+build/
+*.g.dart
+*.pbserver.dart
+*.pbjson.dart
+
+# ============================================================================
+# FLUTTER BUILD ARTIFACTS
+# ============================================================================
+coverage/
+lib/generated_plugin_registrant.dart
+.flutter-plugins
+.flutter-plugins-dependencies
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.pub-cache/
+.pub/
+
+# ============================================================================
+# PLATFORM-SPECIFIC BUILD FOLDERS (LOCAL ONLY - NEVER COMMIT)
+# ============================================================================
+# These are generated during `flutter build` and contain native code artifacts.
+# They should be generated locally by each developer, not stored in git.
+android/
+ios/
+windows/
+linux/
+macos/
+web/
+
+# ============================================================================
+# BUILD OUTPUTS
+# ============================================================================
+*.apk
+*.aar
+*.dill
+*.dill.sha1
+*.jar
+*.jks
+*.jts
+*.zip
+
+# ============================================================================
+# IDE & EDITOR CONFIGURATION
+# ============================================================================
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# ============================================================================
+# OS FILES
+# ============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.directory
+ehthumbs.db
+
+# ============================================================================
+# TEMPORARY & BACKUP FILES
+# ============================================================================
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.#*
+\#*\#
 *.class
 *.log
 *.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
+
+# ============================================================================
+# ENVIRONMENT & SECRETS
+# ============================================================================
+.env
+.env.local
+.env.*.local
+.env.production.local
+*.key
+*.pem
+*.keystore
+
+# ============================================================================
+# DART SPECIFIC
+# ============================================================================
+.analysis_cache
+.dart_plugin/
+pubspec.lock
 .svn/
-.swiftpm/
+.fvm/
+
+# ============================================================================
+# BUILD SYSTEM ARTIFACTS
+# ============================================================================
+/.gradle/
+/build/
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+.buildlog/
+.history/
 migrate_working_dir/
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+# ============================================================================
+# SUPABASE LOCAL DEVELOPMENT
+# ============================================================================
+.supabase/
+supabase/.env.local
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# ============================================================================
+# NODE.JS (for potential backend migration)
+# ============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+pnpm-debug.log*
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# ============================================================================
+# MISCELLANEOUS
+# ============================================================================
 .vercel
-.env*.local
-# Debug / local analysis
-*.txt
-dart_analyze_output.txt
+*.symbols
+*.map.json
+.atom/
+.buildbot
+migrate_working_dir/
+
+# ============================================================================
+# INTENTIONALLY PRESERVED
+# ============================================================================
+# Archive folder contains legacy code and should be version-controlled
+# !.archive/
 
 # Test screens (local only)
 lib/screens/test_*.dart
