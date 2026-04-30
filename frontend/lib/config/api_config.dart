@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://localhost:3000';
   
   // Endpoints
   static const String auth = '/auth';
@@ -8,13 +8,13 @@ class ApiConfig {
   static const String grades = '/grades';
   static const String announcements = '/announcements';
   static const String documents = '/documents';
-  static const String health = '/health';
+  static const String health = '/';
   
   // Auth endpoints
   static const String register = '$auth/register';
   static const String login = '$auth/login';
   static const String logout = '$auth/logout';
-  static const String profile = '$auth/profile';
+  static const String profile = '$auth/me';
   static const String refresh = '$auth/refresh';
   
   // User endpoints

@@ -1,6 +1,7 @@
 import '../models/user_model.dart';
+import '../models/api_response.dart';
 import 'api_service.dart';
-import 'storage_service.dart';
+import '../core/services/storage_service.dart';
 
 class AuthService {
   static Future<AuthResponse> register(CreateUserRequest request) async {

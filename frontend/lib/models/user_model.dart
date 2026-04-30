@@ -6,15 +6,22 @@ part 'user_model.g.dart';
 class UserModel {
   final String id;
   final String email;
+  @JsonKey(name: 'first_name')
   final String firstName;
+  @JsonKey(name: 'last_name')
   final String lastName;
   final String role;
   final String? phone;
+  @JsonKey(name: 'profile_image_url')
   final String? profileImageUrl;
   final String? department;
+  @JsonKey(name: 'student_id')
   final String? studentId;
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
+  @JsonKey(name: 'is_active')
   final bool isActive;
 
   const UserModel({

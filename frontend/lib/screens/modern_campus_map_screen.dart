@@ -1,0 +1,569 @@
+import 'package:flutter/material.dart';
+import 'package:campusconnect/core/services/campus_service.dart';
+
+class ModernCampusMapScreen extends StatefulWidget {
+  const ModernCampusMapScreen({super.key});
+
+  @override
+  State<ModernCampusMapScreen> createState() => _ModernCampusMapScreenState();
+}
+
+class _ModernCampusMapScreenState extends State<ModernCampusMapScreen> {
+
+  List<Map<String, dynamic>> _blocs = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCampusData();
+  }
+
+  Future<void> _loadCampusData() async {
+    final data = await CampusService.getCampusBlocs();
+    if (mounted) {
+      setState(() {
+        _blocs = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  IconData _getIcon(String? iconName) {
+    switch (iconName) {
+      case 'account_balance': return Icons.account_balance;
+      case 'science': return Icons.science;
+      case 'menu_book': return Icons.menu_book;
+      case 'local_library': return Icons.local_library;
+      default: return Icons.location_on;
+    }
+  }
+
+  Color _getColor(String? colorHex) {
+    if (colorHex == null) return const Color(0xFF2563EB);
+    try {
+      return Color(int.parse(colorHex));
+    } catch (e) {
+      return const Color(0xFF2563EB);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Carte du Campus',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            Text(
+              'Orientation rapide',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline, color: Color(0xFF64748B)),
+            onPressed: () {
+              _showInfoDialog(context);
+            },
+          ),
+        ],
+      ),
+      body: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+          // Carte simplifiée du campus
+          Expanded(
+            flex: 3,
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 2,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Routes principales
+                  _buildMainRoads(),
+                  
+                  // Blocs
+                  ..._blocs.map((bloc) => _buildBlocCard(context, bloc)),
+                  
+                  // Entrée principale
+                  _buildMainEntrance(),
+                  
+                  // Parking
+                  _buildParking(),
+                ],
+              ),
+            ),
+          ),
+          
+          // Légende claire
+          Expanded(
+            flex: 2,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                      'Légende du Campus',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      itemCount: _blocs.length,
+                      itemBuilder: (context, index) {
+                        final bloc = _blocs[index];
+                        return _buildLegendItem(context, bloc);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainRoads() {
+    return Stack(
+      children: [
+        // Route horizontale principale
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0.45,
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        
+        // Route verticale principale
+        Positioned(
+          left: 0.45,
+          top: 0,
+          bottom: 0,
+          child: Container(
+            width: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        
+        // Allées secondaires
+        Positioned(
+          left: 0.2,
+          right: 0.2,
+          top: 0.2,
+          child: Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2E8F0),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        
+        Positioned(
+          left: 0.2,
+          right: 0.2,
+          bottom: 0.2,
+          child: Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2E8F0),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBlocCard(BuildContext context, Map<String, dynamic> bloc) {
+    if (!mounted) return Container();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth - 40; // Margin de 20 de chaque côté
+    final cardSize = containerWidth * 0.2; // 20% de la largeur
+    
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final position = Offset(bloc['position_x'], bloc['position_y']);
+    // Extract ID (e.g. "A" from "Bloc A")
+    final id = bloc['name'].toString().split(' ').last;
+
+    return Positioned(
+      left: position.dx * containerWidth - cardSize / 2,
+      top: position.dy * containerWidth - cardSize / 2,
+      child: GestureDetector(
+        onTap: () {
+          _showBlocDetails(context, bloc);
+        },
+        child: Container(
+          width: cardSize,
+          height: cardSize,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color,
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: cardSize * 0.25,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                id,
+                style: TextStyle(
+                  fontSize: cardSize * 0.15,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainEntrance() {
+    if (!mounted) return Container();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth - 40;
+    
+    return Positioned(
+      left: containerWidth * 0.5 - 30,
+      bottom: 10,
+      child: Container(
+        width: 60,
+        height: 30,
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(15),
+            topRight: Radius.circular(15),
+          ),
+        ),
+        child: Icon(
+          Icons.login,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParking() {
+    if (!mounted) return Container();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth - 40;
+    
+    return Positioned(
+      left: containerWidth * 0.85 - 25,
+      top: containerWidth * 0.5 - 25,
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: const Color(0xFF64748B).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF64748B),
+            width: 2,
+          ),
+        ),
+        child: Icon(
+          Icons.local_parking,
+          color: Color(0xFF64748B),
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(BuildContext context, Map<String, dynamic> bloc) {
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final id = bloc['name'].toString().split(' ').last;
+    final services = (bloc['services'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icône et identifiant
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color,
+                width: 2,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ),
+                Text(
+                  id,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(width: 16),
+          
+          // Informations
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  bloc['name'],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  bloc['description'],
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 2,
+                  children: services.take(3).map((service) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        service,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          
+          // Flèche
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: Color(0xFF94A3B8),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlocDetails(BuildContext context, Map<String, dynamic> bloc) {
+    if (!mounted) return;
+    
+    final color = _getColor(bloc['color_hex']);
+    final icon = _getIcon(bloc['icon_name']);
+    final id = bloc['name'].toString().split(' ').last;
+    final services = (bloc['services'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(width: 8),
+              Text('${bloc['name']} - $id'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                bloc['description'] ?? '',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Services disponibles :',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (services.isEmpty)
+                const Text('Aucun service listé.', style: TextStyle(color: Colors.grey))
+              else
+                ...services.map((service) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8, top: 4),
+                    child: Text(
+                      '• $service',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  );
+                }),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Comment utiliser la carte'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '• Cliquez sur un bloc pour voir les détails',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '• Consultez la légende pour connaître les services',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '• Les routes principales sont en gris foncé',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Compris'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
