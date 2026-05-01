@@ -168,8 +168,7 @@ class MessagingService {
       final token = await AuthService.getToken();
       if (token == null) throw Exception('No token');
       
-      final bytes = await File(filePath).readAsBytes();
-      final response = await ApiService.uploadFileFromBytes(fileName, bytes, token);
+      final response = await ApiService.uploadFile(filePath, token);
       if (response.success && response.data != null) {
         return response.data!['url'];
       }

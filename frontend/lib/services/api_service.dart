@@ -972,22 +972,20 @@ class ApiService {
     );
   }
 
-  // File Upload Endpoint
-  static Future<ApiResponse<Map<String, dynamic>>> uploadFile(File file, String token) async {
+
+  static Future<ApiResponse<Map<String, dynamic>>> uploadFile(String filePath, String token, {String fieldName = 'file', String endpoint = '/upload'}) async {
     try {
-      final uri = Uri.parse('${ApiConfig.baseUrl}/upload');
+      final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final request = http.MultipartRequest('POST', uri);
       
       request.headers.addAll({
         'Authorization': 'Bearer $token',
       });
       
-      final multipartFile = await http.MultipartFile.fromPath(
-        'file',
-        file.path,
-      );
-      
-      request.files.add(multipartFile);
+      request.files.add(await http.MultipartFile.fromPath(
+        fieldName,
+        filePath,
+      ));
       
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
@@ -997,19 +995,17 @@ class ApiService {
         return ApiResponse.fromJson(body, (j) => Map<String, dynamic>.from(j as Map));
       } else {
         final body = json.decode(response.body);
-        String errorMessage = 'Upload failed';
-        if (body['error'] != null) {
-          if (body['error'] is Map) {
-            errorMessage = body['error']['message'] ?? 'Upload failed';
-          } else {
-            errorMessage = body['error'].toString();
-          }
-        }
-        return ApiResponse.error(errorMessage);
+        return ApiResponse.error(
+          body['error'] ?? body['message'] ?? 'Upload failed',
+        );
       }
     } catch (e) {
       return ApiResponse.error('Network error during upload: $e');
     }
+  }
+
+  static Future<ApiResponse<Map<String, dynamic>>> uploadAvatar(String filePath, String token) async {
+    return uploadFile(filePath, token, fieldName: 'avatar', endpoint: '/upload/avatar');
   }
 
   static Future<ApiResponse<Map<String, dynamic>>> uploadFileFromBytes(String fileName, List<int> bytes, String token) async {

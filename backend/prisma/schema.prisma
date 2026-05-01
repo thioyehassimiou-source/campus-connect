@@ -39,11 +39,11 @@ model announcements {
   scope         String?   @default("global")
   filiere       String?
   niveau        String?
-  faculty_id    Int?
-  department_id Int?
-  is_pinned     Boolean?  @default(false)
   created_at    DateTime? @default(now()) @db.Timestamptz(6)
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+  is_pinned     Boolean?  @default(false)
+  department_id Int?
+  faculty_id    Int?
   users         users?    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -110,12 +110,12 @@ model conversations {
 }
 
 model conversation_participants {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversation_id String         @db.Uuid
-  user_id         String         @db.Uuid
-  joined_at       DateTime?      @default(now()) @db.Timestamptz(6)
-  conversations   conversations? @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  profiles        profiles?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversation_id String        @db.Uuid
+  user_id         String        @db.Uuid
+  joined_at       DateTime?     @default(now()) @db.Timestamptz(6)
+  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  profiles        profiles      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([conversation_id, user_id])
 }
@@ -129,13 +129,13 @@ model courses {
   color          String?       @default("#2563EB")
   status         String?       @default("Actif")
   students_count Int?          @default(0)
-  scope          String?       @default("license")
-  faculty_id     Int?
-  department_id  Int?
-  filiere        String?
-  niveau         String?
   created_at     DateTime?     @default(now()) @db.Timestamptz(6)
   updated_at     DateTime?     @default(now()) @db.Timestamptz(6)
+  scope          String?       @default("license")
+  filiere        String?
+  niveau         String?
+  department_id  Int?
+  faculty_id     Int?
   assignments    assignments[]
   attendance     attendance[]
   users          users?        @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -160,10 +160,10 @@ model grades {
   grade                          Decimal?  @db.Decimal(5, 2)
   comment                        String?
   semester                       String?
-  faculty_id                     Int?
-  department_id                  Int?
   created_at                     DateTime? @default(now()) @db.Timestamptz(6)
   updated_at                     DateTime? @default(now()) @db.Timestamptz(6)
+  department_id                  Int?
+  faculty_id                     Int?
   courses                        courses?  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users_grades_student_idTousers users?    @relation("grades_student_idTousers", fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users_grades_teacher_idTousers users?    @relation("grades_teacher_idTousers", fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -185,8 +185,7 @@ model messages {
   conversations   conversations? @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   messages        messages?      @relation("messagesTomessages", fields: [reply_to_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_messages  messages[]     @relation("messagesTomessages")
-  users           users?         @relation(fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_users_sender_id_fkey")
-  profiles        profiles?      @relation(fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_profiles_sender_id_fkey")
+  sender          users?         @relation(fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_profiles_sender_id_fkey")
 
   @@index([conversation_id], map: "idx_messages_conversation")
 }
@@ -222,53 +221,47 @@ model departments {
 }
 
 model profiles {
-  id         String  @id @db.Uuid
-  nom        String?
-  email      String?
-  full_name  String?
-  avatar_url String?
-  role       String  @default("Étudiant")
-  filiere    String?
-  niveau     String?
-  matricule  String? @unique
-  phone      String?
-  telephone  String?
-  bio        String?
-
-  faculty_id    Int?
-  department_id Int?
-  service_id    String? @db.Uuid
-
-  status          String?   @default("active")
-  is_verified     Boolean?  @default(false)
-  moyenne         Float?    @default(0)
-  credits_valides Int?      @default(0)
-  classement      String?
-  linkedin        String?
-  github          String?
-  twitter         String?
-  competences     String[]
-  interets        String[]
-  office          String?
-  specialization  String?
-  office_hours    Json?     @default("{}")
-  publications    Json?     @default("[]")
-  social_links    Json?     @default("{}")
-  is_active       Boolean?  @default(true)
-  last_login_at   DateTime? @db.Timestamptz(6)
-  student_id      String?
-  department      String?
-
-  date_naissance DateTime? @db.Date
-  created_at     DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
-
+  id                        String                      @id @db.Uuid
+  full_name                 String?
+  avatar_url                String?
+  role                      String                      @default("Étudiant")
+  filiere                   String?
+  niveau                    String?
+  matricule                 String?                     @unique
+  phone                     String?
+  bio                       String?
+  date_naissance            DateTime?                   @db.Date
+  created_at                DateTime?                   @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime?                   @default(now()) @db.Timestamptz(6)
+  classement                String?
+  competences               String[]
+  credits_valides           Int?                        @default(0)
+  department                String?
+  department_id             Int?
+  email                     String?
+  faculty_id                Int?
+  github                    String?
+  interets                  String[]
+  is_active                 Boolean?                    @default(true)
+  is_verified               Boolean?                    @default(false)
+  last_login_at             DateTime?                   @db.Timestamptz(6)
+  linkedin                  String?
+  moyenne                   Float?                      @default(0)
+  nom                       String?
+  office                    String?
+  office_hours              Json?                       @default("{}")
+  publications              Json?                       @default("[]")
+  service_id                String?                     @db.Uuid
+  social_links              Json?                       @default("{}")
+  specialization            String?
+  status                    String?                     @default("active")
+  student_id                String?
+  telephone                 String?
+  twitter                   String?
   conversation_participants conversation_participants[]
-  messages                  messages[]
+  departments               departments?                @relation(fields: [department_id], references: [id])
+  faculties                 faculties?                  @relation(fields: [faculty_id], references: [id])
   users                     users                       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  faculties   faculties?   @relation(fields: [faculty_id], references: [id])
-  departments departments? @relation(fields: [department_id], references: [id])
 }
 
 model resources {
@@ -279,12 +272,12 @@ model resources {
   type          String?   @default("document")
   course_id     String?   @db.Uuid
   teacher_id    String?   @db.Uuid
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
   author_name   String?
+  niveau        String?
   scope         String?   @default("license")
   department_id Int?
   faculty_id    Int?
-  niveau        String?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
   courses       courses?  @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users         users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
@@ -310,11 +303,11 @@ model schedules {
   filiere       String?
   niveau        String?
   semester      String?
-  status        Int?      @default(0)
-  notes         String?
-  faculty_id    Int?
-  department_id Int?
   created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  notes         String?
+  status        Int?      @default(0)
+  department_id Int?
+  faculty_id    Int?
   courses       courses?  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users         users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -329,16 +322,16 @@ model services {
   icon         String?
   category     String?
   is_active    Boolean?  @default(true)
-  faculty_id   Int?
-  contact      String?
-  telephone    String?
-  email        String?
-  localisation String?
-  horaires     String?
-  site_web     String?
-  parent_id    String?   @db.Uuid
-  metadata     Json?     @default("{}")
   created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  contact      String?
+  email        String?
+  faculty_id   Int?
+  horaires     String?
+  localisation String?
+  metadata     Json?     @default("{}")
+  parent_id    String?   @db.Uuid
+  site_web     String?
+  telephone    String?
   updated_at   DateTime? @default(now()) @db.Timestamptz(6)
 }
 

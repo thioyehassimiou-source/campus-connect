@@ -933,7 +933,7 @@ class _ModernAssignmentsScreenState extends ConsumerState<ModernAssignmentsScree
                     if (user == null || token == null) throw Exception('Non connecté');
 
                     // 1. Upload vers le backend Node.js via Multer
-                    final uploadResponse = await ApiService.uploadFile(selectedFile!, token);
+                    final uploadResponse = await ApiService.uploadFile(selectedFile!.path, token);
                     
                     if (!uploadResponse.success || uploadResponse.data == null) {
                       throw Exception(uploadResponse.error ?? 'Échec de l\'upload du fichier');

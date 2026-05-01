@@ -12,6 +12,21 @@ const transformUser = async (dbUser: any) => {
   const profile = dbUser.profiles;
   if (!profile) return null;
 
+  // Récupérer les noms réels si IDs présents
+  let departmentName = profile.filiere || "";
+  let facultyName = "";
+
+  if (profile.department_id) {
+    const dept = await prisma.departments.findUnique({
+      where: { id: profile.department_id },
+      include: { faculties: true }
+    });
+    if (dept) {
+      departmentName = dept.name;
+      facultyName = dept.faculties?.name || "";
+    }
+  }
+
   const nameParts = (profile.full_name || '').split(' ');
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
@@ -22,39 +37,18 @@ const transformUser = async (dbUser: any) => {
     first_name: firstName,
     last_name: lastName,
     role: dbUser.role.toLowerCase().replace('é', 'e'),
-    phone: profile.phone || "",
+    phone: profile.phone || profile.telephone || "",
     profile_image_url: profile.avatar_url || "",
-    department: profile.filiere || "",
-    student_id: profile.matricule || "",
+    department: departmentName,
+    faculty: facultyName,
+    student_id: profile.matricule || profile.student_id || "",
     created_at: dbUser.created_at,
     updated_at: dbUser.updated_at,
     is_active: true,
     niveau: profile.niveau || "",
+    credits_valides: profile.credits_valides || 0,
+    moyenne: profile.moyenne || 0,
   };
-
-  // Si c'est un étudiant, on pourrait ajouter ses stats ici
-  if (dbUser.role === 'Étudiant') {
-    const grades = await prisma.grades.findMany({
-      where: { student_id: dbUser.id }
-    });
-    
-    if (grades.length > 0) {
-      let totalPoints = 0;
-      let totalCoeff = 0;
-      let earnedCredits = 0;
-
-      for (const grade of grades) {
-        const val = Number(grade.grade || 0);
-        const coeff = 1;
-        totalPoints += val * coeff;
-        totalCoeff += coeff;
-        if (val >= 10) earnedCredits += coeff;
-      }
-
-      userData.moyenne = Number((totalPoints / totalCoeff).toFixed(2));
-      userData.credits_valides = earnedCredits;
-    }
-  }
 
   return userData;
 };
@@ -78,6 +72,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const password_hash = await bcrypt.hash(password, 12);
     const full_name = `${first_name} ${last_name || ''}`.trim();
 
+    // Vérifier si filiere est un ID (nombre) ou un nom
+    const deptId = !isNaN(Number(filiere)) ? Number(filiere) : null;
+
     const user = await prisma.users.create({
       data: {
         email,
@@ -87,7 +84,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           create: { 
             full_name, 
             role: role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
-            filiere: filiere,
+            filiere: deptId ? undefined : filiere, // Si on a un ID, on ne met pas le nom brut
+            department_id: deptId,
             niveau: niveau,
             matricule: student_id 
           },

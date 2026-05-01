@@ -5,6 +5,7 @@ import 'package:campusconnect/core/services/grade_service.dart';
 import 'package:campusconnect/core/services/export_service.dart';
 import 'package:campusconnect/core/services/profile_service.dart';
 import 'package:campusconnect/services/auth_service.dart';
+import 'package:campusconnect/shared/widgets/grade_performance_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
@@ -102,10 +103,46 @@ class _ModernStudentGradesScreenState extends ConsumerState<ModernStudentGradesS
                   // Filtre par semestre
                   _buildSemesterFilter(),
                   
+                  // Graphique de performance
+                  if (filteredGrades.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Évolution des résultats',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          GradePerformanceChart(
+                            grades: filteredGrades.map((g) => g.value).toList(),
+                            labels: filteredGrades.map((g) => g.subject).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // Liste des notes
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: filteredGrades.length,
                       itemBuilder: (context, index) {
                         return _buildGradeCard(filteredGrades[index]);

@@ -26,8 +26,10 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
   final List<String> _levelOptions = ['Licence 1', 'Licence 2', 'Licence 3'];
   dynamic _selectedFiliereId;
   dynamic _selectedServiceId;
+  dynamic _selectedFacultyId;
   List<Map<String, dynamic>> _filieres = [];
   List<Map<String, dynamic>> _services = [];
+  List<Map<String, dynamic>> _faculties = [];
   bool _isInitialLoading = true;
   String? _initialLoadError;
   bool _isLoading = false;
@@ -59,6 +61,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
     try {
       final filieresResponse = await ApiService.getFilieres();
       final servicesResponse = await ApiService.getServices();
+      final facultiesResponse = await ApiService.getFaculties();
       
       if (mounted) {
         setState(() {
@@ -67,6 +70,9 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
           }
           if (servicesResponse.success && servicesResponse.data != null) {
             _services = servicesResponse.data!;
+          }
+          if (facultiesResponse.success && facultiesResponse.data != null) {
+            _faculties = facultiesResponse.data!;
           }
           _isInitialLoading = false;
         });
@@ -91,7 +97,12 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
     }
     
     if (_selectedRole == 'Étudiant' && _selectedFiliereId == null) {
-      setState(() { _errorMessage = 'Veuillez sélectionner une filière'; });
+      setState(() { _errorMessage = 'Veuillez sélectionner un département'; });
+      return;
+    }
+
+    if (_selectedRole == 'Enseignant' && _selectedFacultyId == null) {
+      setState(() { _errorMessage = 'Veuillez sélectionner une faculté'; });
       return;
     }
 
@@ -119,7 +130,9 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         role: role,
-        filiere: _selectedRole == 'Étudiant' ? _selectedFiliereId?.toString() : null,
+        filiere: _selectedRole == 'Étudiant' 
+            ? _selectedFiliereId?.toString() 
+            : (_selectedRole == 'Enseignant' ? _selectedFacultyId?.toString() : null),
         niveau: _selectedRole == 'Étudiant' ? _selectedLevel : null,
         studentId: _selectedRole == 'Étudiant' ? _emailController.text.trim().split('@')[0] : null,
       );
@@ -164,321 +177,150 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
         ],
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 80, // Subtracting vertical padding (40 * 2)
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        Icons.person_add_rounded,
-                        color: Colors.white,
-                        size: 40,
-                      ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+          child: Column(
+            children: [
+              // Header
+              Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Créer un compte',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
+                    child: const Icon(
+                      Icons.person_add_rounded,
+                      color: Colors.white,
+                      size: 40,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Rejoignez la communauté universitaire',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Créer un compte',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Rejoignez la communauté universitaire',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 40),
+
+              // Formulaire
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 40),
-
-                // Formulaire
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Prénom
+                      _buildTextField(
+                        controller: _firstNameController,
+                        label: 'Prénom',
+                        hint: 'Jean',
+                        icon: Icons.person_outline_rounded,
+                        validator: (value) => (value == null || value.isEmpty) ? 'Prénom requis' : null,
                       ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Nom et Prénom
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _firstNameController,
-                                label: 'Prénom',
-                                hint: 'Jean',
-                                icon: Icons.person_outline_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Prénom requis';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _lastNameController,
-                                label: 'Nom',
-                                hint: 'Dupont',
-                                icon: Icons.person_outline_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Nom requis';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 20),
 
-                        const SizedBox(height: 20),
+                      // Nom
+                      _buildTextField(
+                        controller: _lastNameController,
+                        label: 'Nom',
+                        hint: 'Dupont',
+                        icon: Icons.person_outline_rounded,
+                        validator: (value) => (value == null || value.isEmpty) ? 'Nom requis' : null,
+                      ),
+                      const SizedBox(height: 20),
 
-                        // Email/Matricule
-                        _buildTextField(
-                          controller: _emailController,
-                          label: 'Email universitaire / Matricule',
-                          hint: 'nom@univ-campus.fr ou MAT2024001',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Email/Matricule requis';
-                            }
-                            if (!value.contains('@') && !value.startsWith('MAT')) {
-                              return 'Format invalide';
-                            }
-                            return null;
-                          },
-                        ),
+                      // Email
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'Email / Matricule',
+                        hint: 'nom@univ-campus.fr',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Email requis';
+                          if (!value.contains('@') && !value.startsWith('MAT')) return 'Format invalide';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
 
-                        const SizedBox(height: 20),
+                      // Rôle
+                      _buildRoleSelector(),
 
-                        // Sélecteur de rôle
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Rôle',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedRole = 'Étudiant';
-                                          // Reset Admin selection if needed, but keep Faculties loaded
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        decoration: BoxDecoration(
-                                          color: _selectedRole == 'Étudiant'
-                                              ? const Color(0xFF2563EB)
-                                              : Colors.transparent,
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(12),
-                                            bottomLeft: Radius.circular(12),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Étudiant',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: _selectedRole == 'Étudiant'
-                                                ? Colors.white
-                                                : const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedRole = 'Enseignant';
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        decoration: BoxDecoration(
-                                          color: _selectedRole == 'Enseignant'
-                                              ? const Color(0xFF2563EB)
-                                              : Colors.transparent,
-                                        ),
-                                        child: Text(
-                                          'Enseignant',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: _selectedRole == 'Enseignant'
-                                                ? Colors.white
-                                                : const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedRole = 'Administratif';
-                                          // Services are already loaded in _loadInitialData
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        decoration: BoxDecoration(
-                                          color: _selectedRole == 'Administratif'
-                                              ? const Color(0xFF2563EB)
-                                              : Colors.transparent,
-                                          borderRadius: const BorderRadius.only(
-                                            topRight: Radius.circular(12),
-                                            bottomRight: Radius.circular(12),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Administratif',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: _selectedRole == 'Administratif'
-                                                ? Colors.white
-                                                : const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 20),
 
-                        const SizedBox(height: 20),
-
-                        // États de chargement des données (Facultés, etc.)
-                        if (_isInitialLoading)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Column(
-                                children: [
-                                  const CircularProgressIndicator(strokeWidth: 3),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Chargement des facultés...',
-                                    style: TextStyle(
-                                      color: Color(0xFF64748B),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else if (_initialLoadError != null)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFEE2E2)),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _initialLoadError!,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Color(0xFF991B1B), fontSize: 13),
-                                ),
-                                const SizedBox(height: 12),
-                                TextButton.icon(
-                                  onPressed: _loadInitialData,
-                                  icon: const Icon(Icons.refresh, size: 18),
-                                  label: const Text('Réessayer'),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF2563EB),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else ...[
-                          if (_selectedRole == 'Étudiant' && _filieres.isNotEmpty)
-                            _buildDropdown(
-                              'Filière',
-                              _selectedFiliereId,
-                              _filieres.map((f) => DropdownMenuItem<dynamic>(
-                                value: f['id'],
-                                child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
-                              )).toList(),
-                              (value) => setState(() => _selectedFiliereId = value),
-                            ),
+                      // Champs dynamiques
+                      if (_isInitialLoading)
+                        const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(strokeWidth: 2)))
+                      else ...[
+                        // Faculté visible pour Étudiant et Enseignant
+                        if (_selectedRole == 'Étudiant' || _selectedRole == 'Enseignant') ...[
+                          _buildDropdown(
+                            'Faculté',
+                            _selectedFacultyId,
+                            _faculties.map((f) => DropdownMenuItem<dynamic>(
+                              value: f['id'],
+                              child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) {
+                              setState(() {
+                                _selectedFacultyId = value;
+                                _selectedFiliereId = null; // ✅ Réinitialiser le département
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 20),
                         ],
 
                         if (_selectedRole == 'Étudiant') ...[
+                          _buildDropdown(
+                            'Département',
+                            _selectedFiliereId,
+                            _filieres.where((f) {
+                              if (_selectedFacultyId == null) return true;
+                              // Trouver le nom de la faculté sélectionnée pour comparer
+                              final selectedFac = _faculties.firstWhere(
+                                (fac) => fac['id'] == _selectedFacultyId,
+                                orElse: () => {},
+                              );
+                              final facName = selectedFac['name'] ?? selectedFac['nom'];
+                              return f['faculty'] == facName;
+                            }).map((f) => DropdownMenuItem<dynamic>(
+                              value: f['id'],
+                              child: Text(f['nom']?.toString() ?? 'Inconnu'),
+                            )).toList(),
+                            (value) => setState(() => _selectedFiliereId = value),
+                          ),
                           const SizedBox(height: 20),
                           _buildDropdown(
                             'Niveau (Licence)',
@@ -489,174 +331,65 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
                             )).toList(),
                             (value) => setState(() => _selectedLevel = value as String),
                           ),
-                        ],
-
-
-
-
-                        // Service: OBLIGATOIRE pour Administratif (et visible pour tout le monde si chargé ?)
-                        // Non, pour Administratif on montre TOUS les services chargés via _loadAllServices
-                        // Pour les autres, on montre les services liés à la faculté si besoin (mais ici on se concentre sur Admin)
-                        if (_selectedRole == 'Administratif')
+                        ] else if (_selectedRole == 'Administratif') ...[
                           _buildDropdown(
-                            'Service / Entité de rattachement *', // ✅ Plus clair
+                            'Service / Entité',
                             _selectedServiceId,
                             _services.map((s) => DropdownMenuItem<dynamic>(
-                              value: s['id'], // Peut être UUID string ou int
-                              child: Text(s['nom']?.toString() ?? s['name']?.toString() ?? 'Inconnu'),
+                              value: s['id'],
+                              child: Text(s['nom']?.toString() ?? 'Inconnu'),
                             )).toList(),
                             (value) => setState(() => _selectedServiceId = value),
                           ),
-
-                        const SizedBox(height: 20),
-
-                        // Mot de passe
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: 'Mot de passe',
-                          hint: '••••••••',
-                          icon: Icons.lock_outline_rounded,
-                          isPassword: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Mot de passe requis';
-                            }
-                            if (value.length < 6) {
-                              return 'Min 6 caractères';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Message d'erreur
-                        if (_errorMessage != null)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFFECACA),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  color: Color(0xFFDC2626),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: TextStyle(
-                                      color: Color(0xFFDC2626),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    softWrap: true,
-                                    overflow: TextOverflow.visible,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        const SizedBox(height: 24),
-
-                        // Bouton S'inscrire
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _handleRegister,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                              disabledBackgroundColor: const Color(0xFF93C5FD),
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'S\'inscrire',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Lien connexion
-                        Center(
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Déjà un compte ? ',
-                                style: TextStyle(
-                                  color: Color(0xFF6B7280),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Se connecter',
-                                    style: TextStyle(
-                                      color: Color(0xFF2563EB),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        ],
                       ],
-                    ),
+
+                      const SizedBox(height: 20),
+
+                      // Mot de passe
+                      _buildTextField(
+                        controller: _passwordController,
+                        label: 'Mot de passe',
+                        hint: '••••••••',
+                        icon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Mot de passe requis';
+                          if (value.length < 6) return 'Min 6 caractères';
+                          return null;
+                        },
+                      ),
+
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        _buildErrorMessage(_errorMessage!),
+                      ],
+
+                      const SizedBox(height: 32),
+
+                      // Bouton Inscription
+                      _buildSubmitButton(),
+
+                      const SizedBox(height: 20),
+
+                      // Connexion
+                      _buildLoginLink(),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // Footer
-                Text(
-                  '© 2024 CampusConnect - Application universitaire officielle',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 32),
+              Text(
+                '© 2024 CampusConnect - Application officielle',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
     );
   }
 
@@ -832,8 +565,8 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text('Confirmation requise'),
-        content: Text(
+        title: const Text('Confirmation requise'),
+        content: const Text(
           'Un email de confirmation vous a été envoyé. '
           'Veuillez confirmer votre compte pour pouvoir vous connecter.',
         ),
@@ -843,8 +576,121 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
               Navigator.of(context).pop(); // Fermer le dialogue
               Navigator.of(context).pop(); // Retourner au login
             },
-            child: Text('Compris'),
+            child: const Text('Compris'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Rôle',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.8),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              _buildRoleOption('Étudiant', const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12))),
+              _buildRoleOption('Enseignant', BorderRadius.zero),
+              _buildRoleOption('Administratif', const BorderRadius.only(topRight: Radius.circular(12), bottomRight: Radius.circular(12))),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleOption(String role, BorderRadius borderRadius) {
+    final isSelected = _selectedRole == role;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedRole = role),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12), // ✅ Plus compact
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+            borderRadius: borderRadius,
+          ),
+          child: Text(
+            role,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : const Color(0xFF6B7280),
+              fontWeight: FontWeight.w600,
+              fontSize: 13, // ✅ Taille réduite pour tenir
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleRegister,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2563EB),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+        ),
+        child: _isLoading
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+            : const Text('S\'inscrire', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  Widget _buildLoginLink() {
+    return Center(
+      child: TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: RichText(
+          text: TextSpan(
+            text: 'Déjà un compte ? ',
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14, fontWeight: FontWeight.w500),
+            children: [
+              const TextSpan(text: 'Se connecter', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 16),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w500))),
         ],
       ),
     );
