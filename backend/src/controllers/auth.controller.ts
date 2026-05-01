@@ -19,18 +19,17 @@ const transformUser = async (dbUser: any) => {
   const userData: any = {
     id: dbUser.id,
     email: dbUser.email,
-    firstName,
-    lastName,
+    first_name: firstName,
+    last_name: lastName,
     role: dbUser.role.toLowerCase().replace('é', 'e'),
-    phone: profile.phone || null,
-    profileImageUrl: profile.avatar_url || null,
-    department: profile.filiere || null,
-    studentId: profile.matricule || null,
-    createdAt: dbUser.created_at,
-    updatedAt: dbUser.updated_at,
-    isActive: true,
-    // On peut ajouter d'autres champs ici
-    niveau: profile.niveau,
+    phone: profile.phone || "",
+    profile_image_url: profile.avatar_url || "",
+    department: profile.filiere || "",
+    student_id: profile.matricule || "",
+    created_at: dbUser.created_at,
+    updated_at: dbUser.updated_at,
+    is_active: true,
+    niveau: profile.niveau || "",
   };
 
   // Si c'est un étudiant, on pourrait ajouter ses stats ici
@@ -45,8 +44,8 @@ const transformUser = async (dbUser: any) => {
       let earnedCredits = 0;
 
       for (const grade of grades) {
-        const val = Number(grade.value);
-        const coeff = Number(grade.coefficient || 1);
+        const val = Number(grade.grade || 0);
+        const coeff = 1;
         totalPoints += val * coeff;
         totalCoeff += coeff;
         if (val >= 10) earnedCredits += coeff;
@@ -63,7 +62,7 @@ const transformUser = async (dbUser: any) => {
 // POST /auth/register
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, first_name, last_name, role = 'Étudiant', department, student_id } = req.body;
+    const { email, password, first_name, last_name, role = 'Étudiant', filiere, niveau, student_id } = req.body;
 
     if (!email || !password || !first_name) {
       sendError(res, 'Email, mot de passe et prénom sont requis', 400);
@@ -88,7 +87,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           create: { 
             full_name, 
             role: role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
-            filiere: department,
+            filiere: filiere,
+            niveau: niveau,
             matricule: student_id 
           },
         },

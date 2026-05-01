@@ -24,12 +24,8 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
   String _selectedRole = 'Étudiant';
   String _selectedLevel = 'Licence 1';
   final List<String> _levelOptions = ['Licence 1', 'Licence 2', 'Licence 3'];
-  dynamic _selectedFacultyId;
-  dynamic _selectedDepartmentId;
   dynamic _selectedFiliereId;
   dynamic _selectedServiceId;
-  List<Map<String, dynamic>> _faculties = [];
-  List<Map<String, dynamic>> _departments = [];
   List<Map<String, dynamic>> _filieres = [];
   List<Map<String, dynamic>> _services = [];
   bool _isInitialLoading = true;
@@ -41,7 +37,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFaculties();
+    _loadInitialData();
   }
 
   @override
@@ -53,7 +49,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _loadFaculties() async {
+  Future<void> _loadInitialData() async {
     if (!mounted) return;
     setState(() {
       _isInitialLoading = true;
@@ -61,19 +57,22 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
     });
 
     try {
-      final response = await ApiService.getFaculties();
+      final filieresResponse = await ApiService.getFilieres();
+      final servicesResponse = await ApiService.getServices();
+      
       if (mounted) {
         setState(() {
-          if (response.success && response.data != null) {
-            _faculties = response.data!;
-          } else {
-            _initialLoadError = response.error?.message ?? 'Erreur de chargement';
+          if (filieresResponse.success && filieresResponse.data != null) {
+            _filieres = filieresResponse.data!;
+          }
+          if (servicesResponse.success && servicesResponse.data != null) {
+            _services = servicesResponse.data!;
           }
           _isInitialLoading = false;
         });
       }
     } catch (e) {
-      print('Erreur chargement facultés: $e');
+      print('Erreur chargement données initiales: $e');
       if (mounted) {
         setState(() {
           _initialLoadError = 'Impossible de charger les données universitaires.';
@@ -81,55 +80,6 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
         });
       }
     }
-  }
-
-  Future<void> _loadDepartments(String facultyId) async {
-    try {
-      final response = await ApiService.getDepartments(facultyId);
-      if (response.success && response.data != null) {
-        setState(() {
-          _departments = response.data!;
-          _selectedDepartmentId = null;
-          _filieres = [];
-          _selectedFiliereId = null;
-        });
-      }
-    } catch (e) {
-      print('Erreur chargement départements: $e');
-    }
-  }
-
-  Future<void> _loadFilieres(String departmentId) async {
-    try {
-      final response = await ApiService.getFilieres(departmentId);
-      if (response.success && response.data != null) {
-        setState(() {
-          _filieres = response.data!;
-          _selectedFiliereId = null;
-        });
-      }
-    } catch (e) {
-      print('Erreur chargement filières: $e');
-    }
-  }
-
-  Future<void> _loadAllServices() async {
-    try {
-      final response = await ApiService.getServices();
-      if (response.success && response.data != null) {
-        setState(() {
-          _services = response.data!;
-          _selectedServiceId = null;
-        });
-      }
-    } catch (e) {
-      print('Erreur chargement tous les services: $e');
-    }
-  }
-
-  Future<void> _loadServices(int facultyId) async {
-    // This could filter services by faculty in the future
-    await _loadAllServices();
   }
 
   Future<void> _handleRegister() async {
@@ -140,8 +90,8 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
       return;
     }
     
-    if (_selectedRole != 'Administratif' && _selectedFacultyId == null) {
-      setState(() { _errorMessage = 'Veuillez sélectionner une faculté'; });
+    if (_selectedRole == 'Étudiant' && _selectedFiliereId == null) {
+      setState(() { _errorMessage = 'Veuillez sélectionner une filière'; });
       return;
     }
 
@@ -169,8 +119,9 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         role: role,
-        department: _selectedRole == 'Étudiant' ? _selectedDepartmentId?.toString() : null,
-        studentId: _selectedRole == 'Étudiant' ? null : null, // Add if needed
+        filiere: _selectedRole == 'Étudiant' ? _selectedFiliereId?.toString() : null,
+        niveau: _selectedRole == 'Étudiant' ? _selectedLevel : null,
+        studentId: _selectedRole == 'Étudiant' ? _emailController.text.trim().split('@')[0] : null,
       );
 
       final result = await AuthService.register(request);
@@ -431,8 +382,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
                                       onTap: () {
                                         setState(() {
                                           _selectedRole = 'Administratif';
-                                          // Load services for Admin
-                                          _loadAllServices();
+                                          // Services are already loaded in _loadInitialData
                                         });
                                       },
                                       child: Container(
@@ -505,7 +455,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 TextButton.icon(
-                                  onPressed: _loadFaculties,
+                                  onPressed: _loadInitialData,
                                   icon: const Icon(Icons.refresh, size: 18),
                                   label: const Text('Réessayer'),
                                   style: TextButton.styleFrom(
@@ -516,31 +466,15 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
                             ),
                           )
                         else ...[
-                          // Sélecteur de faculté (UNIQUEMENT pour Étudiant et Enseignant)
-                          if (_selectedRole != 'Administratif')
+                          if (_selectedRole == 'Étudiant' && _filieres.isNotEmpty)
                             _buildDropdown(
-                              'Faculté',
-                              _selectedFacultyId,
-                              _faculties.map((f) => DropdownMenuItem<dynamic>(
+                              'Filière',
+                              _selectedFiliereId,
+                              _filieres.map((f) => DropdownMenuItem<dynamic>(
                                 value: f['id'],
                                 child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
                               )).toList(),
-                              (value) {
-                                setState(() {
-                                  _selectedFacultyId = value;
-                                  if (value != null) {
-                                    int? fIdInt;
-                                    try {
-                                        fIdInt = value is int ? value : int.tryParse(value.toString());
-                                    } catch (_) {}
-                                    
-                                    if (fIdInt != null) {
-                                        _loadDepartments(fIdInt.toString());
-                                        _loadServices(fIdInt);
-                                    }
-                                  }
-                                });
-                              },
+                              (value) => setState(() => _selectedFiliereId = value),
                             ),
                         ],
 
@@ -557,49 +491,7 @@ class _ModernRegisterScreenState extends ConsumerState<ModernRegisterScreen> {
                           ),
                         ],
 
-                        if (_selectedFacultyId != null && _selectedRole != 'Administratif') const SizedBox(height: 20),
 
-                        // Sélecteur département: uniquement pour ÉTUDIANT
-                        if (_selectedRole == 'Étudiant' && _departments.isNotEmpty)
-                          _buildDropdown(
-                            'Département',
-                            _selectedDepartmentId,
-                            _departments.map((d) => DropdownMenuItem<dynamic>(
-                              value: d['id'],
-                              child: Text(d['nom']?.toString() ?? d['name']?.toString() ?? 'Inconnu'),
-                            )).toList(),
-                            (value) {
-                              setState(() {
-                                _selectedDepartmentId = value;
-                                if (value != null) {
-                                  int? dIdInt;
-                                  try {
-                                    dIdInt = value is int ? value : int.tryParse(value.toString());
-                                  } catch (_) {}
-                                  
-                                  if (dIdInt != null) {
-                                    _loadFilieres(dIdInt.toString());
-                                  }
-                                } else {
-                                  _filieres = [];
-                                  _selectedFiliereId = null;
-                                }
-                              });
-                            },
-                          ),
-
-                        if (_selectedRole == 'Étudiant' && _filieres.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          _buildDropdown(
-                            'Filière',
-                            _selectedFiliereId,
-                            _filieres.map((f) => DropdownMenuItem<dynamic>(
-                              value: f['id'],
-                              child: Text(f['nom']?.toString() ?? f['name']?.toString() ?? 'Inconnu'),
-                            )).toList(),
-                            (value) => setState(() => _selectedFiliereId = value),
-                          ),
-                        ],
 
 
                         // Service: OBLIGATOIRE pour Administratif (et visible pour tout le monde si chargé ?)

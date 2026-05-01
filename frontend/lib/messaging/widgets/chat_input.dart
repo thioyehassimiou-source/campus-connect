@@ -13,6 +13,7 @@ import '../services/messaging_service.dart';
 
 class ChatInput extends StatefulWidget {
   final Function(String) onSend;
+  final Function(bool)? onTypingChanged;
   final VoidCallback? onAttach;
   final bool readOnly;
   final ChatMessage? repliedMessage;
@@ -21,6 +22,7 @@ class ChatInput extends StatefulWidget {
   const ChatInput({
     super.key,
     required this.onSend,
+    this.onTypingChanged,
     this.onAttach,
     this.readOnly = false,
     this.repliedMessage,
@@ -36,6 +38,7 @@ class _ChatInputState extends State<ChatInput> {
   final FocusNode _focusNode = FocusNode();
   bool _showSend = false;
   bool _showEmoji = false;
+  Timer? _typingTimer;
 
   // Audio Recording State
   final _audioRecorder = AudioRecorder();
@@ -47,9 +50,21 @@ class _ChatInputState extends State<ChatInput> {
   void initState() {
     super.initState();
     _controller.addListener(() {
-      setState(() {
-        _showSend = _controller.text.trim().isNotEmpty;
-      });
+      final isNotEmpty = _controller.text.trim().isNotEmpty;
+      if (_showSend != isNotEmpty) {
+        setState(() => _showSend = isNotEmpty);
+      }
+      
+      // Gérer l'indicateur d'écriture
+      if (isNotEmpty) {
+        if (_typingTimer == null || !_typingTimer!.isActive) {
+          widget.onTypingChanged?.call(true);
+        }
+        _typingTimer?.cancel();
+        _typingTimer = Timer(const Duration(seconds: 2), () {
+          widget.onTypingChanged?.call(false);
+        });
+      }
     });
     
     _focusNode.addListener(() {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/messaging_models.dart';
@@ -5,6 +6,7 @@ import '../controllers/messaging_providers.dart';
 import '../services/messaging_service.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
+import '../../../core/services/socket_service.dart';
 import '../../../services/auth_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -20,12 +22,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _repliedMessage;
   String? _currentUserId;
+  bool _isOtherUserTyping = false;
+  StreamSubscription? _typingSub;
 
   @override
   void initState() {
     super.initState();
     _markRead();
     _loadCurrentUser();
+    _listenToTyping();
+  }
+
+  void _listenToTyping() {
+    _typingSub = ref.read(socketServiceProvider).onTyping.listen((data) {
+      if (data['conversationId'] == widget.conversation.id && 
+          data['userId'] != _currentUserId) {
+        if (mounted) {
+          setState(() {
+            _isOtherUserTyping = data['isTyping'];
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _typingSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCurrentUser() async {
@@ -44,6 +68,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       replyToId: _repliedMessage?.id,
     );
     setState(() => _repliedMessage = null); // Clear reply after sending
+  }
+
+  void _handleTyping(bool isTyping) {
+    ref.read(messagingControllerProvider.notifier).sendTyping(widget.conversation.id, isTyping);
   }
 
   void _handleReply(ChatMessage message) {
@@ -102,11 +130,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
             Text(
-              _getSubTitle(),
-              style: const TextStyle(
+              _isOtherUserTyping ? 'en train d\'écrire...' : _getSubTitle(),
+              style: TextStyle(
                 fontSize: 11, 
-                fontWeight: FontWeight.normal,
-                color: Colors.white70,
+                fontWeight: _isOtherUserTyping ? FontWeight.bold : FontWeight.normal,
+                color: _isOtherUserTyping ? Colors.greenAccent : Colors.white70,
               ),
             ),
           ],
@@ -249,6 +277,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               ChatInput(
                 onSend: _handleSend,
+                onTypingChanged: _handleTyping,
                 readOnly: widget.conversation.type == ChatConversationType.announcement,
                 onAttach: () {},
                 repliedMessage: _repliedMessage,

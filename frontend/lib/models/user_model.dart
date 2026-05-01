@@ -73,7 +73,8 @@ class CreateUserRequest {
   final String lastName;
   final UserRole role;
   final String? phone;
-  final String? department;
+  final String? filiere;
+  final String? niveau;
   final String? studentId;
 
   CreateUserRequest({
@@ -83,7 +84,8 @@ class CreateUserRequest {
     required this.lastName,
     required this.role,
     this.phone,
-    this.department,
+    this.filiere,
+    this.niveau,
     this.studentId,
   });
 
@@ -95,7 +97,8 @@ class CreateUserRequest {
       'last_name': lastName,
       'role': role.name,
       'phone': phone,
-      'department': department,
+      'filiere': filiere,
+      'niveau': niveau,
       'student_id': studentId,
     };
   }

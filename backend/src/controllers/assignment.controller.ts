@@ -8,13 +8,7 @@ export const getStudentAssignments = async (req: AuthRequest, res: Response) => 
   try {
     const user = req.user!;
     const assignments = await prisma.assignments.findMany({
-      where: {
-        courses: {
-          enrollments: {
-            some: { student_id: user.id }
-          }
-        }
-      },
+      where: {},
       include: { courses: true },
       orderBy: { due_date: 'asc' },
     });
@@ -68,7 +62,7 @@ export const submitAssignment = async (req: AuthRequest, res: Response) => {
     const { id } = req.params as Record<string, string>;
     const { content } = req.body;
 
-    const submission = await prisma.submissions.create({
+    const submission = await prisma.assignment_submissions.create({
       data: {
         assignment_id: id,
         student_id: user.id,
@@ -88,9 +82,9 @@ export const submitAssignment = async (req: AuthRequest, res: Response) => {
 export const getAssignmentSubmissions = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params as Record<string, string>;
-    const submissions = await prisma.submissions.findMany({
+    const submissions = await prisma.assignment_submissions.findMany({
       where: { assignment_id: id },
-      include: { users_submissions_student_idTousers: { include: { profiles: true } } },
+      include: { users: { include: { profiles: true } } },
     });
     sendSuccess(res, submissions);
   } catch (error) {

@@ -693,10 +693,10 @@ class ApiService {
     );
   }
 
-  static Future<ApiResponse<List<Map<String, dynamic>>>> getFilieres(String departmentId) async {
+  static Future<ApiResponse<List<Map<String, dynamic>>>> getFilieres() async {
     return _handleRequest<List<Map<String, dynamic>>>(
       () => _client.get(
-        Uri.parse('${ApiConfig.baseUrl}/universities/departments/$departmentId/filieres'),
+        Uri.parse('${ApiConfig.baseUrl}/universities/filieres'),
         headers: _getHeaders(),
       ),
       (json) => List<Map<String, dynamic>>.from(json),

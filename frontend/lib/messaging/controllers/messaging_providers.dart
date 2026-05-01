@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/messaging_models.dart';
 import '../services/messaging_service.dart';
@@ -13,6 +14,7 @@ final chatConversationsProvider = StreamProvider<List<ChatConversation>>((ref) {
 class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final String conversationId;
   final Ref ref;
+  StreamSubscription? _messageSub;
 
   ChatMessagesNotifier(this.conversationId, this.ref) : super(const AsyncValue.loading()) {
     _init();
@@ -20,32 +22,37 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   void _init() async {
     try {
-      // 1. Initialiser et connecter le socket
-      SocketService().connectAndListen();
-      SocketService().joinConversation(conversationId);
+      final socketService = ref.read(socketServiceProvider);
+      
+      // 1. Connecter le socket s'il ne l'est pas
+      await socketService.connect();
+      socketService.joinConversation(conversationId);
 
-      // 2. Récupérer l'historique
+      // 2. Récupérer l'historique via REST
       final history = await MessagingService.fetchMessages(conversationId);
       state = AsyncValue.data(history);
 
-      // 3. Écouter les nouveaux messages
-      SocketService().onNewMessage.listen((data) {
+      // 3. Écouter les nouveaux messages via Socket
+      _messageSub = socketService.onNewMessage.listen((data) {
         if (data['conversation_id'] == conversationId || data['conversationId'] == conversationId) {
           final newMessage = ChatMessage(
-            id: data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
             conversationId: conversationId,
-            senderId: data['senderId'] ?? data['sender_id'] ?? '',
-            senderName: data['senderName'] ?? data['sender_name'],
-            content: data['content'] ?? data['message'] ?? '',
-            timestamp: DateTime.now(),
+            senderId: data['sender_id'] ?? data['senderId'] ?? '',
+            senderName: data['users']?['profiles']?['full_name'] ?? data['sender']?['profiles']?['full_name'] ?? data['sender_name'] ?? 'Utilisateur',
+            content: data['content'] ?? '',
+            timestamp: data['created_at'] != null ? DateTime.parse(data['created_at']) : DateTime.now(),
             isRead: false,
             type: MessageType.text,
             status: MessageStatus.sent,
           );
 
-          // Ajouter le message à la liste actuelle
           if (state.hasValue) {
-            state = AsyncValue.data([...state.value!, newMessage]);
+            // Éviter les doublons si le message arrive aussi via REST (peu probable ici)
+            final alreadyExists = state.value!.any((m) => m.id == newMessage.id);
+            if (!alreadyExists) {
+              state = AsyncValue.data([...state.value!, newMessage]);
+            }
           }
         }
       });
@@ -53,14 +60,18 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       state = AsyncValue.error(e, st);
     }
   }
+
+  @override
+  void dispose() {
+    _messageSub?.cancel();
+    ref.read(socketServiceProvider).leaveConversation(conversationId);
+    super.dispose();
+  }
 }
 
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>, String>((ref, conversationId) {
   return ChatMessagesNotifier(conversationId, ref);
 });
-
-/// Provider pour la conversation sélectionnée
-final selectedConversationProvider = StateProvider<ChatConversation?>((ref) => null);
 
 /// Controller for messaging actions
 class MessagingController extends StateNotifier<AsyncValue<void>> {
@@ -72,21 +83,15 @@ class MessagingController extends StateNotifier<AsyncValue<void>> {
     required String content,
     String? replyToId,
   }) async {
-    state = const AsyncValue.loading();
     try {
-      // 1. Envoi via REST (pour persistance)
-      await MessagingService.sendMessage(
-        conversationId: conversationId,
-        content: content,
-        replyToId: replyToId,
-      );
-
-      // 2. Envoi via Socket.io (pour temps réel)
-      SocketService().sendMessage({
-        'conversationId': conversationId,
-        'content': content,
-        'replyToId': replyToId,
-      });
+      // Nous envoyons uniquement via Socket maintenant, car le Backend 
+      // se charge de sauvegarder en base lors de la réception du socket.
+      // Cela évite les doublons et assure le temps réel.
+      
+      final socketService = ref.read(socketServiceProvider);
+      await socketService.connect();
+      
+      socketService.sendMessage(conversationId, content);
 
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -94,10 +99,13 @@ class MessagingController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  void sendTyping(String conversationId, bool isTyping) {
+    ref.read(socketServiceProvider).sendTyping(conversationId, isTyping);
+  }
+
   Future<void> markAsRead(String conversationId) async {
     try {
       await MessagingService.markMessagesAsRead(conversationId);
-      // Optionnel: rafraîchir la liste des conversations pour mettre à jour les compteurs
       ref.invalidate(chatConversationsProvider);
     } catch (e) {
       print('Erreur marquage lecture: $e');

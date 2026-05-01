@@ -28,23 +28,23 @@ model admin_activity_logs {
 }
 
 model announcements {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title       String
-  content     String
-  category    String?
-  priority    String?   @default("Normale")
-  author_id   String?   @db.Uuid
-  author_name String?
-  service_id  String?   @db.Uuid
-  scope       String?   @default("global")
-  filiere     String?
-  niveau      String?
-  faculty_id  String?   @db.Uuid
-  department_id String?   @db.Uuid
-  is_pinned   Boolean?  @default(false)
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
-  users       users?    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  content       String
+  category      String?
+  priority      String?   @default("Normale")
+  author_id     String?   @db.Uuid
+  author_name   String?
+  service_id    String?   @db.Uuid
+  scope         String?   @default("global")
+  filiere       String?
+  niveau        String?
+  faculty_id    Int?
+  department_id Int?
+  is_pinned     Boolean?  @default(false)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+  users         users?    @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model assignment_submissions {
@@ -78,7 +78,6 @@ model assignments {
   users                  users?                   @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model attendance {
   id                                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   student_id                         String?   @db.Uuid
@@ -97,17 +96,17 @@ model attendance {
 }
 
 model conversations {
-  id                     String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                   String?
-  is_group               Boolean?                    @default(false)
-  last_message           String?
-  last_message_time      DateTime?                   @db.Timestamptz(6)
-  last_message_sender_id String?                     @db.Uuid
-  is_last_message_read   Boolean?                    @default(true)
-  created_at             DateTime?                   @default(now()) @db.Timestamptz(6)
-  updated_at             DateTime?                   @default(now()) @db.Timestamptz(6)
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                      String?
+  is_group                  Boolean?                    @default(false)
+  last_message              String?
+  last_message_time         DateTime?                   @db.Timestamptz(6)
+  last_message_sender_id    String?                     @db.Uuid
+  is_last_message_read      Boolean?                    @default(true)
+  created_at                DateTime?                   @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime?                   @default(now()) @db.Timestamptz(6)
   conversation_participants conversation_participants[]
-  messages               messages[]
+  messages                  messages[]
 }
 
 model conversation_participants {
@@ -131,8 +130,10 @@ model courses {
   status         String?       @default("Actif")
   students_count Int?          @default(0)
   scope          String?       @default("license")
-  faculty_id     String?       @db.Uuid
-  department_id  String?       @db.Uuid
+  faculty_id     Int?
+  department_id  Int?
+  filiere        String?
+  niveau         String?
   created_at     DateTime?     @default(now()) @db.Timestamptz(6)
   updated_at     DateTime?     @default(now()) @db.Timestamptz(6)
   assignments    assignments[]
@@ -146,7 +147,7 @@ model courses {
 model filieres {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nom         String
-  code        String    @unique
+  code        String?   @unique
   description String?
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
 }
@@ -159,6 +160,8 @@ model grades {
   grade                          Decimal?  @db.Decimal(5, 2)
   comment                        String?
   semester                       String?
+  faculty_id                     Int?
+  department_id                  Int?
   created_at                     DateTime? @default(now()) @db.Timestamptz(6)
   updated_at                     DateTime? @default(now()) @db.Timestamptz(6)
   courses                        courses?  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -201,40 +204,89 @@ model notifications {
   @@index([user_id], map: "idx_notifications_user")
 }
 
+model faculties {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  description String?
+  departments departments[]
+  profiles    profiles[]
+}
+
+model departments {
+  id          Int        @id @default(autoincrement())
+  faculty_id  Int?
+  name        String
+  description String?
+  faculties   faculties? @relation(fields: [faculty_id], references: [id])
+  profiles    profiles[]
+}
+
 model profiles {
-  id             String    @id @db.Uuid
-  full_name      String?
-  avatar_url     String?
-  role           String    @default("Étudiant")
-  filiere        String?
-  niveau         String?
-  matricule      String?   @unique
-  phone          String?
-  bio            String?
+  id         String  @id @db.Uuid
+  nom        String?
+  email      String?
+  full_name  String?
+  avatar_url String?
+  role       String  @default("Étudiant")
+  filiere    String?
+  niveau     String?
+  matricule  String? @unique
+  phone      String?
+  telephone  String?
+  bio        String?
+
+  faculty_id    Int?
+  department_id Int?
+  service_id    String? @db.Uuid
+
+  status          String?   @default("active")
+  is_verified     Boolean?  @default(false)
+  moyenne         Float?    @default(0)
+  credits_valides Int?      @default(0)
+  classement      String?
+  linkedin        String?
+  github          String?
+  twitter         String?
+  competences     String[]
+  interets        String[]
+  office          String?
+  specialization  String?
+  office_hours    Json?     @default("{}")
+  publications    Json?     @default("[]")
+  social_links    Json?     @default("{}")
+  is_active       Boolean?  @default(true)
+  last_login_at   DateTime? @db.Timestamptz(6)
+  student_id      String?
+  department      String?
+
   date_naissance DateTime? @db.Date
   created_at     DateTime? @default(now()) @db.Timestamptz(6)
   updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+
   conversation_participants conversation_participants[]
-  messages       messages[]
-  users          users     @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  messages                  messages[]
+  users                     users                       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  faculties   faculties?   @relation(fields: [faculty_id], references: [id])
+  departments departments? @relation(fields: [department_id], references: [id])
 }
 
 model resources {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title       String
-  description String?
-  url         String?
-  type        String?   @default("document")
-  course_id   String?   @db.Uuid
-  teacher_id  String?   @db.Uuid
-  author_name String?
-  scope       String?   @default("license")
-  department_id String?   @db.Uuid
-  faculty_id  String?   @db.Uuid
-  niveau      String?
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  courses     courses?  @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users       users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  description   String?
+  url           String?
+  type          String?   @default("document")
+  course_id     String?   @db.Uuid
+  teacher_id    String?   @db.Uuid
+  author_name   String?
+  scope         String?   @default("license")
+  department_id Int?
+  faculty_id    Int?
+  niveau        String?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  courses       courses?  @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model rooms {
@@ -248,56 +300,67 @@ model rooms {
 }
 
 model schedules {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  course_id   String?   @db.Uuid
-  teacher_id  String?   @db.Uuid
-  day_of_week String
-  start_time  DateTime  @db.Time(6)
-  end_time    DateTime  @db.Time(6)
-  room        String?
-  filiere     String?
-  niveau      String?
-  semester    String?
-  status      Int?      @default(0)
-  notes       String?
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  courses     courses?  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users       users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id     String?   @db.Uuid
+  teacher_id    String?   @db.Uuid
+  day_of_week   String
+  start_time    DateTime  @db.Time(6)
+  end_time      DateTime  @db.Time(6)
+  room          String?
+  filiere       String?
+  niveau        String?
+  semester      String?
+  status        Int?      @default(0)
+  notes         String?
+  faculty_id    Int?
+  department_id Int?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  courses       courses?  @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users         users?    @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([course_id], map: "idx_schedules_course")
   @@index([teacher_id], map: "idx_schedules_teacher")
 }
 
 model services {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  description String?
-  icon        String?
-  category    String?
-  is_active   Boolean?  @default(true)
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String    @unique
+  description  String?
+  icon         String?
+  category     String?
+  is_active    Boolean?  @default(true)
+  faculty_id   Int?
+  contact      String?
+  telephone    String?
+  email        String?
+  localisation String?
+  horaires     String?
+  site_web     String?
+  parent_id    String?   @db.Uuid
+  metadata     Json?     @default("{}")
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime? @default(now()) @db.Timestamptz(6)
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  id                                              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                                           String                   @unique
-  password_hash                                   String
-  role                                            String                   @default("Étudiant")
-  created_at                                      DateTime?                @default(now()) @db.Timestamptz(6)
-  updated_at                                      DateTime?                @default(now()) @db.Timestamptz(6)
-  admin_activity_logs                             admin_activity_logs[]
-  announcements                                   announcements[]
-  assignment_submissions                          assignment_submissions[]
-  assignments                                     assignments[]
-  attendance_attendance_student_idTousers         attendance[]             @relation("attendance_student_idTousers")
-  attendance_attendance_teacher_idTousers         attendance[]             @relation("attendance_teacher_idTousers")
-  courses                                         courses[]
-  grades_grades_student_idTousers                 grades[]                 @relation("grades_student_idTousers")
-  grades_grades_teacher_idTousers                 grades[]                 @relation("grades_teacher_idTousers")
-  messages                                        messages[]
-  notifications                                   notifications[]
-  profiles                                        profiles?
-  resources                                       resources[]
-  schedules                                       schedules[]
+  id                                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                   String                   @unique
+  password_hash                           String
+  role                                    String                   @default("Étudiant")
+  created_at                              DateTime?                @default(now()) @db.Timestamptz(6)
+  updated_at                              DateTime?                @default(now()) @db.Timestamptz(6)
+  admin_activity_logs                     admin_activity_logs[]
+  announcements                           announcements[]
+  assignment_submissions                  assignment_submissions[]
+  assignments                             assignments[]
+  attendance_attendance_student_idTousers attendance[]             @relation("attendance_student_idTousers")
+  attendance_attendance_teacher_idTousers attendance[]             @relation("attendance_teacher_idTousers")
+  courses                                 courses[]
+  grades_grades_student_idTousers         grades[]                 @relation("grades_student_idTousers")
+  grades_grades_teacher_idTousers         grades[]                 @relation("grades_teacher_idTousers")
+  messages                                messages[]
+  notifications                           notifications[]
+  profiles                                profiles?
+  resources                               resources[]
+  schedules                               schedules[]
 }

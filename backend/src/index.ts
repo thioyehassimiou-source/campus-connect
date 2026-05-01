@@ -24,13 +24,11 @@ import universityRoutes from './routes/university.routes';
 import { Server } from 'socket.io';
 import http from 'http';
 
+import { setupSocket } from './lib/socket';
+
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  }
-});
+const io = setupSocket(server);
 const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(helmet());
@@ -59,33 +57,6 @@ app.use('/grades', gradeRoutes);
 app.use('/attendance', attendanceRoutes);
 app.use('/assignments', assignmentRoutes);
 app.use('/universities', universityRoutes);
-
-// Socket.io configuration
-io.on('connection', (socket) => {
-  console.log(`🔌 Nouvel utilisateur connecté: ${socket.id}`);
-
-  // Rejoindre une room (conversation)
-  socket.on('join_conversation', (conversationId) => {
-    socket.join(conversationId);
-    console.log(`User ${socket.id} joined conversation: ${conversationId}`);
-  });
-
-  // Envoyer un message
-  socket.on('send_message', (data) => {
-    // data devrait contenir: conversationId, message, senderId, etc.
-    console.log('Nouveau message reçu:', data);
-    
-    // On broadcast le message à tous les utilisateurs dans la room (sauf l'expéditeur)
-    // ou à tout le monde si on le renvoie tel quel
-    if (data.conversationId) {
-       io.to(data.conversationId).emit('receive_message', data);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`❌ Utilisateur déconnecté: ${socket.id}`);
-  });
-});
 
 // 404
 app.use((req, res) => {
