@@ -16,9 +16,12 @@ Améliorer l'expérience universitaire en offrant :
 CampusConnect est disponible sur deux plateformes distinctes :
 
 ### 🌐 Version Web
-- Framework : Next.js
-- Repository : https://github.com/ton-repo/campusconnect-web
-
+- Framework : Next.js (App Router, Server Actions, SSR)
+Base de données : PostgreSQL via nodejs
+Sécurité : Protection au niveau de l'authentification et sécurité au niveau des lignes (RLS)
+UI/UX : Design MD3 (Material Design 3) avec animations fluides.
+- Repository : 
+https://github.com/thioyehassimiou-source/campusconnect-web.git
 ### 📲 Application Mobile
 - Framework : Flutter
 - Repository : 
