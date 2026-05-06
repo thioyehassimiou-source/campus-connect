@@ -21,8 +21,8 @@ CampusConnect est disponible sur deux plateformes distinctes :
 
 ### 📲 Application Mobile
 - Framework : Flutter
-- Repository : https://github.com/ton-repo/campusconnect-mobile
-
+- Repository : 
+https://github.com/thioyehassimiou-source/campus-connect.git
 ---
 
 ## 🛠️ Technologies
@@ -36,7 +36,7 @@ CampusConnect est disponible sur deux plateformes distinctes :
 - Flutter
 
 ### Backend
-- Supabase (Auth + Base de données)
+- NodeJS express (Auth + Base de données)
 
 ---
 
