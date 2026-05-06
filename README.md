@@ -57,3 +57,20 @@ https://github.com/thioyehassimiou-source/campus-connect.git
 
 CampusConnect suit une architecture multi-repos :
 
+---
+
+## ⚙️ Installation
+
+### 🔹 Web (Next.js)
+
+```bash
+git clone https://github.com/ton-repo/campusconnect-web.git
+cd campusconnect-web
+npm install
+npm run dev
+
+## Mobile (Flutter)
+git clone https://github.com/ton-repo/campusconnect-mobile.git
+cd campusconnect-mobile
+flutter pub get
+flutter run
